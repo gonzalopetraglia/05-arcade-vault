@@ -10,18 +10,6 @@ Arcade Vault — plataforma para jugar online y competir por puntos. Currently a
 
 Built with Spec Driven Design using the `/spec` and `/spec-impl` skills from [Klerith/fernando-skills](https://github.com/Klerith/fernando-skills) (`npx skills@latest add Klerith/fernando-skills`). Write the spec first, then implement against it.
 
-## Commands
-
-```bash
-npm run dev      # dev server (also regenerates the AGENTS.md agent block)
-npm run build
-npm start        # serve the production build
-npm run lint     # eslint (flat config, no `next lint`)
-npx tsc --noEmit # typecheck; tsconfig has noEmit, so this is the only type gate
-```
-
-No test runner is configured yet.
-
 ## Stack notes that differ from older Next.js
 
 - **Next 16 + React 19.** Read `node_modules/next/dist/docs/` before writing framework code — see AGENTS.md. Docs are split `01-app/` (App Router, the one in use), `02-pages/`, `03-architecture/`.
@@ -29,6 +17,10 @@ No test runner is configured yet.
 - **Tailwind v4, CSS-first config.** No `tailwind.config.*`. Theme tokens live in `@theme inline` inside `app/globals.css`; PostCSS wiring is `@tailwindcss/postcss` only.
 - **ESLint flat config** composing `eslint-config-next/core-web-vitals` + `/typescript`.
 - `@/*` maps to the repo root.
+
+## Skills
+
+Usa siempre /frontend-design para diseñar la interfaz del usuario.
 
 ## Conventions
 
