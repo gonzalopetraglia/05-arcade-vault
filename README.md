@@ -14,3 +14,15 @@ https://github.com/Klerith/fernando-skills
 ```bash
 npx skills@latest add Klerith/fernando-skills
 ```
+
+## Commands
+
+```bash
+npm run dev      # dev server (also regenerates the AGENTS.md agent block)
+npm run build
+npm start        # serve the production build
+npm run lint     # eslint (flat config, no `next lint`)
+npx tsc --noEmit # typecheck; tsconfig has noEmit, so this is the only type gate
+```
+
+No test runner is configured yet.
