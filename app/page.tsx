@@ -1,6 +1,4 @@
-import { LibraryGrid } from "@/components/library-grid";
-import { GAMES } from "@/lib/games";
-
 export default function Home() {
-  return <LibraryGrid games={GAMES} />;
+  // Marcador temporal: la landing se implementa en el paso 10 de la SPEC 02.
+  return <div />;
 }
