@@ -12,6 +12,9 @@ export function ContactForm() {
   const [sentName, setSentName] = useState("");
   const [shake, setShake] = useState(false);
   const shakeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Cierra la puerta al doble envío de forma sincrónica: dos clics seguidos
+  // corren antes del re-render, así que ambos leerían `status === "idle"`.
+  const sending = useRef(false);
 
   const triggerShake = () => {
     if (shakeTimer.current) clearTimeout(shakeTimer.current);
@@ -21,7 +24,7 @@ export function ContactForm() {
 
   const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (status === "sending") return;
+    if (sending.current) return;
 
     const payload = {
       name: form.name.trim(),
@@ -34,6 +37,7 @@ export function ContactForm() {
       return;
     }
 
+    sending.current = true;
     setStatus("sending");
 
     try {
@@ -51,6 +55,8 @@ export function ContactForm() {
       }
     } catch {
       // La red falló: se trata igual que un error del servidor.
+    } finally {
+      sending.current = false;
     }
 
     setStatus("error");
