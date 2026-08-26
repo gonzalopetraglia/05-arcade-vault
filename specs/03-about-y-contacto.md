@@ -1,6 +1,6 @@
 # SPEC 03 — Acerca de y formulario de contacto
 
-> **Estado:** Aceptado
+> **Estado:** Implementado
 > **Depende de:** SPEC 01, SPEC 02
 > **Fecha:** 2026-08-26
 > **Objetivo:** Portar `references/templates/home-about/about.jsx` a la ruta `/about` y hacer que su formulario envíe un correo real al equipo mediante Resend.
@@ -125,27 +125,27 @@ Ninguna lleva prefijo `NEXT_PUBLIC_`: no deben llegar al navegador.
 
 ## Criterios de aceptación
 
-- [ ] `npm run lint` termina sin errores ni advertencias.
-- [ ] `npm run build` termina sin errores ni advertencias de hidratación.
-- [ ] `/about` responde 200 y ya no cae en la pantalla 404.
-- [ ] El nav marca «Acerca de» como entrada activa en `/about`.
-- [ ] El hero muestra el kicker «▸ ACERCA DE», el título en degradado, el párrafo de misión y los tres highlights con sus iconos pixel y sus colores (magenta, cyan, verde).
-- [ ] El divisor muestra 24 píxeles parpadeando con retardo escalonado.
-- [ ] La sección de contacto muestra los tres tips con sus LED verde, amarillo y magenta.
-- [ ] Enviar con cualquiera de los tres campos vacío dispara el `shake` y **no** genera petición de red.
-- [ ] Un envío válido con las variables de entorno configuradas devuelve 200, pinta la terminal verde con el nombre en mayúsculas y el correo llega a `CONTACT_TO_EMAIL`.
-- [ ] Ese correo tiene como asunto `[Arcade Vault] Mensaje de <nombre>` y responder a él escribe a la dirección que puso el usuario.
-- [ ] Con `RESEND_API_KEY` vacía, el endpoint devuelve 500 `NOT_CONFIGURED` y la interfaz pinta la terminal de error, no la de éxito.
-- [ ] Con la clave inválida, el endpoint devuelve 502 `SEND_FAILED` y la interfaz pinta la terminal de error.
-- [ ] Desde la terminal de error, «REINTENTAR» vuelve al formulario con los tres campos tal y como estaban.
-- [ ] Un `POST /api/contact` con `message` de 2001 caracteres devuelve 400 `INVALID`.
-- [ ] Un `POST /api/contact` con `email` sin `@` devuelve 400 `INVALID`.
-- [ ] Un nombre con `<script>alert(1)</script>` llega escapado en el HTML del correo.
-- [ ] Durante el envío el botón está deshabilitado y pulsarlo dos veces no manda dos correos.
-- [ ] Al cargar `/about`, el divisor y la sección de contacto empiezan ocultos y aparecen al hacer scroll.
-- [ ] A 375 px de ancho `/about` no produce scroll horizontal.
-- [ ] `app/globals.css` no contiene ninguna clase `.gp-`.
-- [ ] `grep -rn "RESEND_API_KEY" components app/about` no devuelve resultados (la clave nunca toca el cliente).
+- [x] `npm run lint` termina sin errores ni advertencias.
+- [x] `npm run build` termina sin errores ni advertencias de hidratación.
+- [x] `/about` responde 200 y ya no cae en la pantalla 404.
+- [x] El nav marca «Acerca de» como entrada activa en `/about`.
+- [x] El hero muestra el kicker «▸ ACERCA DE», el título en degradado, el párrafo de misión y los tres highlights con sus iconos pixel y sus colores (magenta, cyan, verde).
+- [x] El divisor muestra 24 píxeles parpadeando con retardo escalonado.
+- [x] La sección de contacto muestra los tres tips con sus LED verde, amarillo y magenta.
+- [x] Enviar con cualquiera de los tres campos vacío dispara el `shake` y **no** genera petición de red.
+- [x] Un envío válido con las variables de entorno configuradas devuelve 200, pinta la terminal verde con el nombre en mayúsculas y el correo llega a `CONTACT_TO_EMAIL`.
+- [x] Ese correo tiene como asunto `[Arcade Vault] Mensaje de <nombre>` y responder a él escribe a la dirección que puso el usuario.
+- [x] Con `RESEND_API_KEY` vacía, el endpoint devuelve 500 `NOT_CONFIGURED` y la interfaz pinta la terminal de error, no la de éxito.
+- [x] Con la clave inválida, el endpoint devuelve 502 `SEND_FAILED` y la interfaz pinta la terminal de error.
+- [x] Desde la terminal de error, «REINTENTAR» vuelve al formulario con los tres campos tal y como estaban.
+- [x] Un `POST /api/contact` con `message` de 2001 caracteres devuelve 400 `INVALID`.
+- [x] Un `POST /api/contact` con `email` sin `@` devuelve 400 `INVALID`.
+- [x] Un nombre con `<script>alert(1)</script>` llega escapado en el HTML del correo.
+- [x] Durante el envío el botón está deshabilitado y pulsarlo dos veces no manda dos correos.
+- [x] Al cargar `/about`, el divisor y la sección de contacto empiezan ocultos y aparecen al hacer scroll.
+- [x] A 375 px de ancho `/about` no produce scroll horizontal.
+- [x] `app/globals.css` no contiene ninguna clase `.gp-`.
+- [x] `grep -rn "RESEND_API_KEY" components app/about` no devuelve resultados (la clave nunca toca el cliente).
 
 ---
 
