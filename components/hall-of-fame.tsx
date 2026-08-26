@@ -1,12 +1,45 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
-import { type Game, seededScores } from "@/lib/games";
+import { Fragment, useMemo, useState } from "react";
+import { useSession } from "@/components/session-provider";
+import { type Game, type ScoreRow, seededScores } from "@/lib/games";
+
+function formatDate(at: number) {
+  const d = new Date(at);
+  const day = String(d.getDate()).padStart(2, "0");
+  const mon = String(d.getMonth() + 1).padStart(2, "0");
+  return `${day}/${mon}/${d.getFullYear()}`;
+}
 
 export function HallOfFame({ games }: { games: Game[] }) {
+  const { scores } = useSession();
   const [tab, setTab] = useState(games[0].id);
   const rows = useMemo(() => seededScores(tab.length * 23 + 7, 12), [tab]);
+  const game = games.find((g) => g.id === tab);
+
+  // Best run the player actually saved on this game, if any.
+  const best = useMemo(() => {
+    const mine = scores.filter((s) => s.game === tab);
+    if (mine.length === 0) return null;
+    return mine.reduce((a, b) => (b.score > a.score ? b : a));
+  }, [scores, tab]);
+
+  // The saved row slots in by score, so its rank is the one it really earns.
+  const table = useMemo<(ScoreRow & { you: boolean })[]>(() => {
+    const mock = rows.map((r) => ({ ...r, you: false }));
+    if (!best) return mock;
+    const yours = {
+      rank: 0,
+      name: best.name,
+      score: best.score,
+      date: formatDate(best.at),
+      you: true,
+    };
+    return [...mock, yours]
+      .sort((a, b) => b.score - a.score)
+      .map((r, i) => ({ ...r, rank: i + 1 }));
+  }, [rows, best]);
 
   return (
     <div className="av-hall fade-in">
@@ -67,18 +100,41 @@ export function HallOfFame({ games }: { games: Game[] }) {
           <div>PUNTUACIÓN</div>
           <div>FECHA</div>
         </div>
-        {rows.map((r, i) => (
-          <div
-            key={r.name + i}
-            className={"tr" + (i === 0 ? " top1" : i === 1 ? " top2" : i === 2 ? " top3" : "")}
-            style={{ animationDelay: `${i * 50}ms` }}
-          >
-            <div className="rk">#{String(r.rank).padStart(2, "0")}</div>
-            <div className="pl">{r.name}</div>
-            <div className="sc">{r.score.toLocaleString("es-ES")}</div>
-            <div className="dt">{r.date}</div>
-          </div>
-        ))}
+        {table.map((r, i) =>
+          r.you ? (
+            <Fragment key="you">
+              <div className="tr you-label">▸ TU MEJOR MARCA EN {game?.title}</div>
+              <div className="tr you" style={{ animationDelay: `${i * 50}ms` }}>
+                <div className="rk" style={{ color: "var(--yellow)" }}>
+                  #{String(r.rank).padStart(2, "0")}
+                </div>
+                <div className="pl" style={{ color: "var(--yellow)" }}>
+                  {r.name}
+                </div>
+                <div
+                  className="sc"
+                  style={{ color: "var(--yellow)", textShadow: "0 0 6px rgba(245,255,0,0.5)" }}
+                >
+                  {r.score.toLocaleString("es-ES")}
+                </div>
+                <div className="dt">{r.date}</div>
+              </div>
+            </Fragment>
+          ) : (
+            <div
+              key={r.name + i}
+              className={
+                "tr" + (r.rank === 1 ? " top1" : r.rank === 2 ? " top2" : r.rank === 3 ? " top3" : "")
+              }
+              style={{ animationDelay: `${i * 50}ms` }}
+            >
+              <div className="rk">#{String(r.rank).padStart(2, "0")}</div>
+              <div className="pl">{r.name}</div>
+              <div className="sc">{r.score.toLocaleString("es-ES")}</div>
+              <div className="dt">{r.date}</div>
+            </div>
+          ),
+        )}
       </div>
 
       <div style={{ textAlign: "center", marginTop: 32 }}>
