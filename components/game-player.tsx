@@ -2,16 +2,30 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { useSession } from "@/components/session-provider";
 import type { Game } from "@/lib/games";
 
 export function GamePlayer({ game }: { game: Game }) {
+  const { user, saveScore } = useSession();
   const [score, setScore] = useState(0);
-  const [lives] = useState(3);
+  const [lives, setLives] = useState(3);
   const [paused, setPaused] = useState(false);
   const [over, setOver] = useState(false);
-  const [name] = useState("INVITADO");
+  const [saved, setSaved] = useState(false);
+  // null means "not edited yet": fall back to the session name, which only
+  // becomes known after the provider hydrates from localStorage.
+  const [typedName, setTypedName] = useState<string | null>(null);
 
   const level = Math.floor(score / 2500) + 1;
+  const name = typedName ?? user?.name ?? "INVITADO";
+
+  const restart = () => {
+    setScore(0);
+    setLives(3);
+    setPaused(false);
+    setOver(false);
+    setSaved(false);
+  };
 
   useEffect(() => {
     if (over || paused) return;
@@ -91,6 +105,44 @@ export function GamePlayer({ game }: { game: Game }) {
           <span>CARGA · 1MB</span>
         </div>
       </div>
+
+      {over && (
+        <div className="modal-bd">
+          <div className="modal">
+            <h2>FIN DEL JUEGO</h2>
+            <div className="final-label">PUNTUACIÓN FINAL</div>
+            <div className="final">{score.toLocaleString("es-ES")}</div>
+            {!saved ? (
+              <div className="input-row">
+                <input
+                  value={name}
+                  onChange={(e) => setTypedName(e.target.value.toUpperCase().slice(0, 10))}
+                  placeholder="TUS INICIALES"
+                />
+                <button
+                  className="btn yellow"
+                  onClick={() => {
+                    saveScore({ game: game.id, score, name });
+                    setSaved(true);
+                  }}
+                >
+                  GUARDAR PUNTUACIÓN
+                </button>
+              </div>
+            ) : (
+              <div className="toast-saved">▸ PUNTUACIÓN GUARDADA_</div>
+            )}
+            <div className="actions">
+              <button className="btn" onClick={restart}>
+                JUGAR DE NUEVO
+              </button>
+              <Link className="btn magenta" href="/">
+                VOLVER AL VAULT
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
