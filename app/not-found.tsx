@@ -39,7 +39,7 @@ export default function NotFound() {
       </p>
 
       <div style={{ marginTop: 40 }}>
-        <Link className="btn magenta lg" href="/">
+        <Link className="btn magenta lg" href="/games">
           VOLVER AL VAULT
         </Link>
       </div>
