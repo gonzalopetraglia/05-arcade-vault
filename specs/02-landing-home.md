@@ -1,6 +1,6 @@
 # SPEC 02 — Landing: la portada de Arcade Vault
 
-> **Estado:** Aprobado
+> **Estado:** Implementado
 > **Depende de:** SPEC 01
 > **Fecha:** 2026-08-26
 > **Objetivo:** Portar `references/templates/home-about/home.jsx` a la ruta `/` como landing, moviendo la biblioteca a `/games` y el detalle a `/games/[id]`.
@@ -106,26 +106,26 @@ El rail de juegos no lleva mock propio: usa `GAMES.slice(0, 6)` de `lib/games.ts
 
 ## Criterios de aceptación
 
-- [ ] `npm run lint` termina sin errores ni advertencias.
-- [ ] `npm run build` termina sin errores ni advertencias de hidratación.
-- [ ] `grep -rn "/juegos" app components` no devuelve resultados.
-- [ ] `/` muestra el hero con el título en tres líneas y los dos botones «EXPLORAR JUEGOS» y «CREAR CUENTA».
-- [ ] «EXPLORAR JUEGOS» navega a `/games` y esa ruta muestra el grid con las ocho cards y los cinco chips.
-- [ ] «CREAR CUENTA» navega a `/auth`.
-- [ ] `/games/serpentina` muestra el detalle; `/juegos/serpentina` devuelve la pantalla 404.
-- [ ] La landing muestra las cuatro tarjetas de features con sus iconos pixel y sus cuatro colores.
-- [ ] El rail muestra exactamente seis juegos y cada uno navega a `/games/<id>`.
-- [ ] «VER TODOS LOS JUEGOS →» navega a `/games`.
-- [ ] La sección de actividad muestra las siete filas del ticker y las cinco del top, con las barras de `.tp-fill` decrecientes.
-- [ ] «VER SALÓN →» navega a `/salon`.
-- [ ] La sección de pricing muestra el sello «FREE PLAY», las seis líneas del plan y las tres preguntas del FAQ.
-- [ ] «EMPEZAR GRATIS →» e «INSERTAR MONEDA →» navegan a `/auth` y a `/games` respectivamente.
-- [ ] Al cargar `/`, las secciones bajo el hero empiezan ocultas y aparecen al hacer scroll (la clase `in` se añade al entrar en viewport).
-- [ ] El nav muestra cinco entradas: Inicio, Biblioteca, Salón, Acerca de y el botón de sesión.
-- [ ] En `/` está activa «Inicio»; en `/games`, `/games/<id>` y `/jugar/<id>` está activa «Biblioteca».
-- [ ] Las cifras del ticker y del top se ven con separador de miles español (`184.220`).
-- [ ] A 375 px de ancho la landing no produce scroll horizontal y el nav abre el panel lateral.
-- [ ] `app/globals.css` no contiene ninguna clase `.gp-`, `.about-` ni `.contact-`.
+- [x] `npm run lint` termina sin errores ni advertencias.
+- [x] `npm run build` termina sin errores ni advertencias de hidratación.
+- [x] `grep -rn "/juegos" app components` no devuelve resultados.
+- [x] `/` muestra el hero con el título en tres líneas y los dos botones «EXPLORAR JUEGOS» y «CREAR CUENTA».
+- [x] «EXPLORAR JUEGOS» navega a `/games` y esa ruta muestra el grid con las ocho cards y los cinco chips.
+- [x] «CREAR CUENTA» navega a `/auth`.
+- [x] `/games/serpentina` muestra el detalle; `/juegos/serpentina` devuelve la pantalla 404.
+- [x] La landing muestra las cuatro tarjetas de features con sus iconos pixel y sus cuatro colores.
+- [x] El rail muestra exactamente seis juegos y cada uno navega a `/games/<id>`.
+- [x] «VER TODOS LOS JUEGOS →» navega a `/games`.
+- [x] La sección de actividad muestra las siete filas del ticker y las cinco del top, con las barras de `.tp-fill` decrecientes.
+- [x] «VER SALÓN →» navega a `/salon`.
+- [x] La sección de pricing muestra el sello «FREE PLAY», las seis líneas del plan y las tres preguntas del FAQ.
+- [x] «EMPEZAR GRATIS →» e «INSERTAR MONEDA →» navegan a `/auth` y a `/games` respectivamente.
+- [x] Al cargar `/`, las secciones bajo el hero empiezan ocultas y aparecen al hacer scroll (la clase `in` se añade al entrar en viewport).
+- [x] El nav muestra cinco entradas: Inicio, Biblioteca, Salón, Acerca de y el botón de sesión.
+- [x] En `/` está activa «Inicio»; en `/games`, `/games/<id>` y `/jugar/<id>` está activa «Biblioteca».
+- [x] Las cifras del ticker y del top se ven con separador de miles español (`184.220`).
+- [x] A 375 px de ancho la landing no produce scroll horizontal y el nav abre el panel lateral.
+- [x] `app/globals.css` no contiene ninguna clase `.gp-`, `.about-` ni `.contact-`.
 
 ---
 
