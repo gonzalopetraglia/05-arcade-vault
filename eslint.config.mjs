@@ -12,6 +12,9 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Standalone React 18 prototype served by Babel from a static HTML file.
+    // It is design reference, not app code, and does not lint as a module.
+    "references/**",
   ]),
 ]);
 
