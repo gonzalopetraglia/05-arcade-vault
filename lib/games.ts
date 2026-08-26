@@ -145,3 +145,14 @@ export function seededScores(seed: number, count = 12): ScoreRow[] {
 export function getGame(id: string): Game | undefined {
   return GAMES.find((g) => g.id === id);
 }
+
+/**
+ * Score formatter with a fixed locale. Using toLocaleString() without a locale
+ * would take it from the environment, so a server with a different default
+ * would render HTML the client does not reproduce.
+ */
+const scoreFormatter = new Intl.NumberFormat("es-ES");
+
+export function formatScore(n: number): string {
+  return scoreFormatter.format(n);
+}
