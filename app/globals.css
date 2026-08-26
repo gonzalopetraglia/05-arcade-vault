@@ -1161,7 +1161,8 @@ a { color: inherit; text-decoration: none; }
 .tp-rk { font-family: var(--pixel); font-size: 10px; color: var(--ink-faint); }
 .tp-p { font-family: var(--pixel); font-size: 11px; letter-spacing: 0.06em; color: var(--ink); }
 .tp-s { font-family: var(--pixel); font-size: 11px; color: var(--cyan); text-shadow: 0 0 6px rgba(0,245,255,0.4); }
-.tp-bar { position: absolute; }
+.tp-bar { position: relative; height: 6px; overflow: hidden; color: var(--cyan); background: rgba(255,255,255,0.05); }
+.tp-fill { display: block; height: 100%; background: currentColor; box-shadow: 0 0 6px currentColor; }
 .top-row { position: relative; }
 .top-row::before {
   content: ""; position: absolute; left: 36px; right: 0; top: 0; bottom: 0;
@@ -1174,7 +1175,10 @@ a { color: inherit; text-decoration: none; }
 .top-row.top1::before { background: linear-gradient(90deg, rgba(255,207,58,0.14), transparent); }
 .top-row.top2::before { background: linear-gradient(90deg, rgba(199,208,224,0.10), transparent); }
 .top-row.top3::before { background: linear-gradient(90deg, rgba(217,122,58,0.10), transparent); }
-.tp-p, .tp-s, .tp-rk { position: relative; z-index: 1; }
+.top-row.top1 .tp-bar { color: var(--gold); }
+.top-row.top2 .tp-bar { color: var(--silver); }
+.top-row.top3 .tp-bar { color: var(--bronze); }
+.tp-p, .tp-s, .tp-rk, .tp-bar { position: relative; z-index: 1; }
 
 
 /* ===== PRICING ===== */
