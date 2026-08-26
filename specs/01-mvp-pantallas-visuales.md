@@ -1,6 +1,6 @@
 # SPEC 01 — MVP visual: las cinco pantallas de Arcade Vault
 
-> **Estado:** Aprobado
+> **Estado:** Implementado
 > **Depende de:** —
 > **Fecha:** 2026-08-26
 > **Objetivo:** Portar las cinco pantallas de `references/templates/` a Next.js 16 con App Router, solo la capa visual, sin implementar ningún juego.
@@ -124,31 +124,31 @@ Sin versionado de esquema: son datos de demo y se pueden tirar. Toda lectura y e
 
 ## Criterios de aceptación
 
-- [ ] `npm run lint` termina sin errores ni advertencias.
-- [ ] `npm run build` termina sin errores y sin advertencias de hidratación.
-- [ ] `/` muestra el hero, el buscador, los cinco chips y las ocho cards.
-- [ ] Escribir «serp» en el buscador deja una sola card visible.
-- [ ] Pulsar el chip PUZZLE deja solo CAÍDA.
-- [ ] Una búsqueda sin resultados muestra el bloque «NO HAY RESULTADOS».
-- [ ] Pulsar una card navega a `/juegos/<id>` y la URL es compartible: recargar la reconstruye igual.
-- [ ] El detalle muestra portada, cuatro tags, párrafo largo, tira de estadísticas y diez filas de puntuaciones.
-- [ ] Las mismas diez filas aparecen tras recargar el detalle (`seededScores` es determinista).
-- [ ] `/juegos/inventado` devuelve 404 y muestra la pantalla arcade dentro del layout.
-- [ ] «▶ JUGAR AHORA» navega a `/jugar/<id>`.
-- [ ] En el reproductor el marcador sube solo y el nivel avanza al pasar 2 500 puntos.
-- [ ] PAUSA detiene el marcador y muestra la superposición «EN PAUSA»; REANUDAR lo reactiva.
-- [ ] FIN abre el modal con la puntuación final formateada en es-ES.
-- [ ] Guardar la puntuación muestra «▸ PUNTUACIÓN GUARDADA_» y añade una entrada a `localStorage.av_scores`.
-- [ ] «JUGAR DE NUEVO» reinicia marcador, vidas, nivel y cierra el modal.
-- [ ] Enviar el formulario de `/auth` con el usuario `px_kai` redirige a `/` y el nav muestra «PX_KAI ▾».
-- [ ] Recargar cualquier página conserva la sesión.
-- [ ] Pulsar el botón del nombre en el nav cierra la sesión y devuelve el botón «Iniciar Sesión».
-- [ ] `/salon` muestra el podio, las doce filas y cambia de datos al pulsar otra pestaña de juego.
-- [ ] Sin partidas guardadas en el juego activo, la fila «TU MEJOR MARCA» no aparece.
-- [ ] Con una partida guardada, esa fila muestra la puntuación real guardada, no un valor inventado.
-- [ ] A 375 px de ancho el nav muestra el botón ≡ y abre el panel lateral.
-- [ ] A 375 px de ancho ninguna pantalla produce scroll horizontal.
-- [ ] Ninguna partida ni juego real existe en el código: buscar `requestAnimationFrame` o `canvas` en `app/` y `components/` no devuelve nada.
+- [x] `npm run lint` termina sin errores ni advertencias.
+- [x] `npm run build` termina sin errores y sin advertencias de hidratación.
+- [x] `/` muestra el hero, el buscador, los cinco chips y las ocho cards.
+- [x] Escribir «serp» en el buscador deja una sola card visible.
+- [x] Pulsar el chip PUZZLE deja solo CAÍDA.
+- [x] Una búsqueda sin resultados muestra el bloque «NO HAY RESULTADOS».
+- [x] Pulsar una card navega a `/juegos/<id>` y la URL es compartible: recargar la reconstruye igual.
+- [x] El detalle muestra portada, cuatro tags, párrafo largo, tira de estadísticas y diez filas de puntuaciones.
+- [x] Las mismas diez filas aparecen tras recargar el detalle (`seededScores` es determinista).
+- [x] `/juegos/inventado` devuelve 404 y muestra la pantalla arcade dentro del layout.
+- [x] «▶ JUGAR AHORA» navega a `/jugar/<id>`.
+- [x] En el reproductor el marcador sube solo y el nivel avanza al pasar 2 500 puntos.
+- [x] PAUSA detiene el marcador y muestra la superposición «EN PAUSA»; REANUDAR lo reactiva.
+- [x] FIN abre el modal con la puntuación final formateada en es-ES.
+- [x] Guardar la puntuación muestra «▸ PUNTUACIÓN GUARDADA_» y añade una entrada a `localStorage.av_scores`.
+- [x] «JUGAR DE NUEVO» reinicia marcador, vidas, nivel y cierra el modal.
+- [x] Enviar el formulario de `/auth` con el usuario `px_kai` redirige a `/` y el nav muestra «PX_KAI ▾».
+- [x] Recargar cualquier página conserva la sesión.
+- [x] Pulsar el botón del nombre en el nav cierra la sesión y devuelve el botón «Iniciar Sesión».
+- [x] `/salon` muestra el podio, las doce filas y cambia de datos al pulsar otra pestaña de juego.
+- [x] Sin partidas guardadas en el juego activo, la fila «TU MEJOR MARCA» no aparece.
+- [x] Con una partida guardada, esa fila muestra la puntuación real guardada, no un valor inventado.
+- [x] A 375 px de ancho el nav muestra el botón ≡ y abre el panel lateral.
+- [x] A 375 px de ancho ninguna pantalla produce scroll horizontal.
+- [x] Ninguna partida ni juego real existe en el código: buscar `requestAnimationFrame` o `canvas` en `app/` y `components/` no devuelve nada.
 
 ---
 
