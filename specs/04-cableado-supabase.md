@@ -1,6 +1,6 @@
 # SPEC 04 — Cableado base de Supabase
 
-> **Estado:** Aprobado
+> **Estado:** Implementado
 > **Depende de:** SPEC 01
 > **Fecha:** 2026-08-27
 > **Objetivo:** Dejar Supabase conectado al proyecto —clientes de navegador y servidor, `proxy.ts` de refresco de sesión y una ruta de diagnóstico— sin cambiar ninguna pantalla ni crear ninguna tabla.
@@ -95,23 +95,23 @@ export type SupabaseHealth =
 
 ## Criterios de aceptación
 
-- [ ] `npm run lint` termina sin errores ni advertencias.
-- [ ] `npm run build` termina sin errores ni advertencias de hidratación.
-- [ ] `package.json` lista `@supabase/supabase-js` y `@supabase/ssr`.
-- [ ] `.env.example` contiene `NEXT_PUBLIC_SUPABASE_URL` y `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` con valores de ejemplo, no reales.
-- [ ] `git status` no lista `.env.local` como archivo sin seguimiento.
-- [ ] Existe `proxy.ts` en la raíz del proyecto y **no** existe ningún `middleware.ts`.
-- [ ] `GET /api/health/supabase` devuelve 200 con `{"ok":true,"authService":"up","claims":"none"}`.
-- [ ] Con `NEXT_PUBLIC_SUPABASE_URL` vacía, esa ruta devuelve 500 `NOT_CONFIGURED`.
-- [ ] Con una URL de proyecto inválida, esa ruta devuelve 502 `UNREACHABLE` y no lanza una excepción sin capturar.
-- [ ] La respuesta de esa ruta no contiene la cadena `sb_publishable_` ni ninguna clave.
-- [ ] `grep -rn "getSession" lib proxy.ts app` no devuelve resultados.
-- [ ] `grep -rn "SUPABASE" components app/auth` no devuelve resultados: ninguna pantalla usa Supabase todavía.
-- [ ] `components/session-provider.tsx` y `app/auth/page.tsx` no tienen ningún cambio respecto a la SPEC 01.
-- [ ] Iniciar sesión falsa en `/auth` sigue funcionando igual que antes y el nav sigue mostrando el usuario.
-- [ ] Guardar una puntuación en `/jugar/<id>` sigue persistiendo en `localStorage` y apareciendo en `/salon`.
-- [ ] `POST /api/contact` sigue funcionando con el `proxy.ts` activo.
-- [ ] El proyecto de Supabase no tiene ninguna tabla nueva en el esquema `public`.
+- [x] `npm run lint` termina sin errores ni advertencias.
+- [x] `npm run build` termina sin errores ni advertencias de hidratación.
+- [x] `package.json` lista `@supabase/supabase-js` y `@supabase/ssr`.
+- [x] `.env.example` contiene `NEXT_PUBLIC_SUPABASE_URL` y `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` con valores de ejemplo, no reales.
+- [x] `git status` no lista `.env.local` como archivo sin seguimiento.
+- [x] Existe `proxy.ts` en la raíz del proyecto y **no** existe ningún `middleware.ts`.
+- [x] `GET /api/health/supabase` devuelve 200 con `{"ok":true,"authService":"up","claims":"none"}`.
+- [x] Con `NEXT_PUBLIC_SUPABASE_URL` vacía, esa ruta devuelve 500 `NOT_CONFIGURED`.
+- [x] Con una URL de proyecto inválida, esa ruta devuelve 502 `UNREACHABLE` y no lanza una excepción sin capturar.
+- [x] La respuesta de esa ruta no contiene la cadena `sb_publishable_` ni ninguna clave.
+- [x] `grep -rn "getSession" lib proxy.ts app` no devuelve resultados.
+- [x] `grep -rn "SUPABASE" components app/auth` no devuelve resultados: ninguna pantalla usa Supabase todavía.
+- [x] `components/session-provider.tsx` y `app/auth/page.tsx` no tienen ningún cambio respecto a la SPEC 01.
+- [x] Iniciar sesión falsa en `/auth` sigue funcionando igual que antes y el nav sigue mostrando el usuario.
+- [x] Guardar una puntuación en `/jugar/<id>` sigue persistiendo en `localStorage` y apareciendo en `/salon`.
+- [x] `POST /api/contact` sigue funcionando con el `proxy.ts` activo.
+- [x] El proyecto de Supabase no tiene ninguna tabla nueva en el esquema `public`.
 
 ---
 
