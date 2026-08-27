@@ -1,6 +1,6 @@
 # SPEC 06 — Leaderboard real y tabla de juegos
 
-> **Estado:** Aprobado
+> **Estado:** Implementado
 > **Depende de:** SPEC 01, SPEC 04, SPEC 05
 > **Fecha:** 2026-08-27
 > **Objetivo:** Llevar el catálogo y las puntuaciones a Supabase con RLS, servirlos por una API propia (`/api/games`, `/api/scores`), convertir el salón de la fama en un ranking real y añadir a `/games` una vista de tabla ordenable junto a las tarjetas.
@@ -176,39 +176,39 @@ El tipo `Game` sigue siendo el de `lib/games.ts`, pero pierde los campos `best` 
 
 ## Criterios de aceptación
 
-- [ ] `npm run lint` termina sin errores ni advertencias.
-- [ ] `npm run build` termina sin errores ni advertencias de hidratación.
-- [ ] `list_tables` muestra `public.games` y `public.scores`, ambas con RLS activada.
-- [ ] `get_advisors` no reporta tablas sin RLS ni vistas `security definer`.
-- [ ] `supabase/migrations/` contiene el SQL de las dos migraciones y está commiteado.
-- [ ] `select count(*) from games` devuelve 9 y el orden por `sort_order` coincide con `lib/games.ts`.
-- [ ] Reejecutar la migración de seed no duplica ninguna fila.
-- [ ] `.env.example` incluye `SUPABASE_SECRET_KEY` con valor de ejemplo y sin prefijo `NEXT_PUBLIC_`.
-- [ ] `grep -rn "SUPABASE_SECRET_KEY" components lib/supabase/client.ts` no devuelve resultados.
-- [ ] Ninguna respuesta de la API contiene la cadena `sb_secret_`.
-- [ ] `GET /api/games` devuelve nueve juegos, cada uno con `best` y `plays` numéricos.
-- [ ] `GET /api/scores?game=asteroides` devuelve las puntuaciones de ese juego ordenadas de mayor a menor, con `rank` empezando en 1.
-- [ ] `GET /api/scores` sin parámetro `game` responde 400.
-- [ ] `POST /api/scores` con `score: -1`, con `score: 20000000` o sin `name` responde 400 `INVALID_BODY`.
-- [ ] `POST /api/scores` con un `game` inexistente responde 400 `UNKNOWN_GAME`.
-- [ ] `POST /api/scores` con `name: "  ana lópez  "` guarda `ANA LÓPEZ` recortado a 10 caracteres.
-- [ ] La undécima petición correcta desde la misma IP en un minuto responde 429 `RATE_LIMITED`.
-- [ ] Un `insert` en `scores` con la clave publicable desde el navegador es rechazado por la RLS y no crea ninguna fila.
-- [ ] `grep -rn "av_scores\|seededScores\|SavedScore" app components lib` no devuelve resultados.
-- [ ] Guardar una puntuación en el modal de fin de partida la inserta en la base y aparece en `/salon` sin recargar la página a mano.
-- [ ] Si el `POST` falla, el modal muestra un error y no finge que se guardó.
-- [ ] Iniciar sesión falsa en `/auth` sigue funcionando y `av_user` sigue en `localStorage`.
-- [ ] `/salon` muestra el podio y el top 10 reales del juego seleccionado.
-- [ ] Un juego sin puntuaciones muestra el estado vacío, no filas inventadas ni un podio con nombres.
-- [ ] Con la API caída, `/salon` y `/games` muestran su estado de error con opción de reintentar, sin pantalla en blanco.
-- [ ] `/games` muestra nueve tarjetas en la vista de cuadrícula, con `best` y `plays` procedentes de la base.
-- [ ] El conmutador CUADRÍCULA / TABLA cambia de vista y la elección sobrevive a una recarga.
-- [ ] Pulsar el encabezado MEJOR ordena la tabla por puntuación, y volver a pulsarlo invierte el orden.
-- [ ] El filtro de categoría se aplica igual en las dos vistas.
-- [ ] En un móvil emulado, la tabla desplaza horizontalmente dentro de su contenedor y la página no.
-- [ ] `/games/asteroides` sigue siendo una ruta estática generada desde el seed.
-- [ ] `/jugar/asteroides` y `/jugar/serpentina` siguen jugándose igual que en la SPEC 05.
-- [ ] `proxy.ts` y `GET /api/health/supabase` siguen funcionando como en la SPEC 04.
+- [x] `npm run lint` termina sin errores ni advertencias.
+- [x] `npm run build` termina sin errores ni advertencias de hidratación.
+- [x] `list_tables` muestra `public.games` y `public.scores`, ambas con RLS activada.
+- [x] `get_advisors` no reporta tablas sin RLS ni vistas `security definer`.
+- [x] `supabase/migrations/` contiene el SQL de las dos migraciones y está commiteado.
+- [x] `select count(*) from games` devuelve 9 y el orden por `sort_order` coincide con `lib/games.ts`.
+- [x] Reejecutar la migración de seed no duplica ninguna fila.
+- [x] `.env.example` incluye `SUPABASE_SECRET_KEY` con valor de ejemplo y sin prefijo `NEXT_PUBLIC_`.
+- [x] `grep -rn "SUPABASE_SECRET_KEY" components lib/supabase/client.ts` no devuelve resultados.
+- [x] Ninguna respuesta de la API contiene la cadena `sb_secret_`.
+- [x] `GET /api/games` devuelve nueve juegos, cada uno con `best` y `plays` numéricos.
+- [x] `GET /api/scores?game=asteroides` devuelve las puntuaciones de ese juego ordenadas de mayor a menor, con `rank` empezando en 1.
+- [x] `GET /api/scores` sin parámetro `game` responde 400.
+- [x] `POST /api/scores` con `score: -1`, con `score: 20000000` o sin `name` responde 400 `INVALID_BODY`.
+- [x] `POST /api/scores` con un `game` inexistente responde 400 `UNKNOWN_GAME`.
+- [x] `POST /api/scores` con `name: "  ana lópez  "` guarda `ANA LÓPEZ` recortado a 10 caracteres.
+- [x] La undécima petición correcta desde la misma IP en un minuto responde 429 `RATE_LIMITED`.
+- [x] Un `insert` en `scores` con la clave publicable desde el navegador es rechazado por la RLS y no crea ninguna fila.
+- [x] `grep -rn "av_scores\|seededScores\|SavedScore" app components lib` no devuelve resultados.
+- [x] Guardar una puntuación en el modal de fin de partida la inserta en la base y aparece en `/salon` sin recargar la página a mano.
+- [x] Si el `POST` falla, el modal muestra un error y no finge que se guardó.
+- [x] Iniciar sesión falsa en `/auth` sigue funcionando y `av_user` sigue en `localStorage`.
+- [x] `/salon` muestra el podio y el top 10 reales del juego seleccionado.
+- [x] Un juego sin puntuaciones muestra el estado vacío, no filas inventadas ni un podio con nombres.
+- [x] Con la API caída, `/salon` y `/games` muestran su estado de error con opción de reintentar, sin pantalla en blanco.
+- [x] `/games` muestra nueve tarjetas en la vista de cuadrícula, con `best` y `plays` procedentes de la base.
+- [x] El conmutador CUADRÍCULA / TABLA cambia de vista y la elección sobrevive a una recarga.
+- [x] Pulsar el encabezado MEJOR ordena la tabla por puntuación, y volver a pulsarlo invierte el orden.
+- [x] El filtro de categoría se aplica igual en las dos vistas.
+- [x] En un móvil emulado, la tabla desplaza horizontalmente dentro de su contenedor y la página no.
+- [x] `/games/asteroides` sigue siendo una ruta estática generada desde el seed.
+- [x] `/jugar/asteroides` y `/jugar/serpentina` siguen jugándose igual que en la SPEC 05.
+- [x] `proxy.ts` y `GET /api/health/supabase` siguen funcionando como en la SPEC 04.
 
 ---
 
