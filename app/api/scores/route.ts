@@ -1,3 +1,4 @@
+import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
 export type ScoreEntry = {
@@ -9,6 +10,11 @@ export type ScoreEntry = {
 };
 
 export type ScoresResponse = { ok: true; scores: ScoreEntry[] } | { ok: false; error: string };
+
+export type PostScoreError = "INVALID_BODY" | "UNKNOWN_GAME" | "RATE_LIMITED" | "DB_ERROR";
+
+export type PostScoreResponse =
+  { ok: true; entry: ScoreEntry } | { ok: false; error: PostScoreError };
 
 // El top cambia con cada partida guardada: cachear dejaría el salón congelado.
 export const dynamic = "force-dynamic";
@@ -86,5 +92,141 @@ export async function GET(request: Request) {
     return Response.json({ ok: false, error: "DB_ERROR" } satisfies ScoresResponse, {
       status: 500,
     });
+  }
+}
+
+const MAX_SCORE = 10_000_000;
+const MAX_NAME_LENGTH = 10;
+const RATE_LIMIT_MAX = 10;
+const RATE_LIMIT_WINDOW_MS = 60_000;
+
+/**
+ * Límite de frecuencia por IP, en memoria del módulo.
+ *
+ * Se sabe imperfecto y se acepta como tal: no sobrevive a un reinicio del
+ * proceso y no se comparte entre instancias, así que en serverless con varias
+ * lambdas el tope real es mayor. Es un cortacircuitos contra el spam trivial,
+ * no antifraude. El antifraude de verdad necesita auth, y llega con esa spec.
+ */
+const hits = new Map<string, number[]>();
+
+function clientIp(request: Request): string {
+  const forwarded = request.headers.get("x-forwarded-for");
+  return forwarded?.split(",")[0]?.trim() || "unknown";
+}
+
+function rateLimited(ip: string): boolean {
+  const now = Date.now();
+  const recent = (hits.get(ip) ?? []).filter((t) => now - t < RATE_LIMIT_WINDOW_MS);
+
+  if (recent.length >= RATE_LIMIT_MAX) {
+    hits.set(ip, recent);
+    return true;
+  }
+
+  recent.push(now);
+  hits.set(ip, recent);
+  return false;
+}
+
+/**
+ * Misma regla que el `signIn` de la sesión falsa, ahora también en el servidor:
+ * recortar, mayúsculas, 10 caracteres y solo el alfabeto que la interfaz sabe
+ * pintar. Devuelve "" si no queda nada utilizable.
+ */
+function sanitizeName(raw: string): string {
+  return raw
+    .trim()
+    .toUpperCase()
+    .slice(0, MAX_NAME_LENGTH)
+    .replace(/[^A-Z0-9 ÁÉÍÓÚÜÑ.-]/g, "")
+    .trim();
+}
+
+function fail(error: PostScoreError, status: number) {
+  return Response.json({ ok: false, error } satisfies PostScoreResponse, { status });
+}
+
+export async function POST(request: Request) {
+  // El límite va primero, antes de tocar la base: una ráfaga no debe traducirse
+  // en una ráfaga de consultas.
+  if (rateLimited(clientIp(request))) return fail("RATE_LIMITED", 429);
+
+  let body: unknown;
+  try {
+    body = await request.json();
+  } catch {
+    return fail("INVALID_BODY", 400);
+  }
+
+  if (typeof body !== "object" || body === null) return fail("INVALID_BODY", 400);
+  const { game, score, name } = body as Record<string, unknown>;
+
+  if (typeof game !== "string" || game.length === 0) return fail("INVALID_BODY", 400);
+  if (typeof score !== "number" || !Number.isInteger(score) || score < 0 || score > MAX_SCORE) {
+    return fail("INVALID_BODY", 400);
+  }
+  if (typeof name !== "string") return fail("INVALID_BODY", 400);
+
+  const playerName = sanitizeName(name);
+  if (playerName.length === 0) return fail("INVALID_BODY", 400);
+
+  try {
+    // La existencia del juego se comprueba contra la tabla, no contra el array
+    // del seed: la base es la que manda.
+    const supabase = await createClient();
+    const { data: found, error: lookupError } = await supabase
+      .from("games")
+      .select("id")
+      .eq("id", game)
+      .maybeSingle();
+
+    if (lookupError) {
+      console.error("[api/scores] Error comprobando el juego:", lookupError);
+      return fail("DB_ERROR", 500);
+    }
+    if (!found) return fail("UNKNOWN_GAME", 400);
+
+    // Única escritura del proyecto con la clave secreta: la RLS deniega el
+    // INSERT a la clave publicable, así que esta es la puerta y no hay otra.
+    const admin = createAdminClient();
+    const { data: inserted, error: insertError } = await admin
+      .from("scores")
+      .insert({ game_id: game, player_name: playerName, score })
+      .select("id, player_name, score, created_at")
+      .single<ScoreRow>();
+
+    if (insertError || !inserted) {
+      console.error("[api/scores] Error insertando la puntuación:", insertError);
+      return fail("DB_ERROR", 500);
+    }
+
+    // Posición real de la fila en el ranking del juego, con el mismo desempate
+    // que el resto: mejor puntuación primero, y a igualdad gana la más antigua.
+    const { count, error: rankError } = await admin
+      .from("scores")
+      .select("id", { count: "exact", head: true })
+      .eq("game_id", game)
+      .or(
+        `score.gt.${inserted.score},and(score.eq.${inserted.score},created_at.lt.${inserted.created_at})`,
+      );
+
+    if (rankError) {
+      console.error("[api/scores] Error calculando el rank:", rankError);
+      return fail("DB_ERROR", 500);
+    }
+
+    const entry: ScoreEntry = {
+      id: inserted.id,
+      rank: (count ?? 0) + 1,
+      name: inserted.player_name,
+      score: inserted.score,
+      at: inserted.created_at,
+    };
+
+    return Response.json({ ok: true, entry } satisfies PostScoreResponse, { status: 201 });
+  } catch (cause) {
+    console.error("[api/scores] Falló el alta de la puntuación:", cause);
+    return fail("DB_ERROR", 500);
   }
 }
