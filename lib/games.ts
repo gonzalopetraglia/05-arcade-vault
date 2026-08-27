@@ -99,6 +99,17 @@ export const GAMES: Game[] = [
     plays: "6.4K",
   },
   {
+    id: "asteroides",
+    title: "ASTEROIDES",
+    short: "El clásico de 1979, jugable de verdad.",
+    long: "Una nave vectorial a la deriva en un campo de asteroides. Rota, propulsa y dispara para partir cada roca en fragmentos más pequeños hasta limpiar el sector. Recoge el power-up 3x para disparar tres balas a la vez y aguanta con tus tres vidas todo lo que puedas.",
+    cat: "SHOOTER",
+    cover: "cover-rocas",
+    color: "yellow",
+    best: 0,
+    plays: "NUEVO",
+  },
+  {
     id: "duelo-pixel",
     title: "DUELO PIXEL",
     short: "Dos paletas. Una pelota. Reflejos máximos.",
@@ -114,9 +125,24 @@ export const GAMES: Game[] = [
 export const CATS: string[] = ["TODOS", "ARCADE", "PUZZLE", "SHOOTER", "VERSUS"];
 
 export const PLAYERS: string[] = [
-  "PX_KAI", "NEONFOX", "Z3R0COOL", "M00NRYU", "VAULT_07", "GLITCHA",
-  "ATARI_KID", "CYBER_LU", "MAGENTA88", "SCANLINE", "BIT_LORD", "ARKADYA",
-  "DROID_X", "RGB_QUEEN", "PIXEL_DAD", "RETROVIRA", "VECTORX", "JOY_STK",
+  "PX_KAI",
+  "NEONFOX",
+  "Z3R0COOL",
+  "M00NRYU",
+  "VAULT_07",
+  "GLITCHA",
+  "ATARI_KID",
+  "CYBER_LU",
+  "MAGENTA88",
+  "SCANLINE",
+  "BIT_LORD",
+  "ARKADYA",
+  "DROID_X",
+  "RGB_QUEEN",
+  "PIXEL_DAD",
+  "RETROVIRA",
+  "VECTORX",
+  "JOY_STK",
 ];
 
 /**
@@ -131,7 +157,9 @@ export function seededScores(seed: number, count = 12): ScoreRow[] {
   const rows: ScoreRow[] = [];
   for (let i = 0; i < count; i++) {
     let name: string;
-    do { name = PLAYERS[Math.floor(rand() * PLAYERS.length)]; } while (used.has(name) && used.size < PLAYERS.length);
+    do {
+      name = PLAYERS[Math.floor(rand() * PLAYERS.length)];
+    } while (used.has(name) && used.size < PLAYERS.length);
     used.add(name);
     const base = Math.floor(50000 + rand() * 250000);
     const score = base - i * Math.floor(2000 + rand() * 4000);
