@@ -952,6 +952,32 @@ a {
   font-size: 12px;
   color: var(--cyan);
 }
+/* Los tres estados del panel de puntuaciones del detalle, en el mismo hueco
+   que ocuparían las filas. */
+.lb-state {
+  padding: 32px 16px;
+  text-align: center;
+  font-family: var(--pixel);
+  font-size: 10px;
+  line-height: 1.8;
+  letter-spacing: 0.1em;
+  color: var(--ink-faint);
+}
+.lb-state.error {
+  color: var(--magenta);
+}
+.lb-state .loading {
+  color: var(--cyan);
+  animation: hall-pulse 1.1s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .lb-state .loading {
+    animation: none;
+  }
+}
+.lb-state .btn {
+  margin-top: 16px;
+}
 .lb-row.top1 .rk,
 .lb-row.top1 .sc {
   color: var(--gold);
@@ -1495,6 +1521,64 @@ a {
   color: var(--ink-faint);
   margin-top: 6px;
   letter-spacing: 0.12em;
+}
+
+/* Un puesto del podio que nadie ha reclamado todavía. Mismo marco, sin el
+   brillo: se ve que el sitio existe y que está vacío. */
+.podium-slot.empty {
+  border-color: var(--line);
+  box-shadow: none;
+}
+.podium-slot.empty .rank-num,
+.podium-slot.empty .name,
+.podium-slot.empty .score {
+  color: var(--ink-faint);
+  text-shadow: none;
+}
+
+/* Los tres estados del salón: cargando, vacío y error. Ocupan el mismo hueco
+   que el podio más la tabla, así que la pantalla no salta al resolverse. */
+.hall-state {
+  border: 1px solid var(--line);
+  background: var(--bg-2);
+  padding: 56px 24px;
+  text-align: center;
+}
+.hall-state.error {
+  border-color: var(--magenta);
+}
+.hall-state-title {
+  font-family: var(--pixel);
+  font-size: 13px;
+  line-height: 1.7;
+  letter-spacing: 0.08em;
+  color: var(--ink);
+}
+.hall-state.error .hall-state-title {
+  color: var(--magenta);
+  text-shadow: 0 0 10px rgba(255, 0, 200, 0.45);
+}
+/* El cartel de carga late como un CRT sintonizando, no como un spinner. */
+.hall-state-title.loading {
+  color: var(--cyan);
+  text-shadow: 0 0 10px rgba(0, 245, 255, 0.5);
+  animation: hall-pulse 1.1s ease-in-out infinite;
+}
+@keyframes hall-pulse {
+  50% {
+    opacity: 0.35;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hall-state-title.loading {
+    animation: none;
+  }
+}
+.hall-state-note {
+  font-family: var(--mono);
+  font-size: 13px;
+  color: var(--ink-dim);
+  margin: 14px 0 22px;
 }
 
 .hall-table {

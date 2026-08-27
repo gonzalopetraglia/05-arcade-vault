@@ -22,7 +22,7 @@ export const dynamic = "force-dynamic";
 const DEFAULT_LIMIT = 10;
 const MAX_LIMIT = 50;
 
-type ScoreRow = {
+type ScoreRecord = {
   id: string;
   player_name: string;
   score: number;
@@ -33,7 +33,7 @@ type ScoreRow = {
  * El `rank` no vive en la base: es la posición dentro de este top concreto, y
  * depende del `limit` con el que se haya pedido.
  */
-function toEntries(rows: ScoreRow[]): ScoreEntry[] {
+function toEntries(rows: ScoreRecord[]): ScoreEntry[] {
   return rows.map((row, i) => ({
     id: row.id,
     rank: i + 1,
@@ -77,7 +77,7 @@ export async function GET(request: Request) {
       .order("score", { ascending: false })
       .order("created_at", { ascending: true })
       .limit(limit)
-      .returns<ScoreRow[]>();
+      .returns<ScoreRecord[]>();
 
     if (error) {
       console.error("[api/scores] Error de Supabase:", error);
@@ -194,7 +194,7 @@ export async function POST(request: Request) {
       .from("scores")
       .insert({ game_id: game, player_name: playerName, score })
       .select("id, player_name, score, created_at")
-      .single<ScoreRow>();
+      .single<ScoreRecord>();
 
     if (insertError || !inserted) {
       console.error("[api/scores] Error insertando la puntuación:", insertError);
