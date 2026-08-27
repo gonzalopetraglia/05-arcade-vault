@@ -2,17 +2,23 @@
 
 import { useMemo, useState } from "react";
 import { LibraryGrid } from "@/components/library-grid";
+import { LibraryTable } from "@/components/library-table";
 import { CATS } from "@/lib/games";
 import { useCatalog } from "@/lib/use-catalog";
+import { useStoredView } from "@/lib/use-stored-view";
 
 /**
  * La biblioteca: carga el catálogo con métricas, filtra por búsqueda y
- * categoría, y pinta la cuadrícula de portadas.
+ * categoría, y lo pinta como portadas o como tabla.
+ *
+ * El filtro vive aquí y no dentro de cada vista, para que conmutar no cambie
+ * lo que se está mirando.
  */
 export function LibraryView() {
   const { status, games, retry } = useCatalog();
   const [q, setQ] = useState("");
   const [cat, setCat] = useState("TODOS");
+  const [view, setView] = useStoredView();
 
   const filtered = useMemo(
     () =>
@@ -52,6 +58,22 @@ export function LibraryView() {
             </button>
           ))}
         </div>
+        <div className="av-viewswitch" role="group" aria-label="Vista de la biblioteca">
+          <button
+            className={"chip" + (view === "grid" ? " active" : "")}
+            aria-pressed={view === "grid"}
+            onClick={() => setView("grid")}
+          >
+            CUADRÍCULA
+          </button>
+          <button
+            className={"chip" + (view === "table" ? " active" : "")}
+            aria-pressed={view === "table"}
+            onClick={() => setView("table")}
+          >
+            TABLA
+          </button>
+        </div>
       </div>
 
       {status === "error" ? (
@@ -72,6 +94,8 @@ export function LibraryView() {
           <div className="data-state-title">NO HAY RESULTADOS</div>
           <p className="data-state-note">Intenta otra búsqueda o categoría.</p>
         </div>
+      ) : view === "table" ? (
+        <LibraryTable games={filtered} />
       ) : (
         <LibraryGrid games={filtered} />
       )}
