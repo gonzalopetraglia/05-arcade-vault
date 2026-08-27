@@ -1,11 +1,48 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { AsteroidsEngine, type AsteroidsState } from "@/lib/games/asteroids/engine";
 import { H, W } from "@/lib/games/asteroids/entities";
 
 /** Teclas de juego: se les corta el scroll de la página mientras se juega. */
 const GAME_KEYS = ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Space"];
+
+/**
+ * Botón táctil: traduce pointerdown/pointerup/pointercancel a la misma entrada
+ * de teclado que usa el motor. pointercancel y pointerleave se tratan como
+ * pointerup para que ninguna tecla se quede pegada.
+ */
+function TouchButton({
+  code,
+  label,
+  className,
+  setKey,
+  children,
+}: {
+  code: string;
+  label: string;
+  className: string;
+  setKey: (code: string, down: boolean) => void;
+  children: React.ReactNode;
+}) {
+  const release = () => setKey(code, false);
+  return (
+    <button
+      type="button"
+      className={className}
+      aria-label={label}
+      onPointerDown={(e) => {
+        e.preventDefault();
+        setKey(code, true);
+      }}
+      onPointerUp={release}
+      onPointerCancel={release}
+      onPointerLeave={release}
+    >
+      {children}
+    </button>
+  );
+}
 
 type Props = {
   onState: (s: AsteroidsState) => void;
@@ -18,6 +55,7 @@ type Props = {
 
 export function AsteroidsCanvas({ onState, onGameOver, onEngineReady, onAutoPause }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const engineRef = useRef<AsteroidsEngine | null>(null);
   // El efecto se monta una sola vez; los callbacks van por ref para que
   // cambiar de identidad en el padre no reinicie la partida.
   const cbs = useRef({ onState, onGameOver, onEngineReady, onAutoPause });
@@ -68,6 +106,7 @@ export function AsteroidsCanvas({ onState, onGameOver, onEngineReady, onAutoPaus
     document.addEventListener("visibilitychange", onVisibility);
 
     engine.start();
+    engineRef.current = engine;
     cbs.current.onEngineReady(engine);
 
     return () => {
@@ -78,20 +117,54 @@ export function AsteroidsCanvas({ onState, onGameOver, onEngineReady, onAutoPaus
       // Sin esto, el doble montaje de React en desarrollo deja dos bucles
       // requestAnimationFrame corriendo a la vez y el juego va al doble.
       engine.destroy();
+      engineRef.current = null;
       cbs.current.onEngineReady(null);
     };
   }, []);
 
+  // El dedo entra por la misma puerta que la tecla: el motor no distingue.
+  const setKey = useCallback((code: string, down: boolean) => {
+    engineRef.current?.setKey(code, down);
+  }, []);
+
   return (
-    <canvas
-      ref={canvasRef}
-      style={{
-        display: "block",
-        width: "100%",
-        aspectRatio: "4 / 3",
-        background: "#000",
-        touchAction: "none",
-      }}
-    />
+    <div style={{ position: "absolute", inset: 0 }}>
+      <canvas
+        ref={canvasRef}
+        style={{
+          display: "block",
+          width: "100%",
+          aspectRatio: "4 / 3",
+          background: "#000",
+          touchAction: "none",
+        }}
+      />
+      <div className="touch-pad left">
+        <TouchButton
+          code="ArrowLeft"
+          label="Rotar a la izquierda"
+          className="touch-btn rot"
+          setKey={setKey}
+        >
+          ◀
+        </TouchButton>
+        <TouchButton
+          code="ArrowRight"
+          label="Rotar a la derecha"
+          className="touch-btn rot"
+          setKey={setKey}
+        >
+          ▶
+        </TouchButton>
+      </div>
+      <div className="touch-pad right">
+        <TouchButton code="ArrowUp" label="Propulsar" className="touch-btn" setKey={setKey}>
+          PROPULSAR
+        </TouchButton>
+        <TouchButton code="Space" label="Disparar" className="touch-btn" setKey={setKey}>
+          DISPARAR
+        </TouchButton>
+      </div>
+    </div>
   );
 }
