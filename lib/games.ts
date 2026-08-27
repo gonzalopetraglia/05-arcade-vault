@@ -1,6 +1,11 @@
 export type GameCategory = "ARCADE" | "PUZZLE" | "SHOOTER" | "VERSUS";
 export type GameColor = "cyan" | "magenta" | "yellow" | "green";
 
+/**
+ * Un juego del catálogo. Sin `best` ni `plays`: esas dos cifras se calculan de
+ * las puntuaciones reales en la vista `game_stats` y llegan por `/api/games`
+ * como `GameWithStats`. Aquí solo vive lo que se siembra en la base.
+ */
 export type Game = {
   id: string;
   title: string;
@@ -9,15 +14,6 @@ export type Game = {
   cat: GameCategory;
   cover: string;
   color: GameColor;
-  best: number;
-  plays: string;
-};
-
-export type ScoreRow = {
-  rank: number;
-  name: string;
-  score: number;
-  date: string;
 };
 
 export const GAMES: Game[] = [
@@ -29,8 +25,6 @@ export const GAMES: Game[] = [
     cat: "ARCADE",
     cover: "cover-bricks",
     color: "cyan",
-    best: 28450,
-    plays: "12.4K",
   },
   {
     id: "caida",
@@ -40,8 +34,6 @@ export const GAMES: Game[] = [
     cat: "PUZZLE",
     cover: "cover-tetro",
     color: "magenta",
-    best: 184220,
-    plays: "31.8K",
   },
   {
     id: "serpentina",
@@ -51,8 +43,6 @@ export const GAMES: Game[] = [
     cat: "ARCADE",
     cover: "cover-snake",
     color: "green",
-    best: 7820,
-    plays: "9.1K",
   },
   {
     id: "gloton",
@@ -62,8 +52,6 @@ export const GAMES: Game[] = [
     cat: "ARCADE",
     cover: "cover-glot",
     color: "yellow",
-    best: 96400,
-    plays: "27.2K",
   },
   {
     id: "invasores",
@@ -73,8 +61,6 @@ export const GAMES: Game[] = [
     cat: "SHOOTER",
     cover: "cover-invaders",
     color: "green",
-    best: 54190,
-    plays: "18.0K",
   },
   {
     id: "rocas",
@@ -84,8 +70,6 @@ export const GAMES: Game[] = [
     cat: "SHOOTER",
     cover: "cover-rocas",
     color: "yellow",
-    best: 41200,
-    plays: "15.6K",
   },
   {
     id: "ranaria",
@@ -95,8 +79,6 @@ export const GAMES: Game[] = [
     cat: "ARCADE",
     cover: "cover-rana",
     color: "green",
-    best: 18900,
-    plays: "6.4K",
   },
   {
     id: "asteroides",
@@ -106,8 +88,6 @@ export const GAMES: Game[] = [
     cat: "SHOOTER",
     cover: "cover-rocas",
     color: "yellow",
-    best: 0,
-    plays: "NUEVO",
   },
   {
     id: "duelo-pixel",
@@ -117,58 +97,10 @@ export const GAMES: Game[] = [
     cat: "VERSUS",
     cover: "cover-duelo",
     color: "cyan",
-    best: 24,
-    plays: "4.2K",
   },
 ];
 
 export const CATS: string[] = ["TODOS", "ARCADE", "PUZZLE", "SHOOTER", "VERSUS"];
-
-export const PLAYERS: string[] = [
-  "PX_KAI",
-  "NEONFOX",
-  "Z3R0COOL",
-  "M00NRYU",
-  "VAULT_07",
-  "GLITCHA",
-  "ATARI_KID",
-  "CYBER_LU",
-  "MAGENTA88",
-  "SCANLINE",
-  "BIT_LORD",
-  "ARKADYA",
-  "DROID_X",
-  "RGB_QUEEN",
-  "PIXEL_DAD",
-  "RETROVIRA",
-  "VECTORX",
-  "JOY_STK",
-];
-
-/**
- * Deterministic score generator (LCG). Must stay deterministic so it can be
- * called on the server without causing hydration mismatches — do not replace
- * rand() with Math.random().
- */
-export function seededScores(seed: number, count = 12): ScoreRow[] {
-  let s = seed;
-  const rand = () => (s = (s * 9301 + 49297) % 233280) / 233280;
-  const used = new Set<string>();
-  const rows: ScoreRow[] = [];
-  for (let i = 0; i < count; i++) {
-    let name: string;
-    do {
-      name = PLAYERS[Math.floor(rand() * PLAYERS.length)];
-    } while (used.has(name) && used.size < PLAYERS.length);
-    used.add(name);
-    const base = Math.floor(50000 + rand() * 250000);
-    const score = base - i * Math.floor(2000 + rand() * 4000);
-    const day = String(1 + Math.floor(rand() * 28)).padStart(2, "0");
-    const mon = String(1 + Math.floor(rand() * 12)).padStart(2, "0");
-    rows.push({ rank: i + 1, name, score: Math.max(score, 1000), date: `${day}/${mon}/2026` });
-  }
-  return rows.sort((a, b) => b.score - a.score).map((r, i) => ({ ...r, rank: i + 1 }));
-}
 
 export function getGame(id: string): Game | undefined {
   return GAMES.find((g) => g.id === id);

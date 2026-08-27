@@ -565,6 +565,135 @@ a {
   color: var(--ink);
 }
 
+/* El conmutador de vista. Activo en cian, no en magenta como los filtros de
+   categoría: magenta dice qué juegos se ven, cian dice cómo se ven. */
+.av-viewswitch {
+  display: flex;
+  gap: 8px;
+  margin-left: auto;
+}
+.av-viewswitch .chip.active {
+  color: var(--cyan);
+  border-color: var(--cyan);
+  box-shadow: 0 0 10px rgba(0, 245, 255, 0.35);
+}
+
+/* ===== biblioteca en tabla ===== */
+.av-table-wrap {
+  max-width: 1320px;
+  margin: 32px auto 80px;
+  padding: 0 32px;
+  /* La tabla se desplaza dentro de su caja; la página nunca en horizontal. */
+  overflow-x: auto;
+}
+.av-table {
+  width: 100%;
+  min-width: 640px;
+  border-collapse: collapse;
+  border: 1px solid var(--line);
+  background: var(--bg-2);
+  font-family: var(--mono);
+  font-size: 13px;
+}
+.av-table th {
+  padding: 0;
+  text-align: left;
+  border-bottom: 1px solid var(--line);
+}
+.av-table th.num,
+.av-table td.num {
+  text-align: right;
+}
+/* Las dos columnas de cifras se acotan para que no se estiren por el ancho
+   sobrante: los números quedan cerca de su encabezado y se comparan de un
+   vistazo, que es para lo que existe esta vista. */
+.av-table th.num {
+  width: 150px;
+}
+.av-table .sorter {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 14px 18px;
+  background: none;
+  border: 0;
+  font-family: var(--pixel);
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  color: var(--ink-faint);
+  cursor: pointer;
+}
+.av-table th.num .sorter {
+  justify-content: flex-end;
+}
+.av-table .sorter:hover {
+  color: var(--ink);
+}
+.av-table .sorter.active {
+  color: var(--cyan);
+}
+.av-table .sorter .arrow {
+  font-size: 8px;
+  opacity: 0.55;
+}
+.av-table .sorter.active .arrow {
+  opacity: 1;
+}
+.av-table tbody tr {
+  border-bottom: 1px solid var(--line-2);
+}
+.av-table tbody tr:hover {
+  background: rgba(0, 245, 255, 0.04);
+}
+.av-table td {
+  padding: 12px 18px;
+  color: var(--ink-dim);
+  white-space: nowrap;
+}
+.av-table td.game {
+  padding: 0;
+}
+.av-table td.game a {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 18px;
+  color: var(--ink);
+  text-decoration: none;
+}
+.av-table td.game a:hover {
+  color: var(--cyan);
+}
+.av-table .dot {
+  width: 8px;
+  height: 8px;
+  flex: none;
+  box-shadow: 0 0 8px currentColor;
+}
+.av-table .dot.cyan {
+  color: var(--cyan);
+  background: var(--cyan);
+}
+.av-table .dot.magenta {
+  color: var(--magenta);
+  background: var(--magenta);
+}
+.av-table .dot.yellow {
+  color: var(--yellow);
+  background: var(--yellow);
+}
+.av-table .dot.green {
+  color: var(--green);
+  background: var(--green);
+}
+.av-table td.best {
+  font-family: var(--pixel);
+  font-size: 12px;
+  color: var(--cyan);
+  text-shadow: 0 0 6px rgba(0, 245, 255, 0.4);
+}
+
 /* ===== grid + cards ===== */
 .av-grid {
   display: grid;
@@ -952,6 +1081,32 @@ a {
   font-size: 12px;
   color: var(--cyan);
 }
+/* Los tres estados del panel de puntuaciones del detalle, en el mismo hueco
+   que ocuparían las filas. */
+.lb-state {
+  padding: 32px 16px;
+  text-align: center;
+  font-family: var(--pixel);
+  font-size: 10px;
+  line-height: 1.8;
+  letter-spacing: 0.1em;
+  color: var(--ink-faint);
+}
+.lb-state.error {
+  color: var(--magenta);
+}
+.lb-state .loading {
+  color: var(--cyan);
+  animation: data-pulse 1.1s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .lb-state .loading {
+    animation: none;
+  }
+}
+.lb-state .btn {
+  margin-top: 16px;
+}
 .lb-row.top1 .rk,
 .lb-row.top1 .sc {
   color: var(--gold);
@@ -1254,6 +1409,18 @@ a {
     caret 0.8s steps(1) infinite;
   width: 0;
 }
+/* Hermano de .toast-saved para cuando el guardado falla. Sin máquina de
+   escribir: el mensaje de error tiene que leerse entero desde el primer
+   fotograma, y su longitud varía según el motivo. */
+.toast-error {
+  font-family: var(--pixel);
+  font-size: 11px;
+  color: var(--magenta);
+  text-shadow: 0 0 8px var(--magenta);
+  margin-top: 14px;
+  display: block;
+  line-height: 1.5;
+}
 @keyframes typewriter {
   to {
     width: 22ch;
@@ -1485,6 +1652,64 @@ a {
   letter-spacing: 0.12em;
 }
 
+/* Un puesto del podio que nadie ha reclamado todavía. Mismo marco, sin el
+   brillo: se ve que el sitio existe y que está vacío. */
+.podium-slot.empty {
+  border-color: var(--line);
+  box-shadow: none;
+}
+.podium-slot.empty .rank-num,
+.podium-slot.empty .name,
+.podium-slot.empty .score {
+  color: var(--ink-faint);
+  text-shadow: none;
+}
+
+/* Los tres estados del salón: cargando, vacío y error. Ocupan el mismo hueco
+   que el podio más la tabla, así que la pantalla no salta al resolverse. */
+.data-state {
+  border: 1px solid var(--line);
+  background: var(--bg-2);
+  padding: 56px 24px;
+  text-align: center;
+}
+.data-state.error {
+  border-color: var(--magenta);
+}
+.data-state-title {
+  font-family: var(--pixel);
+  font-size: 13px;
+  line-height: 1.7;
+  letter-spacing: 0.08em;
+  color: var(--ink);
+}
+.data-state.error .data-state-title {
+  color: var(--magenta);
+  text-shadow: 0 0 10px rgba(255, 0, 200, 0.45);
+}
+/* El cartel de carga late como un CRT sintonizando, no como un spinner. */
+.data-state-title.loading {
+  color: var(--cyan);
+  text-shadow: 0 0 10px rgba(0, 245, 255, 0.5);
+  animation: data-pulse 1.1s ease-in-out infinite;
+}
+@keyframes data-pulse {
+  50% {
+    opacity: 0.35;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .data-state-title.loading {
+    animation: none;
+  }
+}
+.data-state-note {
+  font-family: var(--mono);
+  font-size: 13px;
+  color: var(--ink-dim);
+  margin: 14px 0 22px;
+}
+
 .hall-table {
   border: 1px solid var(--line);
   background: var(--bg-2);
@@ -1577,6 +1802,12 @@ a {
   }
   .av-grid {
     padding: 0 16px;
+  }
+  .av-table-wrap {
+    padding: 0 16px;
+  }
+  .av-viewswitch {
+    margin-left: 0;
   }
   .av-hero {
     padding: 36px 16px 16px;

@@ -1,45 +1,59 @@
 "use client";
 
 import Link from "next/link";
-import { Fragment, useMemo, useState } from "react";
-import { useSession } from "@/components/session-provider";
-import { type Game, type ScoreRow, seededScores } from "@/lib/games";
+import { useState } from "react";
+import type { ScoreEntry } from "@/app/api/scores/route";
+import { type Game, formatScore } from "@/lib/games";
+import { formatDate, useTopScores } from "@/lib/use-top-scores";
 
-function formatDate(at: number) {
-  const d = new Date(at);
-  const day = String(d.getDate()).padStart(2, "0");
-  const mon = String(d.getMonth() + 1).padStart(2, "0");
-  return `${day}/${mon}/${d.getFullYear()}`;
+const TOP_SIZE = 10;
+const PODIUM_SIZE = 3;
+
+/**
+ * Un puesto del podio. Sin fila que mostrar pinta un hueco: con menos de tres
+ * puntuaciones el podio queda incompleto a propósito, porque rellenarlo con
+ * nombres inventados es exactamente lo que esta pantalla dejó de hacer.
+ */
+function PodiumSlot({
+  medal,
+  rank,
+  entry,
+  champion = false,
+}: {
+  medal: "gold" | "silver" | "bronze";
+  rank: number;
+  entry?: ScoreEntry;
+  champion?: boolean;
+}) {
+  return (
+    <div className={`podium-slot ${medal}${entry ? "" : " empty"}`}>
+      {champion && (
+        <div
+          className="pixel"
+          style={{ fontSize: 9, color: "var(--gold)", letterSpacing: "0.18em" }}
+        >
+          CAMPEÓN
+        </div>
+      )}
+      <div className="rank-num" style={champion ? { fontSize: 36, marginTop: 4 } : undefined}>
+        {String(rank).padStart(2, "0")}
+      </div>
+      <div className="name">{entry ? entry.name : "LIBRE"}</div>
+      <div className="score" style={champion ? { fontSize: 20 } : undefined}>
+        {entry ? formatScore(entry.score) : "—"}
+      </div>
+      <div className="date">{entry ? formatDate(entry.at) : "SIN RECLAMAR"}</div>
+    </div>
+  );
 }
 
 export function HallOfFame({ games }: { games: Game[] }) {
-  const { scores } = useSession();
   const [tab, setTab] = useState(games[0].id);
-  const rows = useMemo(() => seededScores(tab.length * 23 + 7, 12), [tab]);
+  const { status, scores, retry } = useTopScores(tab, TOP_SIZE);
+
   const game = games.find((g) => g.id === tab);
-
-  // Best run the player actually saved on this game, if any.
-  const best = useMemo(() => {
-    const mine = scores.filter((s) => s.game === tab);
-    if (mine.length === 0) return null;
-    return mine.reduce((a, b) => (b.score > a.score ? b : a));
-  }, [scores, tab]);
-
-  // The saved row slots in by score, so its rank is the one it really earns.
-  const table = useMemo<(ScoreRow & { you: boolean })[]>(() => {
-    const mock = rows.map((r) => ({ ...r, you: false }));
-    if (!best) return mock;
-    const yours = {
-      rank: 0,
-      name: best.name,
-      score: best.score,
-      date: formatDate(best.at),
-      you: true,
-    };
-    return [...mock, yours]
-      .sort((a, b) => b.score - a.score)
-      .map((r, i) => ({ ...r, rank: i + 1 }));
-  }, [rows, best]);
+  const podium = Array.from({ length: PODIUM_SIZE }, (_, i) => scores[i]);
+  const empty = status === "ready" && scores.length === 0;
 
   return (
     <div className="av-hall fade-in">
@@ -62,80 +76,68 @@ export function HallOfFame({ games }: { games: Game[] }) {
         ))}
       </div>
 
-      <div className="podium">
-        <div className="podium-slot silver">
-          <div className="rank-num">02</div>
-          <div className="name">{rows[1].name}</div>
-          <div className="score">{rows[1].score.toLocaleString("es-ES")}</div>
-          <div className="date">{rows[1].date}</div>
+      {status === "error" ? (
+        <div className="data-state error">
+          <div className="data-state-title">NO SE PUDO CARGAR EL SALÓN</div>
+          <p className="data-state-note">La señal se ha perdido entre el vault y la pantalla.</p>
+          <button className="btn yellow" onClick={retry}>
+            REINTENTAR
+          </button>
         </div>
-        <div className="podium-slot gold">
-          <div
-            className="pixel"
-            style={{ fontSize: 9, color: "var(--gold)", letterSpacing: "0.18em" }}
-          >
-            CAMPEÓN
-          </div>
-          <div className="rank-num" style={{ fontSize: 36, marginTop: 4 }}>
-            01
-          </div>
-          <div className="name">{rows[0].name}</div>
-          <div className="score" style={{ fontSize: 20 }}>
-            {rows[0].score.toLocaleString("es-ES")}
-          </div>
-          <div className="date">{rows[0].date}</div>
+      ) : status === "loading" ? (
+        <div className="data-state">
+          <div className="data-state-title loading">CARGANDO…</div>
+          <p className="data-state-note">Leyendo las marcas de {game?.title}.</p>
         </div>
-        <div className="podium-slot bronze">
-          <div className="rank-num">03</div>
-          <div className="name">{rows[2].name}</div>
-          <div className="score">{rows[2].score.toLocaleString("es-ES")}</div>
-          <div className="date">{rows[2].date}</div>
+      ) : empty ? (
+        <div className="data-state">
+          <div className="data-state-title">AÚN NADIE HA JUGADO A ESTE JUEGO</div>
+          <p className="data-state-note">
+            El primer puesto está sin reclamar. La primera partida lo decide.
+          </p>
+          <Link className="btn yellow" href={`/jugar/${tab}`}>
+            JUGAR A {game?.title}
+          </Link>
         </div>
-      </div>
+      ) : (
+        <>
+          <div className="podium">
+            <PodiumSlot medal="silver" rank={2} entry={podium[1]} />
+            <PodiumSlot medal="gold" rank={1} entry={podium[0]} champion />
+            <PodiumSlot medal="bronze" rank={3} entry={podium[2]} />
+          </div>
 
-      <div className="hall-table">
-        <div className="th">
-          <div>RANGO</div>
-          <div>JUGADOR</div>
-          <div>PUNTUACIÓN</div>
-          <div>FECHA</div>
-        </div>
-        {table.map((r, i) =>
-          r.you ? (
-            <Fragment key="you">
-              <div className="tr you-label">▸ TU MEJOR MARCA EN {game?.title}</div>
-              <div className="tr you" style={{ animationDelay: `${i * 50}ms` }}>
-                <div className="rk" style={{ color: "var(--yellow)" }}>
-                  #{String(r.rank).padStart(2, "0")}
-                </div>
-                <div className="pl" style={{ color: "var(--yellow)" }}>
-                  {r.name}
-                </div>
-                <div
-                  className="sc"
-                  style={{ color: "var(--yellow)", textShadow: "0 0 6px rgba(245,255,0,0.5)" }}
-                >
-                  {r.score.toLocaleString("es-ES")}
-                </div>
-                <div className="dt">{r.date}</div>
-              </div>
-            </Fragment>
-          ) : (
-            <div
-              key={r.name + i}
-              className={
-                "tr" + (r.rank === 1 ? " top1" : r.rank === 2 ? " top2" : r.rank === 3 ? " top3" : "")
-              }
-              style={{ animationDelay: `${i * 50}ms` }}
-            >
-              <div className="rk">#{String(r.rank).padStart(2, "0")}</div>
-              <div className="pl">{r.name}</div>
-              <div className="sc">{r.score.toLocaleString("es-ES")}</div>
-              <div className="dt">{r.date}</div>
+          <div className="hall-table">
+            <div className="th">
+              <div>RANGO</div>
+              <div>JUGADOR</div>
+              <div>PUNTUACIÓN</div>
+              <div>FECHA</div>
             </div>
-          ),
-        )}
-      </div>
+            {scores.map((entry, i) => (
+              <div
+                key={entry.id}
+                className={
+                  "tr" +
+                  (entry.rank === 1
+                    ? " top1"
+                    : entry.rank === 2
+                      ? " top2"
+                      : entry.rank === 3
+                        ? " top3"
+                        : "")
+                }
+                style={{ animationDelay: `${i * 50}ms` }}
+              >
+                <div className="rk">#{String(entry.rank).padStart(2, "0")}</div>
+                <div className="pl">{entry.name}</div>
+                <div className="sc">{formatScore(entry.score)}</div>
+                <div className="dt">{formatDate(entry.at)}</div>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
 
       <div style={{ textAlign: "center", marginTop: 32 }}>
         <Link className="btn lg" href="/games">

@@ -1,6 +1,5 @@
-import { LibraryGrid } from "@/components/library-grid";
-import { GAMES } from "@/lib/games";
+import { LibraryView } from "@/components/library-view";
 
 export default function GamesPage() {
-  return <LibraryGrid games={GAMES} />;
+  return <LibraryView />;
 }
