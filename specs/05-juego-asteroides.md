@@ -1,6 +1,6 @@
 # SPEC 05 — Asteroides, el primer juego real
 
-> **Estado:** Aprobado
+> **Estado:** Implementado
 > **Depende de:** SPEC 01
 > **Fecha:** 2026-08-27
 > **Objetivo:** Portar el juego de canvas de `references/started-games/02-asteroids/` a un motor TypeScript integrado en la plataforma, jugable en `/jugar/asteroides` con teclado o controles táctiles, cuya puntuación se guarda con el flujo que ya existe.
@@ -147,31 +147,31 @@ export class AsteroidsEngine {
 
 ## Criterios de aceptación
 
-- [ ] `npm run lint` termina sin errores ni advertencias.
-- [ ] `npm run build` termina sin errores ni advertencias de hidratación.
-- [ ] `/games` muestra nueve tarjetas y una es ASTEROIDES.
-- [ ] `/jugar/asteroides` pinta el canvas con la nave y cuatro asteroides grandes, sin arena de CSS detrás.
-- [ ] Las flechas rotan y propulsan, ESPACIO dispara, y ninguna de esas teclas hace scroll en la página.
-- [ ] Disparar a un asteroide grande lo parte en dos medianos y suma 20 puntos; un mediano da 50 y uno pequeño 100.
-- [ ] Al destruir todos los asteroides sube el nivel y aparecen más.
-- [ ] El power-up 3x aparece, se recoge y durante 5 s la nave dispara tres balas.
-- [ ] Chocar con un asteroide resta una vida, hay explosión de partículas y la nave reaparece parpadeando.
-- [ ] Al perder la tercera vida se abre el modal de fin de partida con la puntuación real del motor, no una inventada.
-- [ ] Guardar la puntuación en ese modal la hace aparecer en `/salon` con el nombre introducido.
-- [ ] ESPACIO en la pantalla de game over **no** reinicia la partida.
-- [ ] El botón PAUSA congela el juego por completo —nave, asteroides y partículas— y REANUDAR lo continúa sin muertes por el salto de tiempo.
-- [ ] Cambiar de pestaña pausa la partida automáticamente.
-- [ ] El botón FIN abre el modal con la puntuación acumulada hasta ese momento.
-- [ ] JUGAR DE NUEVO reinicia con 3 vidas, nivel 1 y puntuación 0.
-- [ ] Salir de `/jugar/asteroides` no deja ningún `requestAnimationFrame` corriendo: volver a entrar no acelera el juego.
-- [ ] La puntuación, las vidas y el nivel de la cabecera de React coinciden en todo momento con los que dibuja el canvas.
-- [ ] Con la ventana emulada como móvil aparecen los cuatro botones táctiles y se puede jugar una partida entera sin teclado.
-- [ ] En escritorio los botones táctiles no se ven.
-- [ ] El canvas se adapta al ancho del marco CRT manteniendo la proporción 4:3, sin deformarse ni desbordar horizontalmente.
-- [ ] `/jugar/serpentina` y el resto de juegos siguen funcionando con el simulacro, con el mismo aspecto que antes.
-- [ ] `references/started-games/02-asteroids/` no tiene ningún cambio.
-- [ ] `grep -rn "getElementById" lib components` no devuelve resultados: el canvas llega por `ref`.
-- [ ] La entrada `rocas` de `lib/games.ts` no ha cambiado.
+- [x] `npm run lint` termina sin errores ni advertencias.
+- [x] `npm run build` termina sin errores ni advertencias de hidratación.
+- [x] `/games` muestra nueve tarjetas y una es ASTEROIDES.
+- [x] `/jugar/asteroides` pinta el canvas con la nave y cuatro asteroides grandes, sin arena de CSS detrás.
+- [x] Las flechas rotan y propulsan, ESPACIO dispara, y ninguna de esas teclas hace scroll en la página.
+- [x] Disparar a un asteroide grande lo parte en dos medianos y suma 20 puntos; un mediano da 50 y uno pequeño 100.
+- [x] Al destruir todos los asteroides sube el nivel y aparecen más.
+- [x] El power-up 3x aparece, se recoge y durante 5 s la nave dispara tres balas.
+- [x] Chocar con un asteroide resta una vida, hay explosión de partículas y la nave reaparece parpadeando.
+- [x] Al perder la tercera vida se abre el modal de fin de partida con la puntuación real del motor, no una inventada.
+- [x] Guardar la puntuación en ese modal la hace aparecer en `/salon` con el nombre introducido.
+- [x] ESPACIO en la pantalla de game over **no** reinicia la partida.
+- [x] El botón PAUSA congela el juego por completo —nave, asteroides y partículas— y REANUDAR lo continúa sin muertes por el salto de tiempo.
+- [x] Cambiar de pestaña pausa la partida automáticamente.
+- [x] El botón FIN abre el modal con la puntuación acumulada hasta ese momento.
+- [x] JUGAR DE NUEVO reinicia con 3 vidas, nivel 1 y puntuación 0.
+- [x] Salir de `/jugar/asteroides` no deja ningún `requestAnimationFrame` corriendo: volver a entrar no acelera el juego.
+- [x] La puntuación, las vidas y el nivel de la cabecera de React coinciden en todo momento con los que dibuja el canvas.
+- [x] Con la ventana emulada como móvil aparecen los cuatro botones táctiles y se puede jugar una partida entera sin teclado.
+- [x] En escritorio los botones táctiles no se ven.
+- [x] El canvas se adapta al ancho del marco CRT manteniendo la proporción 4:3, sin deformarse ni desbordar horizontalmente.
+- [x] `/jugar/serpentina` y el resto de juegos siguen funcionando con el simulacro, con el mismo aspecto que antes.
+- [x] `references/started-games/02-asteroids/` no tiene ningún cambio.
+- [x] `grep -rn "getElementById" lib components` no devuelve resultados: el canvas llega por `ref`.
+- [x] La entrada `rocas` de `lib/games.ts` no ha cambiado.
 
 ---
 
