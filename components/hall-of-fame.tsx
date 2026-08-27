@@ -2,44 +2,19 @@
 
 import Link from "next/link";
 import { Fragment, useMemo, useState } from "react";
-import { useSession } from "@/components/session-provider";
 import { type Game, type ScoreRow, seededScores } from "@/lib/games";
 
-function formatDate(at: number) {
-  const d = new Date(at);
-  const day = String(d.getDate()).padStart(2, "0");
-  const mon = String(d.getMonth() + 1).padStart(2, "0");
-  return `${day}/${mon}/${d.getFullYear()}`;
-}
-
 export function HallOfFame({ games }: { games: Game[] }) {
-  const { scores } = useSession();
   const [tab, setTab] = useState(games[0].id);
   const rows = useMemo(() => seededScores(tab.length * 23 + 7, 12), [tab]);
   const game = games.find((g) => g.id === tab);
 
-  // Best run the player actually saved on this game, if any.
-  const best = useMemo(() => {
-    const mine = scores.filter((s) => s.game === tab);
-    if (mine.length === 0) return null;
-    return mine.reduce((a, b) => (b.score > a.score ? b : a));
-  }, [scores, tab]);
-
-  // The saved row slots in by score, so its rank is the one it really earns.
-  const table = useMemo<(ScoreRow & { you: boolean })[]>(() => {
-    const mock = rows.map((r) => ({ ...r, you: false }));
-    if (!best) return mock;
-    const yours = {
-      rank: 0,
-      name: best.name,
-      score: best.score,
-      date: formatDate(best.at),
-      you: true,
-    };
-    return [...mock, yours]
-      .sort((a, b) => b.score - a.score)
-      .map((r, i) => ({ ...r, rank: i + 1 }));
-  }, [rows, best]);
+  // Provisional: el paso 9 sustituye el mock por el top real de la API. Aquí
+  // solo desaparece la marca propia, que salía del `av_scores` recién retirado.
+  const table = useMemo<(ScoreRow & { you: boolean })[]>(
+    () => rows.map((r) => ({ ...r, you: false })),
+    [rows],
+  );
 
   return (
     <div className="av-hall fade-in">
@@ -124,7 +99,8 @@ export function HallOfFame({ games }: { games: Game[] }) {
             <div
               key={r.name + i}
               className={
-                "tr" + (r.rank === 1 ? " top1" : r.rank === 2 ? " top2" : r.rank === 3 ? " top3" : "")
+                "tr" +
+                (r.rank === 1 ? " top1" : r.rank === 2 ? " top2" : r.rank === 3 ? " top3" : "")
               }
               style={{ animationDelay: `${i * 50}ms` }}
             >

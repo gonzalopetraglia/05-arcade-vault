@@ -39,6 +39,8 @@ export function PlayerShell({
 }: Props) {
   const { user, saveScore } = useSession();
   const [saved, setSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
   // null means "not edited yet": fall back to the session name, which only
   // becomes known after the provider hydrates from localStorage.
   const [typedName, setTypedName] = useState<string | null>(null);
@@ -47,7 +49,27 @@ export function PlayerShell({
 
   const restart = () => {
     setSaved(false);
+    setSaveError(null);
     onRestart();
+  };
+
+  /** Mensajes de la API traducidos a algo que el jugador pueda leer. */
+  const SAVE_ERRORS: Record<string, string> = {
+    INVALID_BODY: "NOMBRE O PUNTUACIÓN NO VÁLIDOS",
+    UNKNOWN_GAME: "ESTE JUEGO NO EXISTE EN EL VAULT",
+    RATE_LIMITED: "DEMASIADOS INTENTOS · ESPERA UN MINUTO",
+    DB_ERROR: "NO SE PUDO GUARDAR · REINTENTA",
+  };
+
+  const save = async () => {
+    setSaving(true);
+    setSaveError(null);
+    const result = await saveScore({ game: game.id, score, name });
+    setSaving(false);
+    // Solo se marca como guardada si el servidor lo confirma: cerrar el modal
+    // con la puntuación perdida sería mentirle al jugador.
+    if (result.ok) setSaved(true);
+    else setSaveError(SAVE_ERRORS[result.error] ?? SAVE_ERRORS.DB_ERROR);
   };
 
   return (
@@ -124,22 +146,20 @@ export function PlayerShell({
             <div className="final-label">PUNTUACIÓN FINAL</div>
             <div className="final">{score.toLocaleString("es-ES")}</div>
             {!saved ? (
-              <div className="input-row">
-                <input
-                  value={name}
-                  onChange={(e) => setTypedName(e.target.value.toUpperCase().slice(0, 10))}
-                  placeholder="TUS INICIALES"
-                />
-                <button
-                  className="btn yellow"
-                  onClick={() => {
-                    saveScore({ game: game.id, score, name });
-                    setSaved(true);
-                  }}
-                >
-                  GUARDAR PUNTUACIÓN
-                </button>
-              </div>
+              <>
+                <div className="input-row">
+                  <input
+                    value={name}
+                    onChange={(e) => setTypedName(e.target.value.toUpperCase().slice(0, 10))}
+                    placeholder="TUS INICIALES"
+                    disabled={saving}
+                  />
+                  <button className="btn yellow" onClick={save} disabled={saving}>
+                    {saving ? "GUARDANDO…" : "GUARDAR PUNTUACIÓN"}
+                  </button>
+                </div>
+                {saveError && <div className="toast-error">▸ {saveError}</div>}
+              </>
             ) : (
               <div className="toast-saved">▸ PUNTUACIÓN GUARDADA_</div>
             )}

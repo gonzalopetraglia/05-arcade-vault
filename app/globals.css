@@ -1254,6 +1254,18 @@ a {
     caret 0.8s steps(1) infinite;
   width: 0;
 }
+/* Hermano de .toast-saved para cuando el guardado falla. Sin máquina de
+   escribir: el mensaje de error tiene que leerse entero desde el primer
+   fotograma, y su longitud varía según el motivo. */
+.toast-error {
+  font-family: var(--pixel);
+  font-size: 11px;
+  color: var(--magenta);
+  text-shadow: 0 0 8px var(--magenta);
+  margin-top: 14px;
+  display: block;
+  line-height: 1.5;
+}
 @keyframes typewriter {
   to {
     width: 22ch;
