@@ -77,22 +77,22 @@ export function HallOfFame({ games }: { games: Game[] }) {
       </div>
 
       {status === "error" ? (
-        <div className="hall-state error">
-          <div className="hall-state-title">NO SE PUDO CARGAR EL SALÓN</div>
-          <p className="hall-state-note">La señal se ha perdido entre el vault y la pantalla.</p>
+        <div className="data-state error">
+          <div className="data-state-title">NO SE PUDO CARGAR EL SALÓN</div>
+          <p className="data-state-note">La señal se ha perdido entre el vault y la pantalla.</p>
           <button className="btn yellow" onClick={retry}>
             REINTENTAR
           </button>
         </div>
       ) : status === "loading" ? (
-        <div className="hall-state">
-          <div className="hall-state-title loading">CARGANDO…</div>
-          <p className="hall-state-note">Leyendo las marcas de {game?.title}.</p>
+        <div className="data-state">
+          <div className="data-state-title loading">CARGANDO…</div>
+          <p className="data-state-note">Leyendo las marcas de {game?.title}.</p>
         </div>
       ) : empty ? (
-        <div className="hall-state">
-          <div className="hall-state-title">AÚN NADIE HA JUGADO A ESTE JUEGO</div>
-          <p className="hall-state-note">
+        <div className="data-state">
+          <div className="data-state-title">AÚN NADIE HA JUGADO A ESTE JUEGO</div>
+          <p className="data-state-note">
             El primer puesto está sin reclamar. La primera partida lo decide.
           </p>
           <Link className="btn yellow" href={`/jugar/${tab}`}>

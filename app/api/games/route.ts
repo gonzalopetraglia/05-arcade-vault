@@ -1,17 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
 import type { Game } from "@/lib/games";
 
-/**
- * Un juego del catálogo con sus métricas derivadas de `scores`.
- *
- * `Omit` porque `Game` todavía arrastra los `best` y `plays` decorativos del
- * MVP visual; desaparecen de `lib/games.ts` en cuanto la biblioteca deje de
- * leerlos del seed, y entonces esto vuelve a ser un simple `Game & { … }`.
- */
-export type GameWithStats = Omit<Game, "best" | "plays"> & {
-  best: number;
-  plays: number;
-};
+/** Un juego del catálogo con sus métricas derivadas de `scores`. */
+export type GameWithStats = Game & { best: number; plays: number };
 
 export type GamesResponse = { ok: true; games: GameWithStats[] } | { ok: false; error: string };
 
