@@ -1,11 +1,47 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { ArkanoidEngine, type ArkanoidState } from "@/lib/games/arkanoid/engine";
 import { H, W } from "@/lib/games/arkanoid/entities";
 
 /** Teclas de juego: se les corta el scroll de la página mientras se juega. */
 const GAME_KEYS = ["ArrowLeft", "ArrowRight"];
+
+/**
+ * Botón táctil: traduce pointerdown/pointerup/pointercancel a la misma entrada
+ * de teclado que usa el motor, así que el dedo y la tecla son indistinguibles.
+ * pointercancel y pointerleave se tratan como pointerup para que ninguna tecla
+ * se quede pegada.
+ */
+function TouchButton({
+  code,
+  label,
+  setKey,
+  children,
+}: {
+  code: string;
+  label: string;
+  setKey: (code: string, down: boolean) => void;
+  children: React.ReactNode;
+}) {
+  const release = () => setKey(code, false);
+  return (
+    <button
+      type="button"
+      className="touch-btn rot"
+      aria-label={label}
+      onPointerDown={(e) => {
+        e.preventDefault();
+        setKey(code, true);
+      }}
+      onPointerUp={release}
+      onPointerCancel={release}
+      onPointerLeave={release}
+    >
+      {children}
+    </button>
+  );
+}
 
 type Props = {
   onState: (s: ArkanoidState) => void;
@@ -94,6 +130,11 @@ export function ArkanoidCanvas({ onState, onGameOver, onEngineReady, onAutoPause
     };
   }, []);
 
+  // El dedo entra por la misma puerta que la tecla: el motor no distingue.
+  const setKey = useCallback((code: string, down: boolean) => {
+    engineRef.current?.setKey(code, down);
+  }, []);
+
   return (
     <div style={{ position: "absolute", inset: 0 }}>
       <canvas
@@ -106,6 +147,16 @@ export function ArkanoidCanvas({ onState, onGameOver, onEngineReady, onAutoPause
           touchAction: "none",
         }}
       />
+      <div className="touch-pad left">
+        <TouchButton code="ArrowLeft" label="Mover a la izquierda" setKey={setKey}>
+          ◀
+        </TouchButton>
+      </div>
+      <div className="touch-pad right">
+        <TouchButton code="ArrowRight" label="Mover a la derecha" setKey={setKey}>
+          ▶
+        </TouchButton>
+      </div>
     </div>
   );
 }
