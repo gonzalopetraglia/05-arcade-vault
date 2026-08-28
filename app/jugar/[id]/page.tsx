@@ -1,7 +1,15 @@
+import type { ComponentType } from "react";
 import { notFound } from "next/navigation";
 import { GamePlayer } from "@/components/game-player";
 import { AsteroidsPlayer } from "@/components/games/asteroids-player";
-import { GAMES, getGame } from "@/lib/games";
+import { TetrisPlayer } from "@/components/games/tetris-player";
+import { GAMES, getGame, type Game } from "@/lib/games";
+
+/** Cada juego portado trae su propio player; el resto siguen con el simulacro. */
+const PLAYERS: Record<string, ComponentType<{ game: Game }>> = {
+  asteroides: AsteroidsPlayer,
+  tetris: TetrisPlayer,
+};
 
 export function generateStaticParams() {
   return GAMES.map((g) => ({ id: g.id }));
@@ -12,8 +20,7 @@ export default async function PlayPage({ params }: PageProps<"/jugar/[id]">) {
   const game = getGame(id);
   if (!game) notFound();
 
-  // Cada juego portado trae su propio player; el resto siguen con el simulacro.
-  if (game.id === "asteroides") return <AsteroidsPlayer game={game} />;
+  const Player = PLAYERS[game.id] ?? GamePlayer;
 
-  return <GamePlayer game={game} />;
+  return <Player game={game} />;
 }
