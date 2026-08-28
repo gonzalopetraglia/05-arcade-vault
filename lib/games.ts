@@ -98,6 +98,15 @@ export const GAMES: Game[] = [
     cover: "cover-duelo",
     color: "cyan",
   },
+  {
+    id: "tetris",
+    title: "TETRIS",
+    short: "Encaja tetrominós y una tuerca que no encaja en nada.",
+    long: "El puzle de caída de toda la vida, con las siete piezas clásicas y una octava: una tuerca hueca que aparece con la misma frecuencia que las demás y que no rellena ninguna línea sola. Rota, encaja y limpia filas mientras la velocidad sube cada 10 líneas.",
+    cat: "PUZZLE",
+    cover: "cover-tetro",
+    color: "magenta",
+  },
 ];
 
 export const CATS: string[] = ["TODOS", "ARCADE", "PUZZLE", "SHOOTER", "VERSUS"];
