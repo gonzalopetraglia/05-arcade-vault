@@ -8,7 +8,7 @@
  */
 
 import type { FruitName } from "./sprites";
-import { FRUIT_NAMES } from "./sprites";
+import { FRUIT_NAMES, FRUITS } from "./sprites";
 
 // ── Constantes del mundo ──────────────────────────────────────────────────────
 export const CELL = 40; // píxeles por celda
@@ -132,6 +132,75 @@ export function spawnFruit(occupied: Cell[]): Fruit | null {
     cell: free[Math.floor(Math.random() * free.length)],
     sprite: FRUIT_NAMES[Math.floor(Math.random() * FRUIT_NAMES.length)],
   };
+}
+
+// ── Dibujo ────────────────────────────────────────────────────────────────────
+// Los colores salen del tema: --green es #00ff88. El canvas no puede leer
+// variables CSS sin un getComputedStyle por frame, así que los literales viven
+// aquí; si el tema cambia, cambian también estas dos constantes.
+const SNAKE_BODY = "#00ff88";
+const SNAKE_HEAD = "#b6ffd9";
+const GRID_LINE = "rgba(0, 255, 136, 0.08)";
+const CELL_GAP = 2; // px de separación entre celdas de la serpiente
+const FRUIT_H = 36; // alto fijo de la fruta; el ancho sale de sw / sh
+
+/** Fondo negro y rejilla tenue de COLS x ROWS. */
+export function drawBoard(ctx: CanvasRenderingContext2D): void {
+  ctx.fillStyle = "#000";
+  ctx.fillRect(0, 0, W, H);
+
+  ctx.strokeStyle = GRID_LINE;
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  for (let x = 1; x < COLS; x++) {
+    ctx.moveTo(x * CELL + 0.5, 0);
+    ctx.lineTo(x * CELL + 0.5, H);
+  }
+  for (let y = 1; y < ROWS; y++) {
+    ctx.moveTo(0, y * CELL + 0.5);
+    ctx.lineTo(W, y * CELL + 0.5);
+  }
+  ctx.stroke();
+}
+
+/** La serpiente, celda a celda: cabeza en verde claro, cuerpo en verde del tema. */
+export function drawSnake(ctx: CanvasRenderingContext2D, snake: SnakeBody): void {
+  const size = CELL - CELL_GAP * 2;
+  const radius = Math.floor(size / 4);
+
+  snake.cells.forEach((c, i) => {
+    ctx.fillStyle = i === 0 ? SNAKE_HEAD : SNAKE_BODY;
+    ctx.beginPath();
+    ctx.roundRect(c.x * CELL + CELL_GAP, c.y * CELL + CELL_GAP, size, size, radius);
+    ctx.fill();
+  });
+}
+
+/**
+ * La fruta, escalada a FRUIT_H de alto conservando la proporción del recorte y
+ * centrada en su celda. Sin imagen —la carga falló— se pinta un círculo verde
+ * para que la partida siga siendo jugable.
+ */
+export function drawFruit(
+  ctx: CanvasRenderingContext2D,
+  img: HTMLImageElement | null,
+  fruit: Fruit,
+): void {
+  const cx = fruit.cell.x * CELL + CELL / 2;
+  const cy = fruit.cell.y * CELL + CELL / 2;
+
+  if (!img) {
+    ctx.fillStyle = SNAKE_BODY;
+    ctx.beginPath();
+    ctx.arc(cx, cy, FRUIT_H / 3, 0, Math.PI * 2);
+    ctx.fill();
+    return;
+  }
+
+  const frame = FRUITS[fruit.sprite];
+  const h = FRUIT_H;
+  const w = (frame.sw / frame.sh) * h;
+  ctx.drawImage(img, frame.sx, frame.sy, frame.sw, frame.sh, cx - w / 2, cy - h / 2, w, h);
 }
 
 /** Nivel y ritmo se derivan de la fruta comida; no se guardan por separado. */
