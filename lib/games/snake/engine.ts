@@ -21,8 +21,10 @@ import {
   drawFruit,
   drawSnake,
   levelFor,
+  opposite,
   spawnFruit,
   tickMsFor,
+  type Dir,
   type Fruit,
 } from "./entities";
 import { loadFruits } from "./sprites";
@@ -41,6 +43,15 @@ type EngineOptions = {
 
 const MAX_DT = 100; // ms; techo del delta entre frames
 
+const DIR_BY_KEY: Record<string, Dir | undefined> = {
+  ArrowUp: "up",
+  ArrowDown: "down",
+  ArrowLeft: "left",
+  ArrowRight: "right",
+};
+
+const MAX_QUEUED_DIRS = 2;
+
 export class SnakeEngine {
   private ctx: CanvasRenderingContext2D;
   private onState: EngineOptions["onState"];
@@ -48,6 +59,7 @@ export class SnakeEngine {
 
   private snake: SnakeBody = SnakeBody.spawn();
   private fruit: Fruit | null = null;
+  private pendingDirs: Dir[] = [];
 
   private score = 0;
   private lives = LIVES;
@@ -129,20 +141,24 @@ export class SnakeEngine {
     this.onGameOver(this.score);
   }
 
-  /** Teclado y táctil entran por aquí; el motor no distingue dedo de tecla. */
+  /**
+   * Teclado y táctil entran por aquí; el motor no distingue dedo de tecla. Solo
+   * cuenta la pulsación: soltar la tecla no cambia el rumbo.
+   *
+   * La dirección va a una cola de como mucho dos entradas. Con una sola, dos
+   * pulsaciones dentro del mismo tic perderían la primera y el juego respondería
+   * peor de lo que el jugador espera.
+   */
   setKey(code: string, down: boolean): void {
     if (!down) return;
-    const dir =
-      code === "ArrowUp"
-        ? "up"
-        : code === "ArrowDown"
-          ? "down"
-          : code === "ArrowLeft"
-            ? "left"
-            : code === "ArrowRight"
-              ? "right"
-              : null;
-    if (dir) this.snake.dir = dir;
+    const dir = DIR_BY_KEY[code];
+    if (!dir) return;
+    if (this.pendingDirs.length >= MAX_QUEUED_DIRS) return;
+    // El opuesto se descarta contra el último rumbo encolado, que es el que la
+    // serpiente tendrá cuando se consuma esta entrada.
+    const last = this.pendingDirs[this.pendingDirs.length - 1] ?? this.snake.dir;
+    if (dir === last || dir === opposite(last)) return;
+    this.pendingDirs.push(dir);
   }
 
   destroy(): void {
@@ -199,6 +215,8 @@ export class SnakeEngine {
   /** Serpiente al centro y fruta nueva. La puntuación no se toca. */
   private resetRound(): void {
     this.snake = SnakeBody.spawn();
+    // Los giros encolados antes de morir no deben sobrevivir a la nueva vida.
+    this.pendingDirs = [];
     this.fruit = spawnFruit(this.snake.cells);
   }
 
@@ -222,6 +240,10 @@ export class SnakeEngine {
 
   /** Un tic: la serpiente avanza una celda y se resuelven las consecuencias. */
   private tick(): void {
+    // Cada tic consume como mucho un giro de la cola.
+    const next = this.pendingDirs.shift();
+    if (next) this.snake.dir = next;
+
     this.snake.step();
 
     if (this.snake.hitsWall() || this.snake.hitsSelf()) {
