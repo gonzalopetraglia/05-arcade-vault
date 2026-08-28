@@ -9,4 +9,7 @@
 
 export type BlockColor = "red" | "yellow" | "cyan" | "magenta" | "hotpink" | "green" | "gray";
 
+export const BLOCK_COLS = 10;
+export const BLOCK_ROWS = 6;
+
 export const EXPLOSION_DURATION = 150; // ms
