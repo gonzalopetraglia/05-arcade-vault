@@ -1,6 +1,6 @@
 # SPEC 09 — Snake, el cuarto juego real
 
-> **Estado:** Aceptado
+> **Estado:** Implementado
 > **Depende de:** SPEC 01, SPEC 05, SPEC 06, SPEC 07, SPEC 08
 > **Fecha:** 2026-08-28
 > **Objetivo:** Diseñar desde cero un Snake en TypeScript sobre la API de motor del Vault, jugable en `/jugar/snake` con teclado y controles táctiles, con las frutas del atlas `references/source-assets/snake-assets/`, su entrada propia de catálogo y su puntuación guardada por el flujo que ya existe.
@@ -184,31 +184,31 @@ export class SnakeEngine {
 
 **Del juego:**
 
-- [ ] La serpiente empieza en el centro con 3 celdas mirando a la derecha y se mueve sola.
-- [ ] Cada fruta comida suma exactamente 10 puntos y alarga la serpiente una celda.
-- [ ] La fruta nunca aparece sobre una celda ocupada por la serpiente.
-- [ ] El sprite de la fruta se elige al azar entre los 22 del atlas y se dibuja con su proporción original.
-- [ ] Chocar contra el muro resta una vida; chocar contra la propia cola también.
-- [ ] Al perder una vida la puntuación se conserva y la serpiente vuelve al estado inicial tras ~1 segundo.
-- [ ] Con 0 vidas se abre el modal de fin de partida con la puntuación acumulada.
-- [ ] Cada 5 frutas el nivel sube uno y el tic se acorta 10 ms, con suelo en 70 ms.
-- [ ] Pulsar la dirección opuesta a la del movimiento actual no mata a la serpiente: el giro se descarta.
-- [ ] Los cuatro botones táctiles giran la serpiente igual que las flechas del teclado.
+- [x] La serpiente empieza en el centro con 3 celdas mirando a la derecha y se mueve sola.
+- [x] Cada fruta comida suma exactamente 10 puntos y alarga la serpiente una celda.
+- [x] La fruta nunca aparece sobre una celda ocupada por la serpiente.
+- [x] El sprite de la fruta se elige al azar entre los 22 del atlas y se dibuja con su proporción original.
+- [x] Chocar contra el muro resta una vida; chocar contra la propia cola también.
+- [x] Al perder una vida la puntuación se conserva y la serpiente vuelve al estado inicial tras ~1 segundo.
+- [x] Con 0 vidas se abre el modal de fin de partida con la puntuación acumulada.
+- [x] Cada 5 frutas el nivel sube uno y el tic se acorta 10 ms, con suelo en 70 ms.
+- [x] Pulsar la dirección opuesta a la del movimiento actual no mata a la serpiente: el giro se descarta.
+- [x] Los cuatro botones táctiles giran la serpiente igual que las flechas del teclado.
 
 **De la plataforma:**
 
-- [ ] `npm run lint` y `npm run build` terminan sin errores ni advertencias de hidratación.
-- [ ] `/games` muestra SNAKE con su portada, y `/games/snake` sigue siendo estática.
-- [ ] `grep -rn "getElementById" lib components` no devuelve resultados: el canvas llega por `ref`.
-- [ ] Salir de `/jugar/snake` no deja ningún `requestAnimationFrame` corriendo; volver a entrar no acelera el juego.
-- [ ] El HUD de React y lo que ocurre en el canvas coinciden en todo momento.
-- [ ] PAUSA congela el juego entero y REANUDAR no mata a nadie por el salto de tiempo; FIN abre el modal con la puntuación acumulada; JUGAR DE NUEVO reinicia al estado inicial.
-- [ ] Guardar en el modal inserta la puntuación en la base y aparece en `/salon` sin recargar a mano; si el `POST` falla, el modal muestra un error y no finge que se guardó.
-- [ ] `curl localhost:3000/api/games` devuelve `snake` con `best` y `plays` numéricos.
-- [ ] `curl "localhost:3000/api/scores?game=snake"` devuelve la partida guardada.
-- [ ] Reejecutar `0005_seed_snake.sql` no duplica ninguna fila.
-- [ ] `references/source-assets/` y `references/started-games/` no tienen ningún cambio.
-- [ ] `/jugar/asteroides`, `/jugar/tetris`, `/jugar/arkanoid` y `/jugar/serpentina` siguen funcionando igual que antes.
+- [x] `npm run lint` y `npm run build` terminan sin errores ni advertencias de hidratación.
+- [x] `/games` muestra SNAKE con su portada, y `/games/snake` sigue siendo estática.
+- [x] `grep -rn "getElementById" lib components` no devuelve resultados: el canvas llega por `ref`.
+- [x] Salir de `/jugar/snake` no deja ningún `requestAnimationFrame` corriendo; volver a entrar no acelera el juego.
+- [x] El HUD de React y lo que ocurre en el canvas coinciden en todo momento.
+- [x] PAUSA congela el juego entero y REANUDAR no mata a nadie por el salto de tiempo; FIN abre el modal con la puntuación acumulada; JUGAR DE NUEVO reinicia al estado inicial.
+- [x] Guardar en el modal inserta la puntuación en la base y aparece en `/salon` sin recargar a mano; si el `POST` falla, el modal muestra un error y no finge que se guardó.
+- [x] `curl localhost:3000/api/games` devuelve `snake` con `best` y `plays` numéricos.
+- [x] `curl "localhost:3000/api/scores?game=snake"` devuelve la partida guardada.
+- [x] Reejecutar `0005_seed_snake.sql` no duplica ninguna fila.
+- [x] `references/source-assets/` y `references/started-games/` no tienen ningún cambio.
+- [x] `/jugar/asteroides`, `/jugar/tetris`, `/jugar/arkanoid` y `/jugar/serpentina` siguen funcionando igual que antes.
 
 ---
 
