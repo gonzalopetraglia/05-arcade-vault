@@ -21,6 +21,15 @@ export const NEXT_BLOCK = 30;
 
 export const LINE_SCORES = [0, 100, 300, 500, 800];
 
+/**
+ * El original leía este color con
+ * `getComputedStyle(document.body).getPropertyValue('--grid-line')`. Aquí es una
+ * constante: el motor dibuja sin tocar el DOM. Es el valor del tema oscuro del
+ * original (`--grid-line: #22222e`), que es el fondo en el que vive la pantalla
+ * del CRT del Vault.
+ */
+export const GRID_LINE = "#22222e";
+
 export const COLORS: (string | null)[] = [
   null,
   "#4dd0e1", // I - cyan
@@ -136,4 +145,44 @@ export function clearLines(board: Board): number {
     }
   }
   return cleared;
+}
+
+// ── Dibujo ────────────────────────────────────────────────────────────────────
+
+/** Un bloque de la rejilla, con el realce blanco al 12 % del original. */
+export function drawBlock(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  colorIndex: number,
+  size: number,
+  alpha?: number,
+): void {
+  if (!colorIndex) return;
+  const color = COLORS[colorIndex];
+  if (!color) return;
+  ctx.globalAlpha = alpha ?? 1;
+  ctx.fillStyle = color;
+  ctx.fillRect(x * size + 1, y * size + 1, size - 2, size - 2);
+  // highlight
+  ctx.fillStyle = "rgba(255,255,255,0.12)";
+  ctx.fillRect(x * size + 1, y * size + 1, size - 2, 4);
+  ctx.globalAlpha = 1;
+}
+
+export function drawGrid(ctx: CanvasRenderingContext2D): void {
+  ctx.strokeStyle = GRID_LINE;
+  ctx.lineWidth = 0.5;
+  for (let c = 1; c < COLS; c++) {
+    ctx.beginPath();
+    ctx.moveTo(c * BLOCK, 0);
+    ctx.lineTo(c * BLOCK, ROWS * BLOCK);
+    ctx.stroke();
+  }
+  for (let r = 1; r < ROWS; r++) {
+    ctx.beginPath();
+    ctx.moveTo(0, r * BLOCK);
+    ctx.lineTo(COLS * BLOCK, r * BLOCK);
+    ctx.stroke();
+  }
 }
