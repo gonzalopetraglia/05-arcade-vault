@@ -1,6 +1,6 @@
 # SPEC 07 — Tetris, el segundo juego real
 
-> **Estado:** Aprobado
+> **Estado:** Implementado
 > **Depende de:** SPEC 01, SPEC 05, SPEC 06
 > **Fecha:** 2026-08-28
 > **Objetivo:** Portar el juego de canvas de `references/started-games/03-tetris/` a un motor TypeScript integrado en la plataforma, jugable en `/jugar/tetris` con teclado o controles táctiles, con su entrada propia de catálogo y su puntuación guardada por el flujo que ya existe.
@@ -163,28 +163,28 @@ No hay paso de portada: `cover-tetro` ya existe en `app/globals.css` y no se toc
 
 ## Criterios de aceptación
 
-- [ ] `npm run lint` y `npm run build` terminan sin errores ni advertencias de hidratación.
-- [ ] `/games` muestra TETRIS con la portada `cover-tetro`, y `/games/tetris` sigue siendo estática.
-- [ ] `grep -rn "getElementById" lib components` no devuelve resultados: los dos canvas llegan por `ref`.
-- [ ] `grep -rn "getComputedStyle" lib/games` no devuelve resultados: el motor no lee estilos del DOM.
-- [ ] Salir de `/jugar/tetris` no deja ningún `requestAnimationFrame` corriendo; volver a entrar no acelera el juego.
-- [ ] Las ocho piezas (I, O, T, S, Z, J, L y la tuerca N) aparecen y se dibujan con los colores del original.
-- [ ] Limpiar 1, 2, 3 y 4 líneas suma exactamente 100, 300, 500 y 800 puntos multiplicados por el nivel.
-- [ ] La caída dura suma 2 puntos por celda recorrida y la bajada suave 1 por fila.
-- [ ] El nivel es `floor(lineas / 10) + 1` y el intervalo de caída es `max(100, 1000 - (nivel - 1) * 90)` milisegundos.
-- [ ] La rotación aplica los kicks `[0, -1, 1, -2, 2]` y no atraviesa las paredes ni los bloques fijos.
-- [ ] El fantasma se dibuja bajo la pieza actual, en su posición final, al 20 % de alfa.
-- [ ] El canvas de la pieza siguiente muestra siempre la pieza que va a entrar, y se actualiza al bloquear una pieza.
-- [ ] Mantener ← o → pulsados repite el movimiento tras 170 ms, cada 50 ms; mantener rotar o caída dura no repite.
-- [ ] Los botones táctiles producen exactamente el mismo efecto que sus teclas, incluida la repetición al mantener el dedo.
-- [ ] El HUD de React muestra los puntos y el nivel emitidos por el motor; las líneas se leen dentro del canvas.
-- [ ] El HUD de React muestra siempre una vida y esa cifra nunca cambia durante la partida.
-- [ ] PAUSA congela el juego entero y REANUDAR no salta ninguna pieza por el salto de tiempo; FIN abre el modal con la puntuación acumulada; JUGAR DE NUEVO deja el tablero vacío, la puntuación a 0, las líneas a 0 y el nivel a 1.
-- [ ] Una pieza que no cabe al aparecer termina la partida y abre el modal de fin.
-- [ ] Guardar en el modal inserta la puntuación en la base y aparece en `/salon` sin recargar a mano; si el `POST` falla, el modal muestra un error y no finge que se guardó.
-- [ ] Reejecutar `0003_seed_tetris.sql` no duplica ninguna fila.
-- [ ] `references/started-games/03-tetris/` no tiene ningún cambio.
-- [ ] `/jugar/asteroides`, `/jugar/caida` y `/jugar/serpentina` siguen funcionando igual que antes.
+- [x] `npm run lint` y `npm run build` terminan sin errores ni advertencias de hidratación.
+- [x] `/games` muestra TETRIS con la portada `cover-tetro`, y `/games/tetris` sigue siendo estática.
+- [x] `grep -rn "getElementById" lib components` no devuelve resultados: los dos canvas llegan por `ref`.
+- [x] `grep -rn "getComputedStyle" lib/games` no devuelve resultados: el motor no lee estilos del DOM.
+- [x] Salir de `/jugar/tetris` no deja ningún `requestAnimationFrame` corriendo; volver a entrar no acelera el juego.
+- [x] Las ocho piezas (I, O, T, S, Z, J, L y la tuerca N) aparecen y se dibujan con los colores del original.
+- [x] Limpiar 1, 2, 3 y 4 líneas suma exactamente 100, 300, 500 y 800 puntos multiplicados por el nivel.
+- [x] La caída dura suma 2 puntos por celda recorrida y la bajada suave 1 por fila.
+- [x] El nivel es `floor(lineas / 10) + 1` y el intervalo de caída es `max(100, 1000 - (nivel - 1) * 90)` milisegundos.
+- [x] La rotación aplica los kicks `[0, -1, 1, -2, 2]` y no atraviesa las paredes ni los bloques fijos.
+- [x] El fantasma se dibuja bajo la pieza actual, en su posición final, al 20 % de alfa.
+- [x] El canvas de la pieza siguiente muestra siempre la pieza que va a entrar, y se actualiza al bloquear una pieza.
+- [x] Mantener ← o → pulsados repite el movimiento tras 170 ms, cada 50 ms; mantener rotar o caída dura no repite.
+- [x] Los botones táctiles producen exactamente el mismo efecto que sus teclas, incluida la repetición al mantener el dedo.
+- [x] El HUD de React muestra los puntos y el nivel emitidos por el motor; las líneas se leen dentro del canvas.
+- [x] El HUD de React muestra siempre una vida y esa cifra nunca cambia durante la partida.
+- [x] PAUSA congela el juego entero y REANUDAR no salta ninguna pieza por el salto de tiempo; FIN abre el modal con la puntuación acumulada; JUGAR DE NUEVO deja el tablero vacío, la puntuación a 0, las líneas a 0 y el nivel a 1.
+- [x] Una pieza que no cabe al aparecer termina la partida y abre el modal de fin.
+- [x] Guardar en el modal inserta la puntuación en la base y aparece en `/salon` sin recargar a mano; si el `POST` falla, el modal muestra un error y no finge que se guardó.
+- [x] Reejecutar `0003_seed_tetris.sql` no duplica ninguna fila.
+- [x] `references/started-games/03-tetris/` no tiene ningún cambio.
+- [x] `/jugar/asteroides`, `/jugar/caida` y `/jugar/serpentina` siguen funcionando igual que antes.
 
 ---
 
