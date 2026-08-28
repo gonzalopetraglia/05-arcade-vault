@@ -37,6 +37,7 @@ import {
   drawGrid,
   ghostY,
   randomPiece,
+  rotateCW,
   type Board,
   type Piece,
 } from "./entities";
@@ -52,6 +53,17 @@ type EngineOptions = {
   onState: (s: TetrisState) => void;
   onGameOver: (finalScore: number) => void;
 };
+
+/**
+ * El original se apoyaba en la repetición de teclas del navegador: cada
+ * `keydown` repetido movía la pieza. La API `setKey(code, down)` es de estado,
+ * y los botones táctiles no repiten nada, así que el motor lleva su propio DAS.
+ */
+const DAS_DELAY = 170; // ms hasta la primera repetición
+const DAS_REPEAT = 50; // ms entre repeticiones
+
+/** Las tres únicas teclas que repiten al mantenerse pulsadas. */
+const REPEATABLE = ["ArrowLeft", "ArrowRight", "ArrowDown"] as const;
 
 export class TetrisEngine {
   private ctx: CanvasRenderingContext2D;
@@ -70,6 +82,11 @@ export class TetrisEngine {
 
   private dropAccum = 0;
   private dropInterval = 1000;
+
+  private keys: Record<string, boolean> = {};
+  private queue: string[] = [];
+  /** Por tecla repetible: tiempo desde la última acción y si ya pasó el retardo. */
+  private das: Record<string, { accum: number; repeating: boolean }> = {};
 
   private rafId: number | null = null;
   private lastTime: number | null = null;
@@ -126,14 +143,27 @@ export class TetrisEngine {
   }
 
   setKey(code: string, down: boolean): void {
-    // Paso 4.
-    void code;
-    void down;
+    if (down) {
+      // Solo el flanco de bajada encola: mantener la tecla lo gestiona el DAS.
+      if (!this.keys[code]) {
+        this.queue.push(code);
+        if ((REPEATABLE as readonly string[]).includes(code)) {
+          this.das[code] = { accum: 0, repeating: false };
+        }
+      }
+      this.keys[code] = true;
+    } else {
+      this.keys[code] = false;
+      delete this.das[code];
+    }
   }
 
   destroy(): void {
     this.destroyed = true;
     this.pause();
+    this.keys = {};
+    this.queue = [];
+    this.das = {};
   }
 
   // ── Bucle ───────────────────────────────────────────────────────────────────
@@ -182,6 +212,8 @@ export class TetrisEngine {
     this.dropInterval = 1000;
     this.dropAccum = 0;
     this.lastTime = null;
+    this.queue = [];
+    this.das = {};
     this.next = randomPiece();
     this.spawn();
   }
@@ -225,10 +257,99 @@ export class TetrisEngine {
     this.onGameOverCb(this.score);
   }
 
+  // ── Acciones ────────────────────────────────────────────────────────────────
+
+  private move(dx: number): void {
+    if (!collide(this.board, this.current.shape, this.current.x + dx, this.current.y)) {
+      this.current.x += dx;
+    }
+  }
+
+  private tryRotate(): void {
+    const rotated = rotateCW(this.current.shape);
+    const kicks = [0, -1, 1, -2, 2];
+    for (const kick of kicks) {
+      if (!collide(this.board, rotated, this.current.x + kick, this.current.y)) {
+        this.current.shape = rotated;
+        this.current.x += kick;
+        return;
+      }
+    }
+  }
+
+  private softDrop(): void {
+    if (!collide(this.board, this.current.shape, this.current.x, this.current.y + 1)) {
+      this.current.y++;
+      this.score += 1;
+    } else {
+      this.lockPiece();
+    }
+  }
+
+  private hardDrop(): void {
+    const gy = ghostY(this.board, this.current);
+    this.score += (gy - this.current.y) * 2;
+    this.current.y = gy;
+    this.lockPiece();
+  }
+
+  private isGameOver(): boolean {
+    return this.state === "gameover";
+  }
+
+  private act(code: string): void {
+    if (this.isGameOver()) return;
+    switch (code) {
+      case "ArrowLeft":
+        this.move(-1);
+        break;
+      case "ArrowRight":
+        this.move(1);
+        break;
+      case "ArrowDown":
+        this.softDrop();
+        break;
+      case "ArrowUp":
+      case "KeyX":
+        this.tryRotate();
+        break;
+      case "Space":
+        this.hardDrop();
+        break;
+    }
+  }
+
+  /** Flancos encolados primero, después la repetición automática de las tres teclas. */
+  private handleInput(dt: number): void {
+    for (const code of this.queue) this.act(code);
+    this.queue = [];
+
+    for (const code of REPEATABLE) {
+      const das = this.das[code];
+      if (!das || !this.keys[code]) continue;
+      das.accum += dt;
+      if (!das.repeating) {
+        if (das.accum >= DAS_DELAY) {
+          das.accum -= DAS_DELAY;
+          das.repeating = true;
+          this.act(code);
+        }
+      }
+      while (das.repeating && das.accum >= DAS_REPEAT) {
+        das.accum -= DAS_REPEAT;
+        this.act(code);
+      }
+    }
+  }
+
   // ── Update ──────────────────────────────────────────────────────────────────
 
   private update(dt: number): void {
-    if (this.state === "gameover") return;
+    if (this.isGameOver()) return;
+
+    this.handleInput(dt);
+    // Una caída dura de la cola puede haber terminado la partida en este frame.
+    if (this.isGameOver()) return;
 
     this.dropAccum += dt;
     if (this.dropAccum >= this.dropInterval) {
