@@ -22,11 +22,10 @@ export const NEXT_BLOCK = 30;
 export const LINE_SCORES = [0, 100, 300, 500, 800];
 
 /**
- * El original leía este color con
- * `getComputedStyle(document.body).getPropertyValue('--grid-line')`. Aquí es una
- * constante: el motor dibuja sin tocar el DOM. Es el valor del tema oscuro del
- * original (`--grid-line: #22222e`), que es el fondo en el que vive la pantalla
- * del CRT del Vault.
+ * El original leía este color de la variable CSS `--grid-line` del `body`. Aquí
+ * es una constante: el motor dibuja sin leer estilos del DOM. Es el valor del
+ * tema oscuro del original (`--grid-line: #22222e`), que es el fondo en el que
+ * vive la pantalla del CRT del Vault.
  */
 export const GRID_LINE = "#22222e";
 
