@@ -381,6 +381,23 @@ export class TetrisEngine {
     for (let r = 0; r < shape.length; r++)
       for (let c = 0; c < shape[r].length; c++)
         if (shape[r][c]) drawBlock(ctx, x + c, y + r, shape[r][c], BLOCK);
+
+    this.drawLines();
+  }
+
+  /**
+   * Las líneas no caben en el HUD del shell, que solo tiene puntos, nivel y
+   * vidas, así que se dibujan dentro del propio tablero.
+   */
+  private drawLines(): void {
+    const ctx = this.ctx;
+    ctx.font = "15px monospace";
+    ctx.textAlign = "left";
+    ctx.textBaseline = "alphabetic";
+    ctx.fillStyle = "rgba(0,0,0,0.55)";
+    ctx.fillText(`LÍNEAS ${this.lines}`, 13, H - 13);
+    ctx.fillStyle = "rgba(255,255,255,0.75)";
+    ctx.fillText(`LÍNEAS ${this.lines}`, 12, H - 14);
   }
 
   private drawNext(): void {
