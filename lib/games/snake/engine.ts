@@ -209,6 +209,7 @@ export class SnakeEngine {
     this.fruitsEaten = 0;
     this.state = "playing";
     this.acc = 0;
+    this.deadFor = 0;
     this.resetRound();
   }
 
@@ -263,11 +264,18 @@ export class SnakeEngine {
     }
   }
 
+  /**
+   * Chocar con el muro o con la cola cuesta una vida. Con vidas de sobra la
+   * partida se congela DEATH_PAUSE en status "dead"; con 0, se acaba. La
+   * puntuación se conserva en los dos casos.
+   */
   private die(): void {
     this.lives--;
     if (this.lives <= 0) {
       this.lives = 0;
       this.state = "gameover";
+      // El HUD ve el 0 antes de que se abra el modal.
+      this.emitState();
       this.onGameOver(this.score);
       return;
     }
