@@ -19,7 +19,12 @@
  */
 
 import {
+  EXPLOSION_DURATION,
+  PADDLE_SPEED,
+  POINTS_PER_BLOCK,
   START_LIVES,
+  W,
+  collideAABB,
   createBall,
   createPaddle,
   type Ball,
@@ -142,10 +147,9 @@ export class ArkanoidEngine {
     this.keys[code] = down;
   }
 
-  /** Ratón y táctil posicional: centro de la paleta en coordenadas del mundo. */
+  /** Ratón: centro de la paleta en coordenadas del mundo, recortado al área. */
   setPaddleX(worldX: number): void {
-    // Se completa en el paso 6.
-    void worldX;
+    this.paddle.x = Math.max(0, Math.min(W - this.paddle.w, worldX - this.paddle.w / 2));
   }
 
   destroy(): void {
@@ -209,10 +213,96 @@ export class ArkanoidEngine {
 
   // ── Update ──────────────────────────────────────────────────────────────────
 
-  private update(dt: number): void {
-    // Se completa en los pasos 6 y 7.
-    void dt;
+  /**
+   * El original hace `sound.cloneNode().play()` en cada golpe para permitir que
+   * dos rebotes suenen solapados. El clon no se guarda en ninguna referencia y
+   * el recolector lo libera al terminar. El rechazo de la promesa se ignora: sin
+   * interacción previa del usuario el navegador bloquea la reproducción, y eso
+   * no puede romper la partida ni ensuciar la consola.
+   */
+  private playSound(sound: HTMLAudioElement | null): void {
+    if (!sound) return;
+    const clone = sound.cloneNode() as HTMLAudioElement;
+    void clone.play().catch(() => {});
   }
+
+  private update(dt: number): void {
+    if (this.state !== "playing") return;
+
+    const { paddle, ball } = this;
+
+    // Paleta
+    if (this.keys.ArrowLeft) paddle.x = Math.max(0, paddle.x - PADDLE_SPEED * dt);
+    if (this.keys.ArrowRight) paddle.x = Math.min(W - paddle.w, paddle.x + PADDLE_SPEED * dt);
+
+    // Movimiento de la pelota
+    ball.x += ball.vx * dt;
+    ball.y += ball.vy * dt;
+
+    // Rebotes en las paredes (izquierda, derecha, arriba)
+    if (ball.x <= 0) {
+      ball.x = 0;
+      ball.vx = Math.abs(ball.vx);
+      this.playSound(this.bounceSound);
+    }
+    if (ball.x + ball.w >= W) {
+      ball.x = W - ball.w;
+      ball.vx = -Math.abs(ball.vx);
+      this.playSound(this.bounceSound);
+    }
+    if (ball.y <= 0) {
+      ball.y = 0;
+      ball.vy = Math.abs(ball.vy);
+      this.playSound(this.bounceSound);
+    }
+
+    // Rebote en la paleta, con el margen de 8 px del original
+    if (
+      ball.vy > 0 &&
+      ball.x + ball.w > paddle.x &&
+      ball.x < paddle.x + paddle.w &&
+      ball.y + ball.h >= paddle.y &&
+      ball.y + ball.h <= paddle.y + paddle.h + 8
+    ) {
+      ball.y = paddle.y - ball.h;
+      ball.vy = -Math.abs(ball.vy);
+      this.playSound(this.bounceSound);
+    }
+
+    // Colisión con bloques. El original invierte siempre vy, aunque el golpe sea
+    // lateral: es un defecto suyo y el port es fiel.
+    for (const block of this.blocks) {
+      if (!block.alive) continue;
+      if (collideAABB(ball, block)) {
+        block.alive = false;
+        this.explosions.push({
+          x: block.x,
+          y: block.y,
+          w: block.w,
+          h: block.h,
+          color: block.color,
+          elapsed: 0,
+        });
+        this.score += POINTS_PER_BLOCK;
+        ball.vy = -ball.vy;
+        this.playSound(this.breakSound);
+        this.onBlocksChanged();
+        break; // un bloque por frame
+      }
+    }
+
+    // Explosiones
+    for (const exp of this.explosions) exp.elapsed += dt * 1000;
+    this.explosions = this.explosions.filter((exp) => exp.elapsed < EXPLOSION_DURATION);
+
+    this.checkBallLost();
+  }
+
+  /** Se completa en el paso 7. */
+  private onBlocksChanged(): void {}
+
+  /** Se completa en el paso 7. */
+  private checkBallLost(): void {}
 
   // ── Draw ────────────────────────────────────────────────────────────────────
 
