@@ -107,6 +107,15 @@ export const GAMES: Game[] = [
     cover: "cover-tetro",
     color: "magenta",
   },
+  {
+    id: "arkanoid",
+    title: "ARKANOID",
+    short: "Cinco muros, tres vidas y una pelota que no perdona.",
+    long: "El rompeladrillos clásico con sus sprites originales. Cinco niveles con formaciones distintas —muro lleno, pirámide, tablero de ajedrez, hueco y marco con cruz— y la pelota acelerando un 10 % en cada uno. Cada bloque estalla en cuatro fotogramas y suma 10 puntos.",
+    cat: "ARCADE",
+    cover: "cover-bricks",
+    color: "cyan",
+  },
 ];
 
 export const CATS: string[] = ["TODOS", "ARCADE", "PUZZLE", "SHOOTER", "VERSUS"];
