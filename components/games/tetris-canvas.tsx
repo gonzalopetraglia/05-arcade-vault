@@ -1,11 +1,49 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { TetrisEngine, type TetrisState } from "@/lib/games/tetris/engine";
 import { H, NEXT_H, NEXT_W, W } from "@/lib/games/tetris/entities";
 
 /** Teclas de juego: se les corta el scroll de la página mientras se juega. */
 const GAME_KEYS = ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Space", "KeyX"];
+
+/**
+ * Botón táctil: traduce pointerdown/pointerup/pointercancel a la misma entrada
+ * de teclado que usa el motor, así que el dedo hereda el DAS de las teclas.
+ * pointercancel y pointerleave se tratan como pointerup para que ninguna tecla
+ * se quede pegada.
+ */
+function TouchButton({
+  code,
+  label,
+  className,
+  setKey,
+  children,
+}: {
+  code: string;
+  label: string;
+  className: string;
+  setKey: (code: string, down: boolean) => void;
+  children: React.ReactNode;
+}) {
+  const release = () => setKey(code, false);
+  return (
+    <button
+      type="button"
+      className={className}
+      aria-label={label}
+      onPointerDown={(e) => {
+        e.preventDefault();
+        setKey(code, true);
+      }}
+      onPointerUp={release}
+      onPointerCancel={release}
+      onPointerLeave={release}
+    >
+      {children}
+    </button>
+  );
+}
 
 type Props = {
   onState: (s: TetrisState) => void;
@@ -90,6 +128,11 @@ export function TetrisCanvas({ onState, onGameOver, onEngineReady, onAutoPause }
     };
   }, []);
 
+  // El dedo entra por la misma puerta que la tecla: el motor no distingue.
+  const setKey = useCallback((code: string, down: boolean) => {
+    engineRef.current?.setKey(code, down);
+  }, []);
+
   return (
     <div
       style={{
@@ -146,6 +189,40 @@ export function TetrisCanvas({ onState, onGameOver, onEngineReady, onAutoPause }
             }}
           />
         </div>
+      </div>
+      <div className="touch-pad left">
+        <TouchButton
+          code="ArrowLeft"
+          label="Mover a la izquierda"
+          className="touch-btn rot"
+          setKey={setKey}
+        >
+          ◀
+        </TouchButton>
+        <TouchButton
+          code="ArrowRight"
+          label="Mover a la derecha"
+          className="touch-btn rot"
+          setKey={setKey}
+        >
+          ▶
+        </TouchButton>
+        <TouchButton
+          code="ArrowDown"
+          label="Bajada suave"
+          className="touch-btn rot"
+          setKey={setKey}
+        >
+          ▼
+        </TouchButton>
+      </div>
+      <div className="touch-pad right">
+        <TouchButton code="ArrowUp" label="Rotar" className="touch-btn" setKey={setKey}>
+          ROTAR
+        </TouchButton>
+        <TouchButton code="Space" label="Caída dura" className="touch-btn" setKey={setKey}>
+          SOLTAR
+        </TouchButton>
       </div>
     </div>
   );
