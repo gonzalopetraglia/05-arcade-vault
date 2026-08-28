@@ -116,6 +116,15 @@ export const GAMES: Game[] = [
     cover: "cover-bricks",
     color: "cyan",
   },
+  {
+    id: "snake",
+    title: "SNAKE",
+    short: "Come fruta, crece y no te muerdas.",
+    long: "Una serpiente recorre una grilla de 20×15 buscando fruta. Cada bocado la alarga 10 puntos y, cada cinco frutas, el mundo se mueve un poco más rápido. El muro mata y la propia cola también; tienes tres vidas para llegar lo más lejos posible.",
+    cat: "ARCADE",
+    cover: "cover-snake",
+    color: "green",
+  },
 ];
 
 export const CATS: string[] = ["TODOS", "ARCADE", "PUZZLE", "SHOOTER", "VERSUS"];
