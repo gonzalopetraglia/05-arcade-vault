@@ -35,7 +35,7 @@ import {
   type Paddle,
 } from "./entities";
 import { LEVELS } from "./levels";
-import { loadSpritesheet } from "./sprites";
+import { EXPLOSION_FRAMES, SPRITES, drawFrame, drawSprite, loadSpritesheet } from "./sprites";
 
 export type ArkanoidState = {
   score: number;
@@ -345,6 +345,48 @@ export class ArkanoidEngine {
   // ── Draw ────────────────────────────────────────────────────────────────────
 
   private draw(): void {
-    // Se completa en el paso 8.
+    const ctx = this.ctx;
+    ctx.fillStyle = "#000";
+    ctx.fillRect(0, 0, W, H);
+
+    for (const block of this.blocks) {
+      if (block.alive)
+        drawSprite(
+          ctx,
+          this.sheet,
+          SPRITES.blocks[block.color],
+          block.x,
+          block.y,
+          block.w,
+          block.h,
+        );
+    }
+
+    for (const exp of this.explosions) {
+      const frameIndex = Math.min(Math.floor((exp.elapsed / EXPLOSION_DURATION) * 4), 3);
+      drawFrame(
+        ctx,
+        this.sheet,
+        EXPLOSION_FRAMES[exp.color][frameIndex],
+        exp.x,
+        exp.y,
+        exp.w,
+        exp.h,
+      );
+    }
+
+    drawSprite(
+      ctx,
+      this.sheet,
+      SPRITES.paddle,
+      this.paddle.x,
+      this.paddle.y,
+      this.paddle.w,
+      this.paddle.h,
+    );
+    drawSprite(ctx, this.sheet, SPRITES.ball, this.ball.x, this.ball.y, this.ball.w, this.ball.h);
+
+    // El original pintaba aquí `Score:`, `Nivel:` y las pelotitas de vidas, más
+    // los overlays de fin y de pausa. Todo eso es del HUD y del shell de React.
   }
 }
