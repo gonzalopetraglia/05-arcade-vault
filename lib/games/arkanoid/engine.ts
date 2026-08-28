@@ -20,10 +20,12 @@
 
 import {
   EXPLOSION_DURATION,
+  H,
   PADDLE_SPEED,
   POINTS_PER_BLOCK,
   START_LIVES,
   W,
+  buildBlocks,
   collideAABB,
   createBall,
   createPaddle,
@@ -198,8 +200,20 @@ export class ArkanoidEngine {
 
   /** `loadLevel(n)` del original: rejilla nueva y pelota repuesta a la velocidad del nivel. */
   private loadLevel(n: number): void {
-    // Se completa en el paso 7.
-    void n;
+    this.level = n;
+    const level = LEVELS[n - 1];
+    this.blocks = buildBlocks(level);
+    this.explosions = [];
+    this.resetBall(level.speed);
+  }
+
+  /**
+   * `initBall()` del original. Muta la pelota en vez de sustituirla para que
+   * update() no se quede con una referencia vieja cuando repone tras un cambio
+   * de nivel dentro del mismo frame.
+   */
+  private resetBall(speed: number): void {
+    Object.assign(this.ball, createBall(this.paddle, speed));
   }
 
   private initGame(): void {
@@ -298,11 +312,35 @@ export class ArkanoidEngine {
     this.checkBallLost();
   }
 
-  /** Se completa en el paso 7. */
-  private onBlocksChanged(): void {}
+  /**
+   * Limpiar la rejilla carga el nivel siguiente. Limpiar el último es el
+   * `gameState = 'win'` del original, traducido al flujo de puntuaciones del
+   * Vault: fin de partida con la puntuación acumulada.
+   */
+  private onBlocksChanged(): void {
+    if (!this.blocks.every((b) => !b.alive)) return;
+    if (this.level < LEVELS.length) {
+      this.loadLevel(this.level + 1);
+    } else {
+      this.state = "gameover";
+      this.emitState();
+      this.onGameOver(this.score);
+    }
+  }
 
-  /** Se completa en el paso 7. */
-  private checkBallLost(): void {}
+  /** La pelota por debajo del área cuesta una vida; sin vidas, fin de partida. */
+  private checkBallLost(): void {
+    if (this.ball.y <= H) return;
+    this.lives--;
+    if (this.lives <= 0) {
+      this.lives = 0;
+      this.state = "gameover";
+      this.emitState();
+      this.onGameOver(this.score);
+    } else {
+      this.resetBall(LEVELS[this.level - 1].speed);
+    }
+  }
 
   // ── Draw ────────────────────────────────────────────────────────────────────
 
