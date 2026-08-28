@@ -1,6 +1,6 @@
 # SPEC 08 — Arkanoid, el tercer juego real
 
-> **Estado:** Aprobado
+> **Estado:** Implementado
 > **Depende de:** SPEC 01, SPEC 05, SPEC 06, SPEC 07
 > **Fecha:** 2026-08-28
 > **Objetivo:** Portar el juego de canvas de `references/started-games/04-arkanoid/` a un motor TypeScript integrado en la plataforma, jugable en `/jugar/arkanoid` con teclado, ratón o controles táctiles, con su spritesheet y sus sonidos, su entrada propia de catálogo y su puntuación guardada por el flujo que ya existe.
@@ -211,30 +211,30 @@ No hay paso de portada: `cover-bricks` ya existe en `app/globals.css` y no se to
 
 ## Criterios de aceptación
 
-- [ ] `npm run lint` y `npm run build` terminan sin errores ni advertencias de hidratación.
-- [ ] `/games` muestra ARKANOID con la portada `cover-bricks`, y `/games/arkanoid` sigue siendo estática.
-- [ ] `grep -rn "getElementById" lib components` no devuelve resultados: el canvas llega por `ref`.
-- [ ] Salir de `/jugar/arkanoid` no deja ningún `requestAnimationFrame` corriendo; volver a entrar no acelera el juego.
-- [ ] La partida empieza en el nivel 1 con 3 vidas y 0 puntos.
-- [ ] Romper un bloque suma exactamente 10 puntos e invierte la componente vertical de la pelota.
-- [ ] Cada bloque roto deja una explosión de 4 fotogramas que dura 150 ms y desaparece sola.
-- [ ] Limpiar todos los bloques carga el nivel siguiente, y la velocidad de la pelota sube según `1.00`, `1.10`, `1.21`, `1.33`, `1.46`.
-- [ ] Los cinco niveles tienen las formaciones del original: muro lleno, pirámide, tablero de ajedrez, huecos y marco con cruz.
-- [ ] Limpiar el nivel 5 termina la partida y abre el modal con la puntuación acumulada.
-- [ ] Perder la pelota por debajo del área resta una vida y repone la pelota sobre la paleta; con 0 vidas termina la partida.
-- [ ] El sprite del spritesheet se usa para paleta, pelota, bloques y explosiones, y nada se dibuja antes de que la imagen cargue.
-- [ ] Suena el rebote al chocar con paredes y paleta, y el sonido de rotura al romper un bloque; si el navegador bloquea la reproducción, el juego sigue funcionando sin errores en consola.
-- [ ] ← y → mueven la paleta a 400 px/s y no la dejan salir del área.
-- [ ] Mover el ratón sobre el canvas centra la paleta en el cursor, también cuando el canvas está escalado por CSS.
-- [ ] Los botones táctiles producen exactamente el mismo efecto que ← y →.
-- [ ] El HUD de React muestra los puntos, las vidas y el nivel emitidos por el motor, y coincide con lo que ocurre en el canvas.
-- [ ] El canvas ya no dibuja `Score:`, `Nivel:` ni las pelotitas de vidas.
-- [ ] PAUSA congela el juego entero y REANUDAR no pierde ninguna vida por el salto de tiempo; FIN abre el modal con la puntuación acumulada; JUGAR DE NUEVO vuelve al nivel 1 con 3 vidas y 0 puntos.
-- [ ] No existe ningún atajo de teclado de pausa ni ningún botón de salto de nivel dibujado en el canvas.
-- [ ] Guardar en el modal inserta la puntuación en la base y aparece en `/salon` sin recargar a mano; si el `POST` falla, el modal muestra un error y no finge que se guardó.
-- [ ] Reejecutar `0004_seed_arkanoid.sql` no duplica ninguna fila.
-- [ ] `references/started-games/04-arkanoid/` no tiene ningún cambio.
-- [ ] `/jugar/asteroides`, `/jugar/tetris`, `/jugar/bloque-buster` y `/jugar/serpentina` siguen funcionando igual que antes.
+- [x] `npm run lint` y `npm run build` terminan sin errores ni advertencias de hidratación.
+- [x] `/games` muestra ARKANOID con la portada `cover-bricks`, y `/games/arkanoid` sigue siendo estática.
+- [x] `grep -rn "getElementById" lib components` no devuelve resultados: el canvas llega por `ref`.
+- [x] Salir de `/jugar/arkanoid` no deja ningún `requestAnimationFrame` corriendo; volver a entrar no acelera el juego.
+- [x] La partida empieza en el nivel 1 con 3 vidas y 0 puntos.
+- [x] Romper un bloque suma exactamente 10 puntos e invierte la componente vertical de la pelota.
+- [x] Cada bloque roto deja una explosión de 4 fotogramas que dura 150 ms y desaparece sola.
+- [x] Limpiar todos los bloques carga el nivel siguiente, y la velocidad de la pelota sube según `1.00`, `1.10`, `1.21`, `1.33`, `1.46`.
+- [x] Los cinco niveles tienen las formaciones del original: muro lleno, pirámide, tablero de ajedrez, huecos y marco con cruz.
+- [x] Limpiar el nivel 5 termina la partida y abre el modal con la puntuación acumulada.
+- [x] Perder la pelota por debajo del área resta una vida y repone la pelota sobre la paleta; con 0 vidas termina la partida.
+- [x] El sprite del spritesheet se usa para paleta, pelota, bloques y explosiones, y nada se dibuja antes de que la imagen cargue.
+- [x] Suena el rebote al chocar con paredes y paleta, y el sonido de rotura al romper un bloque; si el navegador bloquea la reproducción, el juego sigue funcionando sin errores en consola.
+- [x] ← y → mueven la paleta a 400 px/s y no la dejan salir del área.
+- [x] Mover el ratón sobre el canvas centra la paleta en el cursor, también cuando el canvas está escalado por CSS.
+- [x] Los botones táctiles producen exactamente el mismo efecto que ← y →.
+- [x] El HUD de React muestra los puntos, las vidas y el nivel emitidos por el motor, y coincide con lo que ocurre en el canvas.
+- [x] El canvas ya no dibuja `Score:`, `Nivel:` ni las pelotitas de vidas.
+- [x] PAUSA congela el juego entero y REANUDAR no pierde ninguna vida por el salto de tiempo; FIN abre el modal con la puntuación acumulada; JUGAR DE NUEVO vuelve al nivel 1 con 3 vidas y 0 puntos.
+- [x] No existe ningún atajo de teclado de pausa ni ningún botón de salto de nivel dibujado en el canvas.
+- [x] Guardar en el modal inserta la puntuación en la base y aparece en `/salon` sin recargar a mano; si el `POST` falla, el modal muestra un error y no finge que se guardó.
+- [x] Reejecutar `0004_seed_arkanoid.sql` no duplica ninguna fila.
+- [x] `references/started-games/04-arkanoid/` no tiene ningún cambio.
+- [x] `/jugar/asteroides`, `/jugar/tetris`, `/jugar/bloque-buster` y `/jugar/serpentina` siguen funcionando igual que antes.
 
 ---
 
