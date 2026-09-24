@@ -59,6 +59,7 @@ Built with Spec Driven Design using the `/spec` and `/spec-impl` skills from [Kl
 
 - Usa siempre `/frontend-design` para diseñar la interfaz del usuario.
 - `/add-game` (`.claude/skills/add-game/`) writes the spec for a new game — engine port, player, catalog entry, seed migration, leaderboard — from a `references/started-games/` folder or from scratch. It only writes the spec; `/spec-impl` implements it. Its `reference.md` holds the platform contracts (catalog types, engine API, taken ids and `sort_order`); keep it in sync when those change.
+- `game-planner` (`.claude/agents/game-planner.md`) is a subagent, not a skill: it decides which game to port or invent next. It reads the catalog, `references/implemented-games.md` and its own memory in `references/games-suggestions-todo.md`, returns a ranked top 3 with one recommendation and updates that TODO. It only proposes — the spec is still `/add-game`'s job.
 
 ## Hooks
 
