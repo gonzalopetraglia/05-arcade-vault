@@ -3430,6 +3430,40 @@ a {
   }
 }
 
+/* horizontal: pantalla en el centro con todo el alto, cruceta a la izquierda
+   y A/B a la derecha. El mando se parte con `display: contents`: sus dos
+   grupos pasan a ser hijos directos del player y `order` los coloca a cada
+   lado del CRT, sin duplicar el componente ni cambiar su marcado. */
+@media (pointer: coarse) and (orientation: landscape) {
+  .av-player.has-gamepad {
+    flex-direction: row;
+    align-items: center;
+    background: var(--bg-2);
+  }
+  .av-player.has-gamepad .touch-gamepad {
+    display: contents;
+  }
+  .av-player.has-gamepad .gamepad-dpad {
+    order: 0;
+  }
+  .av-player.has-gamepad .crt {
+    order: 1;
+  }
+  .av-player.has-gamepad .gamepad-actions {
+    order: 2;
+  }
+  .av-player.has-gamepad :is(.gamepad-dpad, .gamepad-actions) {
+    flex: 1 1 0;
+    justify-content: center;
+    align-content: center;
+  }
+  /* 4:3 con todo el alto, salvo que los lados no dejen ~180px a cada grupo
+     del mando: entonces manda el ancho */
+  .av-player.has-gamepad .crt-screen {
+    width: min(100dvh * 4 / 3, 100vw - 360px);
+  }
+}
+
 /* ===== tema claro =====
    Papel cálido en vez de negro. Los acentos neón puros no se leen sobre fondo
    claro (el amarillo #f5ff00 da 1.1:1), así que aquí son versiones tintadas
