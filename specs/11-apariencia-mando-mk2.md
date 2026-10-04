@@ -1,6 +1,6 @@
 # SPEC 11 — Apariencia del mando táctil (Gamepad MK-II)
 
-> **Estado:** Aprobado
+> **Estado:** Implementado
 > **Depende de:** SPEC 10
 > **Fecha:** 2026-10-04
 > **Objetivo:** El mando táctil común de la SPEC 10 adopta el aspecto del diseño Gamepad MK-II de `references/gamepad-assets/` en tema oscuro, con una versión propia para tema claro, sin cambiar su comportamiento ni nada en escritorio.
@@ -139,40 +139,40 @@ El diseño usa teclas de 50px (46px en su versión móvil); la SPEC 10 exige un 
 
 **Táctil, tema oscuro, vertical (390×844):**
 
-- [ ] La carcasa tiene degradado, borde exterior, borde interior a 4px y textura de puntos, y se ve como panel bajo la pantalla sin solaparse con `.crt-screen`.
-- [ ] La cruceta tiene cuatro teclas en relieve de al menos 56×56 px y un buje central con una gema romboidal cian que pulsa.
-- [ ] A es magenta y B es cian; están en fila horizontal, B a la izquierda y A a la derecha, con relleno radial, letra blanca en `--font-pixel` y resplandor de su color.
-- [ ] Pulsar una tecla de la cruceta la hunde y pone su triángulo y su borde en cian con resplandor; al soltar vuelve al reposo.
-- [ ] Pulsar A o B lo hunde y muestra el anillo discontinuo; al soltar desaparece.
-- [ ] Las etiquetas DISPARO (Asteroides), CAÍDA y ROTAR (Tetris) se ven bajo su botón.
-- [ ] En Arkanoid y Snake, A y B se ven atenuados, sin resplandor, y pulsarlos no los hunde ni muestra el anillo.
-- [ ] Captura comparada con `references/gamepad-assets/gamepad-neon.png`: misma carcasa, cruceta, buje y A/B (salvo medidas escaladas y etiquetas).
-- [ ] La página no hace scroll.
+- [x] La carcasa tiene degradado, borde exterior, borde interior a 4px y textura de puntos, y se ve como panel bajo la pantalla sin solaparse con `.crt-screen`.
+- [x] La cruceta tiene cuatro teclas en relieve de al menos 56×56 px y un buje central con una gema romboidal cian que pulsa.
+- [x] A es magenta y B es cian; están en fila horizontal, B a la izquierda y A a la derecha, con relleno radial, letra blanca en `--font-pixel` y resplandor de su color.
+- [x] Pulsar una tecla de la cruceta la hunde y pone su triángulo y su borde en cian con resplandor; al soltar vuelve al reposo.
+- [x] Pulsar A o B lo hunde y muestra el anillo discontinuo; al soltar desaparece.
+- [x] Las etiquetas DISPARO (Asteroides), CAÍDA y ROTAR (Tetris) se ven bajo su botón.
+- [x] En Arkanoid y Snake, A y B se ven atenuados, sin resplandor, y pulsarlos no los hunde ni muestra el anillo.
+- [x] Captura comparada con `references/gamepad-assets/gamepad-neon.png`: misma carcasa, cruceta, buje y A/B (salvo medidas escaladas y etiquetas).
+- [x] La página no hace scroll.
 
 **Táctil, horizontal (844×390):**
 
-- [ ] La cruceta está a la izquierda del CRT y A/B a la derecha, cada grupo dentro de su propia media carcasa con degradado, doble borde y textura.
-- [ ] La pantalla mantiene 4:3, cabe entera y no hay scroll.
+- [x] La cruceta está a la izquierda del CRT y A/B a la derecha, cada grupo dentro de su propia media carcasa con degradado, doble borde y textura.
+- [x] La pantalla mantiene 4:3, cabe entera y no hay scroll.
 
 **Táctil, tema claro (390×844 y 844×390):**
 
-- [ ] La carcasa es de tono papel con sombra gris, sin resplandor de color.
-- [ ] Las teclas de la cruceta son claras en relieve; al pulsar se tiñen de cian claro, sin resplandor.
-- [ ] A y B tienen relleno magenta/cian de tema claro con letra blanca, sin `text-shadow` ni resplandor.
-- [ ] Triángulos en reposo y bordes de botón tienen contraste ≥ 3:1 y `.act-label` ≥ 4.5:1 contra su fondo.
+- [x] La carcasa es de tono papel con sombra gris, sin resplandor de color.
+- [x] Las teclas de la cruceta son claras en relieve; al pulsar se tiñen de cian claro, sin resplandor.
+- [x] A y B tienen relleno magenta/cian de tema claro con letra blanca, sin `text-shadow` ni resplandor.
+- [x] Triángulos en reposo y bordes de botón tienen contraste ≥ 3:1 y `.act-label` ≥ 4.5:1 contra su fondo.
 
 **Comportamiento (sin cambios respecto a la SPEC 10):**
 
-- [ ] Los controles de cada juego hacen lo mismo que en la SPEC 10 (tabla de etiquetas por juego).
-- [ ] Mantener pulsado y arrastrar fuera suelta la tecla.
-- [ ] Con `prefers-reduced-motion: reduce` la gema no pulsa.
+- [x] Los controles de cada juego hacen lo mismo que en la SPEC 10 (tabla de etiquetas por juego).
+- [x] Mantener pulsado y arrastrar fuera suelta la tecla.
+- [x] Con `prefers-reduced-motion: reduce` la gema no pulsa.
 
 **General:**
 
-- [ ] `.gamepad-dpad::before` ya no existe en `globals.css`.
-- [ ] `GamepadConfig`, los códigos de tecla y la lógica de `PadButton` no cambian (`git diff` de `touch-gamepad.tsx` solo añade `.pad-hub`, `.pad-hub-gem` y `.act-ring`).
-- [ ] `npm run build` y `npm run lint` pasan sin errores.
-- [ ] La consola no muestra errores ni avisos de hidratación en `/jugar/<id>` con emulación táctil.
+- [x] `.gamepad-dpad::before` ya no existe en `globals.css`.
+- [x] `GamepadConfig`, los códigos de tecla y la lógica de `PadButton` no cambian (`git diff` de `touch-gamepad.tsx` solo añade `.pad-hub`, `.pad-hub-gem` y `.act-ring`).
+- [x] `npm run build` y `npm run lint` pasan sin errores.
+- [x] La consola no muestra errores ni avisos de hidratación en `/jugar/<id>` con emulación táctil.
 
 ---
 
