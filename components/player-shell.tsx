@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState, type ReactNode } from "react";
 import { useSession } from "@/components/session-provider";
 import { SkinSelector } from "@/components/skin-selector";
+import { TouchGamepad, type GamepadConfig } from "@/components/touch-gamepad";
 import type { Game } from "@/lib/games";
 import type { SkinId } from "@/lib/skins";
 
@@ -24,6 +25,8 @@ type Props = {
    */
   skin?: SkinId;
   onSkinChange?: (id: SkinId) => void;
+  /** Mando táctil. Si falta, el layout táctil no se activa y el juego se ve como hoy. */
+  gamepad?: GamepadConfig;
   /** Lo que se ve dentro de la pantalla del CRT. */
   children: ReactNode;
 };
@@ -46,6 +49,7 @@ export function PlayerShell({
   onRestart,
   skin,
   onSkinChange,
+  gamepad,
   children,
 }: Props) {
   const { user, saveScore } = useSession();
@@ -84,7 +88,7 @@ export function PlayerShell({
   };
 
   return (
-    <div className="av-player fade-in">
+    <div className={gamepad ? "av-player has-gamepad fade-in" : "av-player fade-in"}>
       <div className="player-hud">
         <div style={{ display: "flex", gap: 24, flexWrap: "wrap" }}>
           <div className="hud-stat">
@@ -150,6 +154,10 @@ export function PlayerShell({
           <span>CARGA · 1MB</span>
         </div>
       </div>
+
+      {/* Siempre en el DOM; el CSS solo lo enseña con puntero grueso, así el
+          HTML del servidor ya trae el layout correcto y no hay salto. */}
+      {gamepad && <TouchGamepad config={gamepad} />}
 
       {over && (
         <div className="modal-bd">

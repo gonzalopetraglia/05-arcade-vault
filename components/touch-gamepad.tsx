@@ -69,16 +69,16 @@ export function TouchGamepad({ config }: { config: GamepadConfig }) {
     <div className="touch-gamepad">
       <div className="gamepad-dpad">
         <PadButton code="ArrowUp" label="Arriba" className="pad-btn up" setKey={setKey}>
-          ▲
+          <span className="pad-arrow" aria-hidden />
         </PadButton>
         <PadButton code="ArrowLeft" label="Izquierda" className="pad-btn left" setKey={setKey}>
-          ◀
+          <span className="pad-arrow" aria-hidden />
         </PadButton>
         <PadButton code="ArrowRight" label="Derecha" className="pad-btn right" setKey={setKey}>
-          ▶
+          <span className="pad-arrow" aria-hidden />
         </PadButton>
         <PadButton code="ArrowDown" label="Abajo" className="pad-btn down" setKey={setKey}>
-          ▼
+          <span className="pad-arrow" aria-hidden />
         </PadButton>
       </div>
       <div className="gamepad-actions">

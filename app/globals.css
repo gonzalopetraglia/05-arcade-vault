@@ -3208,8 +3208,9 @@ a {
    hunde al pulsar, porque en cristal no hay tacto y la vista tiene que
    confirmar la pulsación. Los colores salen de los tokens con color-mix, así
    que el tema claro hereda sus versiones tintadas sin redefinir nada. */
+/* fuera de un puntero grueso el mando no existe: el escritorio queda igual */
 .touch-gamepad {
-  display: flex;
+  display: none;
   align-items: center;
   justify-content: space-between;
   gap: 24px;
@@ -3279,6 +3280,23 @@ a {
 .pad-btn.right {
   grid-area: right;
   border-radius: 0 8px 8px 0;
+}
+/* triángulos dibujados y no glifos: la fuente pixel no tiene ▲◀▶▼ y la de
+   reserva pinta ◀▶ más pequeños que ▲▼ */
+.pad-arrow {
+  width: 18px;
+  height: 16px;
+  background: currentColor;
+  clip-path: polygon(50% 0, 100% 100%, 0 100%);
+}
+.pad-btn.down .pad-arrow {
+  rotate: 180deg;
+}
+.pad-btn.left .pad-arrow {
+  rotate: -90deg;
+}
+.pad-btn.right .pad-arrow {
+  rotate: 90deg;
 }
 .pad-btn:active {
   transform: translateY(3px);
@@ -3366,6 +3384,50 @@ a {
 /* sobre papel claro el resplandor ensucia el texto en vez de iluminarlo */
 :root[data-theme="light"] .act-key {
   text-shadow: none;
+}
+
+/* ===== layout táctil del player =====
+   Solo con puntero grueso y un juego que pase `gamepad`. Se decide en CSS y no
+   con el hook para que el HTML del servidor ya salga con este layout. El
+   player tapa todo el viewport (por encima de la nav, z-index 50, y por
+   debajo de su propio modal, 80): pantalla arriba, mando abajo, nada más. */
+@media (pointer: coarse) {
+  .av-player.has-gamepad {
+    position: fixed;
+    inset: 0;
+    z-index: 70;
+    display: flex;
+    flex-direction: column;
+    max-width: none;
+    /* 100dvh y no 100vh: el vh móvil incluye la barra del navegador y cortaría
+       el mando */
+    height: 100dvh;
+    margin: 0;
+    padding: 0;
+    background: var(--bg);
+  }
+  .av-player.has-gamepad :is(.player-hud, .crt-bottom) {
+    display: none;
+  }
+  .av-player.has-gamepad .crt {
+    flex: none;
+    padding: 0;
+    border-radius: 0;
+    box-shadow: none;
+  }
+  /* la pantalla ocupa el ancho, salvo que el alto no deje sitio al mando
+     (~240px): entonces se estrecha manteniendo 4:3 */
+  .av-player.has-gamepad .crt-screen {
+    width: min(100%, (100dvh - 240px) * 4 / 3);
+    margin-inline: auto;
+    border-radius: 0;
+  }
+  /* el mando se queda con todo el alto que sobra y centra los controles */
+  .av-player.has-gamepad .touch-gamepad {
+    display: flex;
+    flex: 1 1 auto;
+    min-height: 0;
+  }
 }
 
 /* ===== tema claro =====
