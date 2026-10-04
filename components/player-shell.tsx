@@ -3,7 +3,9 @@
 import Link from "next/link";
 import { useState, type ReactNode } from "react";
 import { useSession } from "@/components/session-provider";
+import { SkinSelector } from "@/components/skin-selector";
 import type { Game } from "@/lib/games";
+import type { SkinId } from "@/lib/skins";
 
 type Props = {
   game: Game;
@@ -15,6 +17,13 @@ type Props = {
   onTogglePause: () => void;
   onEnd: () => void;
   onRestart: () => void;
+  /**
+   * Skin activa y su setter. Opcionales: el selector solo aparece si llegan
+   * las dos, así los juegos sin skins se ven exactamente como antes. El shell
+   * nunca ve la paleta; eso es cosa del player.
+   */
+  skin?: SkinId;
+  onSkinChange?: (id: SkinId) => void;
   /** Lo que se ve dentro de la pantalla del CRT. */
   children: ReactNode;
 };
@@ -35,6 +44,8 @@ export function PlayerShell({
   onTogglePause,
   onEnd,
   onRestart,
+  skin,
+  onSkinChange,
   children,
 }: Props) {
   const { user, saveScore } = useSession();
@@ -95,6 +106,7 @@ export function PlayerShell({
             <div className="v">{String(level).padStart(2, "0")}</div>
           </div>
         </div>
+        {skin && onSkinChange && <SkinSelector value={skin} onChange={onSkinChange} />}
         <div className="hud-actions">
           <button className="btn yellow" onClick={onTogglePause}>
             {paused ? "REANUDAR" : "PAUSA"}

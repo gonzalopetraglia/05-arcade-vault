@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef } from "react";
 import { AsteroidsEngine, type AsteroidsState } from "@/lib/games/asteroids/engine";
 import { H, W } from "@/lib/games/asteroids/entities";
+import type { AsteroidsPalette } from "@/lib/games/asteroids/skins";
 
 /** Teclas de juego: se les corta el scroll de la página mientras se juega. */
 const GAME_KEYS = ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Space"];
@@ -51,9 +52,21 @@ type Props = {
   onEngineReady: (engine: AsteroidsEngine | null) => void;
   /** El juego se ha pausado solo (pestaña oculta o ventana sin foco). */
   onAutoPause: () => void;
+  /**
+   * Paleta de la skin activa. Aquí solo se usa para crear el motor y para el
+   * fondo CSS previo al primer frame; los cambios posteriores los aplica el
+   * player con `engine.setPalette`, sin remontar el canvas.
+   */
+  palette: AsteroidsPalette;
 };
 
-export function AsteroidsCanvas({ onState, onGameOver, onEngineReady, onAutoPause }: Props) {
+export function AsteroidsCanvas({
+  onState,
+  onGameOver,
+  onEngineReady,
+  onAutoPause,
+  palette,
+}: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const engineRef = useRef<AsteroidsEngine | null>(null);
   // El efecto se monta una sola vez; los callbacks van por ref para que
@@ -62,6 +75,9 @@ export function AsteroidsCanvas({ onState, onGameOver, onEngineReady, onAutoPaus
   useEffect(() => {
     cbs.current = { onState, onGameOver, onEngineReady, onAutoPause };
   });
+  // Por ref por el mismo motivo: el motor nace con la paleta del momento y no
+  // debe recrearse (perdiendo la partida) cuando cambia la skin.
+  const initialPalette = useRef(palette);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -77,6 +93,7 @@ export function AsteroidsCanvas({ onState, onGameOver, onEngineReady, onAutoPaus
     const engine = new AsteroidsEngine(canvas, {
       onState: (s) => cbs.current.onState(s),
       onGameOver: (s) => cbs.current.onGameOver(s),
+      palette: initialPalette.current,
     });
 
     const onKeyDown = (e: KeyboardEvent) => {
@@ -135,7 +152,7 @@ export function AsteroidsCanvas({ onState, onGameOver, onEngineReady, onAutoPaus
           display: "block",
           width: "100%",
           aspectRatio: "4 / 3",
-          background: "#000",
+          background: palette.background,
           touchAction: "none",
         }}
       />

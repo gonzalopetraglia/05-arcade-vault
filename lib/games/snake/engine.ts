@@ -10,6 +10,9 @@
  *
  * No hay reinicio por tecla ni overlays en el canvas: pausar, terminar y
  * reiniciar son del shell, y el HUD es de React.
+ *
+ * Los colores salen de la paleta de la skin activa; setPalette la cambia en
+ * caliente sin tocar el estado de la partida.
  */
 
 import {
@@ -27,6 +30,7 @@ import {
   type Dir,
   type Fruit,
 } from "./entities";
+import { SKINS, type SnakePalette } from "./skins";
 import { loadFruits } from "./sprites";
 
 export type SnakeState = {
@@ -39,6 +43,8 @@ export type SnakeState = {
 type EngineOptions = {
   onState: (s: SnakeState) => void;
   onGameOver: (finalScore: number) => void;
+  /** Paleta inicial; sin ella, CLÁSICO oscuro (el aspecto original). */
+  palette?: SnakePalette;
 };
 
 const MAX_DT = 100; // ms; techo del delta entre frames
@@ -56,6 +62,7 @@ export class SnakeEngine {
   private ctx: CanvasRenderingContext2D;
   private onState: EngineOptions["onState"];
   private onGameOver: EngineOptions["onGameOver"];
+  private palette: SnakePalette;
 
   private snake: SnakeBody = SnakeBody.spawn();
   private fruit: Fruit | null = null;
@@ -84,6 +91,7 @@ export class SnakeEngine {
     this.ctx = ctx;
     this.onState = opts.onState;
     this.onGameOver = opts.onGameOver;
+    this.palette = opts.palette ?? SKINS.clasico.dark;
   }
 
   // ── API pública ─────────────────────────────────────────────────────────────
@@ -159,6 +167,20 @@ export class SnakeEngine {
     const last = this.pendingDirs[this.pendingDirs.length - 1] ?? this.snake.dir;
     if (dir === last || dir === opposite(last)) return;
     this.pendingDirs.push(dir);
+  }
+
+  /**
+   * Cambia los colores en caliente. Solo toca la paleta: puntuación, vidas,
+   * nivel, serpiente y fruta siguen donde estaban. Con el bucle parado (pausa,
+   * muerte congelada fuera de foco o fin de partida) se pinta un frame a mano,
+   * porque si no el cambio no se vería hasta reanudar. Mientras el atlas carga
+   * aún no hay nada que redibujar.
+   */
+  setPalette(palette: SnakePalette): void {
+    this.palette = palette;
+    if (this.running || this.destroyed) return;
+    if (!this.img && !this.imgFailed) return;
+    this.draw();
   }
 
   destroy(): void {
@@ -295,8 +317,9 @@ export class SnakeEngine {
 
   private draw(): void {
     const { ctx } = this;
-    drawBoard(ctx);
-    if (this.fruit) drawFruit(ctx, this.img, this.fruit);
-    drawSnake(ctx, this.snake);
+    const { palette } = this;
+    drawBoard(ctx, palette);
+    if (this.fruit) drawFruit(ctx, this.img, this.fruit, palette);
+    drawSnake(ctx, this.snake, palette);
   }
 }
