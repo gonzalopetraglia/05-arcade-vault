@@ -3154,22 +3154,70 @@ a {
 }
 
 /* ===== mando táctil =====
-   Teclas de máquina recreativa: cada botón tiene un canto inferior que se
-   hunde al pulsar, porque en cristal no hay tacto y la vista tiene que
-   confirmar la pulsación. Los colores salen de los tokens con color-mix, así
-   que el tema claro hereda sus versiones tintadas sin redefinir nada. */
+   Piel del Gamepad MK-II: carcasa con doble borde y textura, teclas en
+   relieve con un canto inferior que se hunde al pulsar, porque en cristal no
+   hay tacto y la vista tiene que confirmar la pulsación. */
 /* fuera de un puntero grueso el mando no existe: el escritorio queda igual */
 .touch-gamepad {
+  /* Paleta del Gamepad MK-II (references/gamepad-assets). Vive en la carcasa
+     y no en :root porque en horizontal la carcasa pasa a display: contents y
+     las variables tienen que seguir bajando a cada media carcasa por el DOM. */
+  --gp-shell-top: #1c1c28;
+  --gp-shell-bot: #0c0c14;
+  --gp-shell-glow: rgba(0, 245, 255, 0.4);
+  --gp-dots: rgba(255, 255, 255, 0.03);
+  --gp-key-top: #1a1a25;
+  --gp-key-bot: #0a0a12;
+  --gp-key-edge: #050507;
+  --gp-arrow: var(--ink-dim);
+  --gp-lit: var(--cyan);
+  --gp-glow-on:
+    inset 0 0 16px color-mix(in srgb, var(--gp-lit) 45%, transparent),
+    0 0 16px color-mix(in srgb, var(--gp-lit) 50%, transparent);
+  /* la comparten la carcasa entera y las dos medias carcasas de horizontal */
+  --gp-shell-shadow:
+    0 30px 80px -30px var(--gp-shell-glow), 0 0 0 1px rgba(255, 255, 255, 0.02),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06), inset 0 -2px 0 rgba(0, 0, 0, 0.6);
+  position: relative;
   display: none;
   align-items: center;
   justify-content: space-between;
-  gap: 24px;
-  padding: 20px 22px 26px;
-  background: var(--bg-2);
-  border-top: 1px solid var(--line);
+  /* ajustado para que cruceta (174px) y A/B (166px) quepan a 390px de ancho
+     con el margen de la carcasa */
+  gap: 8px;
+  padding: 16px 12px;
+  background: linear-gradient(180deg, var(--gp-shell-top) 0%, var(--gp-shell-bot) 100%);
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  box-shadow: var(--gp-shell-shadow);
   user-select: none;
   -webkit-user-select: none;
   -webkit-touch-callout: none;
+}
+/* borde interior y textura de puntos: decoración pura, nunca reciben toques */
+.touch-gamepad::before,
+.touch-gamepad::after {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+}
+.touch-gamepad::before {
+  inset: 4px;
+  border: 1px solid color-mix(in srgb, var(--gp-lit) 14%, transparent);
+  border-radius: calc(22px - 4px);
+}
+.touch-gamepad::after {
+  inset: 0;
+  background-image: radial-gradient(var(--gp-dots) 1px, transparent 1px);
+  background-size: 8px 8px;
+  border-radius: inherit;
+  opacity: 0.6;
+}
+/* los controles por encima de la textura */
+.gamepad-dpad,
+.gamepad-actions {
+  position: relative;
+  z-index: 1;
 }
 .touch-gamepad button {
   touch-action: none;
@@ -3177,59 +3225,51 @@ a {
   cursor: pointer;
 }
 
-/* cruceta: una cruz de 3×3 con un buje en el centro */
+/* cruceta: una cruz de 3×3 con un buje real en el centro. Las teclas miden
+   56px y no los 50px del diseño porque es el mínimo táctil de la SPEC 10; el
+   resto se escala en proporción. */
 .gamepad-dpad {
   position: relative;
   display: grid;
   grid-template-columns: repeat(3, 56px);
   grid-template-rows: repeat(3, 56px);
+  gap: 3px;
   grid-template-areas:
     ". up ."
     "left hub right"
     ". down .";
-}
-.gamepad-dpad::before {
-  content: "";
-  grid-area: hub;
-  background: var(--bg-3);
-  border: 1px solid color-mix(in srgb, var(--cyan) 30%, transparent);
-  background-image: radial-gradient(
-    circle at center,
-    color-mix(in srgb, var(--cyan) 35%, transparent) 0 6px,
-    transparent 7px
-  );
 }
 .pad-btn {
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 0;
-  font-family: var(--pixel);
-  font-size: 16px;
-  color: var(--cyan);
-  background: var(--bg-3);
-  border: 1px solid color-mix(in srgb, var(--cyan) 50%, transparent);
-  box-shadow: 0 4px 0 color-mix(in srgb, var(--cyan) 28%, var(--bg));
+  color: var(--gp-arrow);
+  background: linear-gradient(180deg, var(--gp-key-top), var(--gp-key-bot));
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 11px;
+  box-shadow:
+    0 4px 0 var(--gp-key-edge),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.6);
   transition:
-    transform 50ms ease,
-    box-shadow 50ms ease,
-    background 50ms ease;
+    transform 80ms,
+    box-shadow 140ms,
+    color 140ms,
+    border-color 140ms,
+    background 140ms;
 }
 .pad-btn.up {
   grid-area: up;
-  border-radius: 8px 8px 0 0;
 }
 .pad-btn.down {
   grid-area: down;
-  border-radius: 0 0 8px 8px;
 }
 .pad-btn.left {
   grid-area: left;
-  border-radius: 8px 0 0 8px;
 }
 .pad-btn.right {
   grid-area: right;
-  border-radius: 0 8px 8px 0;
 }
 /* triángulos dibujados y no glifos: la fuente pixel no tiene ▲◀▶▼ y la de
    reserva pinta ◀▶ más pequeños que ▲▼ */
@@ -3238,6 +3278,7 @@ a {
   height: 16px;
   background: currentColor;
   clip-path: polygon(50% 0, 100% 100%, 0 100%);
+  transition: filter 140ms;
 }
 .pad-btn.down .pad-arrow {
   rotate: 180deg;
@@ -3248,18 +3289,68 @@ a {
 .pad-btn.right .pad-arrow {
   rotate: 90deg;
 }
+/* el canto de 4px pasa a 1px: la tecla baja 3px en vez de solo cambiar de
+   color, que en cristal es la única confirmación de la pulsación */
 .pad-btn:active {
   transform: translateY(3px);
-  box-shadow: 0 1px 0 color-mix(in srgb, var(--cyan) 28%, var(--bg));
-  background: color-mix(in srgb, var(--cyan) 22%, var(--bg-3));
+  color: var(--gp-lit);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--gp-lit) 8%, var(--gp-key-top)),
+    color-mix(in srgb, var(--gp-lit) 4%, var(--gp-key-bot))
+  );
+  border-color: var(--gp-lit);
+  box-shadow:
+    0 1px 0 var(--gp-key-edge),
+    var(--gp-glow-on);
+}
+/* el clip-path recorta el box-shadow, así que el brillo del triángulo va
+   con drop-shadow */
+.pad-btn:active .pad-arrow {
+  filter: drop-shadow(0 0 6px var(--gp-lit)) drop-shadow(0 0 12px var(--gp-lit));
 }
 
-/* A y B en diagonal: A arriba a la derecha, como en los mandos clásicos */
+/* buje: no es una tecla, solo el centro hundido de la cruz con una gema que
+   late para que el mando parezca encendido */
+.pad-hub {
+  grid-area: hub;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(circle at 50% 50%, var(--gp-key-top) 0%, var(--gp-key-bot) 80%);
+  border: 1px solid color-mix(in srgb, var(--gp-lit) 15%, transparent);
+  border-radius: 7px;
+  box-shadow:
+    inset 0 0 12px rgba(0, 0, 0, 0.8),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  pointer-events: none;
+}
+.pad-hub-gem {
+  width: 13px;
+  height: 13px;
+  background: var(--gp-lit);
+  box-shadow:
+    0 0 10px var(--gp-lit),
+    inset 0 0 4px rgba(0, 0, 0, 0.5);
+  clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
+  /* mismo pulse-led que el LED de "en vivo" del leaderboard, más lento */
+  animation: pulse-led 2s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  /* la gema es pura decoración: quieta y a plena luz */
+  .pad-hub-gem {
+    animation: none;
+  }
+}
+
+/* A y B en fila como en el MK-II: B a la izquierda y A a la derecha, que es
+   donde cae el pulgar para la acción principal. El relleno vertical deja sitio
+   a las etiquetas, que cuelgan bajo cada botón sin descentrar la fila. */
 .gamepad-actions {
-  display: grid;
-  grid-template-columns: repeat(2, 64px);
-  grid-template-rows: 40px 64px 40px;
-  column-gap: 18px;
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  padding: 24px 0;
 }
 .act-btn {
   --act: var(--magenta);
@@ -3267,40 +3358,60 @@ a {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 64px;
-  height: 64px;
+  width: 72px;
+  height: 72px;
   padding: 0;
   border-radius: 50%;
-  background: var(--bg-3);
   border: 2px solid var(--act);
-  box-shadow: 0 5px 0 color-mix(in srgb, var(--act) 35%, var(--bg));
+  /* brillo arriba a la izquierda sobre una esfera que oscurece hacia el borde */
+  background:
+    radial-gradient(circle at 32% 26%, rgba(255, 255, 255, 0.25), transparent 50%),
+    radial-gradient(
+      circle at 50% 55%,
+      color-mix(in srgb, var(--act) 70%, transparent),
+      color-mix(in srgb, color-mix(in srgb, var(--act) 43%, black) 95%, transparent) 75%
+    );
+  box-shadow:
+    0 6px 0 var(--gp-key-edge),
+    0 0 22px color-mix(in srgb, var(--act) 40%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    inset 0 -4px 8px rgba(0, 0, 0, 0.4);
   transition:
-    transform 50ms ease,
-    box-shadow 50ms ease,
-    background 50ms ease;
-}
-.act-btn.a {
-  grid-column: 2;
-  grid-row: 1 / span 2;
-  align-self: start;
+    transform 80ms,
+    box-shadow 140ms;
 }
 .act-btn.b {
-  --act: var(--yellow);
-  grid-column: 1;
-  grid-row: 2 / span 2;
-  align-self: end;
+  --act: var(--cyan);
 }
 .act-key {
+  position: relative;
+  z-index: 2;
   font-family: var(--pixel);
-  font-size: 18px;
-  color: var(--act);
-  text-shadow: 0 0 8px color-mix(in srgb, var(--act) 60%, transparent);
+  font-size: 22px;
+  letter-spacing: 0.02em;
+  color: #fff;
+  text-shadow:
+    0 0 8px var(--act),
+    0 0 18px var(--act),
+    0 1px 0 rgba(0, 0, 0, 0.6);
+}
+/* anillo discontinuo: solo aparece al pulsar, como eco de la pulsación */
+.act-ring {
+  position: absolute;
+  inset: -8px;
+  border-radius: 50%;
+  border: 1px dashed var(--act);
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    opacity 140ms,
+    transform 200ms;
 }
 /* la etiqueta va bajo la tecla, fuera del círculo: el círculo dice qué tecla
    es y la etiqueta qué hace en este juego */
 .act-label {
   position: absolute;
-  top: calc(100% + 10px);
+  top: calc(100% + 12px);
   left: 50%;
   transform: translateX(-50%);
   font-family: var(--pixel);
@@ -3310,9 +3421,15 @@ a {
   color: var(--ink-dim);
 }
 .act-btn:active {
-  transform: translateY(4px);
-  box-shadow: 0 1px 0 color-mix(in srgb, var(--act) 35%, var(--bg));
-  background: color-mix(in srgb, var(--act) 28%, var(--bg-3));
+  transform: translateY(4px) scale(0.97);
+  box-shadow:
+    0 1px 0 var(--gp-key-edge),
+    0 0 36px color-mix(in srgb, var(--act) 40%, transparent),
+    inset 0 0 18px rgba(0, 0, 0, 0.5);
+}
+.act-btn:active .act-ring {
+  opacity: 1;
+  transform: scale(1.08);
 }
 
 /* botón que el juego no usa: presente para que el mando sea siempre el mismo,
@@ -3320,20 +3437,93 @@ a {
 .touch-gamepad .is-off {
   --act: var(--ink-faint);
   opacity: 0.35;
-  box-shadow: none;
+  box-shadow:
+    0 6px 0 var(--gp-key-edge),
+    inset 0 -4px 8px rgba(0, 0, 0, 0.4);
 }
 .touch-gamepad .is-off .act-key {
   text-shadow: none;
 }
 .touch-gamepad .is-off:active {
   transform: none;
-  background: var(--bg-3);
-  box-shadow: none;
+  box-shadow:
+    0 6px 0 var(--gp-key-edge),
+    inset 0 -4px 8px rgba(0, 0, 0, 0.4);
+}
+.touch-gamepad .is-off .act-ring {
+  display: none;
 }
 
-/* sobre papel claro el resplandor ensucia el texto en vez de iluminarlo */
+/* tema claro: carcasa de papel con botones en relieve. Sin resplandores: sobre
+   papel el glow ensucia en vez de iluminar, así que la pulsación se lee por el
+   hundimiento y el tinte cian. Las sombras negras del diseño oscuro se cambian
+   por grises suaves por la misma razón. */
+:root[data-theme="light"] .touch-gamepad {
+  --gp-shell-top: var(--bg-2);
+  --gp-shell-bot: var(--bg-3);
+  --gp-shell-glow: rgba(20, 20, 31, 0.18);
+  --gp-dots: rgba(20, 20, 31, 0.05);
+  --gp-key-top: #f7f4ec;
+  --gp-key-bot: #e0dbc9;
+  --gp-key-edge: #b9b3a0;
+  --gp-arrow: var(--ink-dim);
+  --gp-lit: var(--cyan);
+  /* "ninguno", pero como sombra válida: va dentro de listas de box-shadow y
+     un `none` ahí anularía la declaración entera */
+  --gp-glow-on: 0 0 0 transparent;
+  --gp-shell-shadow:
+    0 30px 80px -30px var(--gp-shell-glow), 0 1px 2px rgba(20, 20, 31, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6), inset 0 -2px 0 rgba(20, 20, 31, 0.08);
+}
+:root[data-theme="light"] .pad-btn {
+  border-color: rgba(20, 20, 31, 0.1);
+  box-shadow:
+    0 4px 0 var(--gp-key-edge),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8),
+    inset 0 -2px 4px rgba(20, 20, 31, 0.08);
+}
+:root[data-theme="light"] .pad-btn:active {
+  background: color-mix(in srgb, var(--gp-lit) 18%, var(--gp-key-top));
+  border-color: var(--gp-lit);
+  box-shadow: 0 1px 0 var(--gp-key-edge);
+}
+:root[data-theme="light"] .pad-btn:active .pad-arrow {
+  filter: none;
+}
+:root[data-theme="light"] .pad-hub {
+  box-shadow:
+    inset 0 0 8px rgba(20, 20, 31, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+:root[data-theme="light"] .pad-hub-gem {
+  box-shadow: none;
+}
+/* relleno lleno del color de tema claro (no al 70% como en oscuro) para que
+   la letra blanca siga pasando 4.5:1 */
+:root[data-theme="light"] .act-btn {
+  background:
+    radial-gradient(circle at 32% 26%, rgba(255, 255, 255, 0.25), transparent 50%),
+    radial-gradient(circle at 50% 55%, var(--act), color-mix(in srgb, var(--act) 80%, black) 75%);
+  box-shadow:
+    0 6px 0 var(--gp-key-edge),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3),
+    inset 0 -4px 8px rgba(0, 0, 0, 0.2);
+}
+:root[data-theme="light"] .act-btn:active {
+  box-shadow:
+    0 1px 0 var(--gp-key-edge),
+    inset 0 0 12px rgba(0, 0, 0, 0.25);
+}
 :root[data-theme="light"] .act-key {
   text-shadow: none;
+}
+/* las reglas claras de .act-btn pesan más que las de .is-off: se repite aquí
+   que el botón sin uso no se hunde */
+:root[data-theme="light"] .touch-gamepad .is-off,
+:root[data-theme="light"] .touch-gamepad .is-off:active {
+  box-shadow:
+    0 6px 0 var(--gp-key-edge),
+    inset 0 -4px 8px rgba(0, 0, 0, 0.2);
 }
 
 /* ===== layout táctil del player =====
@@ -3372,11 +3562,32 @@ a {
     margin-inline: auto;
     border-radius: 0;
   }
-  /* el mando se queda con todo el alto que sobra y centra los controles */
+  /* el mando se queda con todo el alto que sobra y centra los controles; el
+     margen sale de ese sobrante para que la carcasa se vea como un panel */
   .av-player.has-gamepad .touch-gamepad {
     display: flex;
     flex: 1 1 auto;
     min-height: 0;
+    margin: 8px;
+  }
+}
+
+/* pantallas estrechas: encogen A/B, su separación y la carcasa, nunca la
+   cruceta, que ya está en el mínimo táctil de 56px */
+@media (pointer: coarse) and (max-width: 379px) {
+  .av-player.has-gamepad .touch-gamepad {
+    padding-inline: 8px;
+    border-radius: 16px;
+  }
+  .av-player.has-gamepad .touch-gamepad::before {
+    border-radius: calc(16px - 4px);
+  }
+  .av-player.has-gamepad .gamepad-actions {
+    gap: 16px;
+  }
+  .av-player.has-gamepad .act-btn {
+    width: 64px;
+    height: 64px;
   }
 }
 
@@ -3546,15 +3757,58 @@ html.av-touch-lock body {
   .av-player.has-gamepad .gamepad-actions {
     order: 2;
   }
+  /* la carcasa entera no existe en horizontal: su decoración pasa a cada
+     media carcasa */
+  .av-player.has-gamepad .touch-gamepad::before,
+  .av-player.has-gamepad .touch-gamepad::after {
+    display: none;
+  }
+  /* media carcasa por lado, con la misma piel que la entera. Las dos miden lo
+     mismo de ancho y reparten el sobrante con márgenes automáticos, así el CRT
+     queda centrado aunque la cruceta sea más ancha que A/B. */
   .av-player.has-gamepad :is(.gamepad-dpad, .gamepad-actions) {
-    flex: 1 1 0;
+    flex: none;
+    box-sizing: border-box;
+    width: 194px;
+    margin-inline: auto;
+    padding: 10px;
     justify-content: center;
     align-content: center;
+    background: linear-gradient(180deg, var(--gp-shell-top) 0%, var(--gp-shell-bot) 100%);
+    border: 1px solid var(--line);
+    border-radius: 22px;
+    box-shadow: var(--gp-shell-shadow);
   }
-  /* 4:3 con todo el alto, salvo que los lados no dejen ~180px a cada grupo
-     del mando: entonces manda el ancho */
+  .av-player.has-gamepad .gamepad-dpad {
+    /* el grid de 3×56 queda centrado dentro del panel */
+    grid-template-columns: repeat(3, 56px);
+  }
+  .av-player.has-gamepad .gamepad-actions {
+    padding-block: 34px;
+  }
+  .av-player.has-gamepad :is(.gamepad-dpad, .gamepad-actions)::before,
+  .av-player.has-gamepad :is(.gamepad-dpad, .gamepad-actions)::after {
+    content: "";
+    position: absolute;
+    pointer-events: none;
+    z-index: -1;
+  }
+  .av-player.has-gamepad :is(.gamepad-dpad, .gamepad-actions)::before {
+    inset: 4px;
+    border: 1px solid color-mix(in srgb, var(--gp-lit) 14%, transparent);
+    border-radius: calc(22px - 4px);
+  }
+  .av-player.has-gamepad :is(.gamepad-dpad, .gamepad-actions)::after {
+    inset: 0;
+    background-image: radial-gradient(var(--gp-dots) 1px, transparent 1px);
+    background-size: 8px 8px;
+    border-radius: inherit;
+    opacity: 0.6;
+  }
+  /* 4:3 con todo el alto, salvo que los lados no dejen sitio a cada media
+     carcasa (194px + 8px de margen a cada lado): entonces manda el ancho */
   .av-player.has-gamepad .crt-screen {
-    width: min(100dvh * 4 / 3, 100vw - 360px);
+    width: min(100dvh * 4 / 3, 100vw - 420px);
   }
 }
 
