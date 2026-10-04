@@ -3336,6 +3336,12 @@ a {
   /* mismo pulse-led que el LED de "en vivo" del leaderboard, más lento */
   animation: pulse-led 2s ease-in-out infinite;
 }
+@media (prefers-reduced-motion: reduce) {
+  /* la gema es pura decoración: quieta y a plena luz */
+  .pad-hub-gem {
+    animation: none;
+  }
+}
 
 /* A y B en fila como en el MK-II: B a la izquierda y A a la derecha, que es
    donde cae el pulgar para la acción principal. El relleno vertical deja sitio
