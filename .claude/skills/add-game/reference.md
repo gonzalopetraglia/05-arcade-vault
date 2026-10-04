@@ -26,7 +26,16 @@ export function formatScore(n: number): string; // Intl.NumberFormat("es-ES")
 
 `Game` **no** tiene `best` ni `plays`. Esos dos números salen de la vista `game_stats` y viajan en `GameWithStats` (`app/api/games/route.ts`).
 
-Ids ocupados y su `sort_order` (0..8): `bloque-buster`, `caida`, `serpentina`, `gloton`, `invasores`, `rocas`, `ranaria`, `asteroides`, `duelo-pixel`.
+Ids ocupados y su `sort_order`:
+
+- `0002_seed_games.sql` (0..8): `bloque-buster`, `caida`, `serpentina`, `gloton`, `invasores`, `rocas`, `ranaria`, `asteroides`, `duelo-pixel`.
+- `0003_seed_tetris.sql`: `tetris` (9).
+- `0004_seed_arkanoid.sql`: `arkanoid` (10).
+- `0005_seed_snake.sql`: `snake` (11).
+
+Siguiente `sort_order` libre: **12**. Siguiente migración: `0006_seed_<id>.sql`. Antes de fiarte de esto, revisa `supabase/migrations/`: si hay migraciones más nuevas, mandan ellas.
+
+Las entradas simuladas del catálogo (`duelo-pixel`, `invasores`, `ranaria`, `gloton`…) ya tienen fila en `games`. Si se porta una de ellas sin cambiarle el id, no lleva seed nuevo: `on conflict (id) do nothing` la ignoraría. Si cambian sus textos, hace falta un `update` en su lugar.
 
 ## API del motor — patrón de `lib/games/asteroids/engine.ts`
 
@@ -47,11 +56,11 @@ export class AsteroidsEngine {
   constructor(canvas: HTMLCanvasElement, opts: EngineOptions);
   start(): void;
   pause(): void;
-  resume(): void;      // pone lastTime = null: el primer dt tras la pausa es 0
+  resume(): void; // pone lastTime = null: el primer dt tras la pausa es 0
   restart(): void;
-  forceGameOver(): void;  // botón FIN
-  setKey(code: string, down: boolean): void;  // teclado y táctil entran por aquí
-  destroy(): void;     // cancela el rAF pendiente
+  forceGameOver(): void; // botón FIN
+  setKey(code: string, down: boolean): void; // teclado y táctil entran por aquí
+  destroy(): void; // cancela el rAF pendiente
 }
 ```
 
