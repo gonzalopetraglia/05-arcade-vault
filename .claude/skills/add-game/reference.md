@@ -150,7 +150,7 @@ on conflict (id) do nothing;
 - Player y HUD: `.av-player`, `.player-hud`, `.hud-stat` (`.l`, `.v`, `.lives`, `.level`), `.hud-actions`.
 - Marco CRT: `.crt`, `.crt-screen`, `.crt-content`, `.crt-bottom`, `.led`.
 - Modal de fin de partida: `.modal-bd`, `.modal`, `.final`, `.input-row`, `.actions`, `.toast-saved`, `.toast-error`.
-- Controles táctiles: `.touch-pad` (`display: none` salvo bajo `@media (pointer: coarse)`), `.touch-pad.left`, `.touch-pad.right`, `.touch-btn`, `.touch-btn.rot`.
+- Mando táctil (SPEC 10): `.touch-gamepad`, `.gamepad-dpad`, `.gamepad-actions`, `.pad-btn`, `.act-btn`, `.is-off`; solo visible bajo `@media (pointer: coarse)` en `.av-player.has-gamepad`. El player pasa `gamepad={{ setKey, a?, b? }}` a `PlayerShell`; el canvas no lleva controles táctiles propios.
 - Portadas: `.cover-bg` más `.cover-bricks`, `.cover-tetro`, `.cover-snake`, `.cover-glot`, `.cover-invaders`, `.cover-rocas`, `.cover-rana`, `.cover-duelo`.
 - Botones: `.btn` con `.magenta`, `.yellow`, `.ghost`, `.lg`, `.xl`, `.pulse`, `.press`.
 
