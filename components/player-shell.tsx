@@ -1,11 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { useSession } from "@/components/session-provider";
 import { SkinSelector } from "@/components/skin-selector";
 import { TouchGamepad, type GamepadConfig } from "@/components/touch-gamepad";
 import type { Game } from "@/lib/games";
+import { useCoarsePointer } from "@/lib/use-coarse-pointer";
 import type { SkinId } from "@/lib/skins";
 
 type Props = {
@@ -53,6 +54,8 @@ export function PlayerShell({
   children,
 }: Props) {
   const { user, saveScore } = useSession();
+  const coarse = useCoarsePointer();
+  const touch = coarse && gamepad !== undefined;
   const [saved, setSaved] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -61,6 +64,16 @@ export function PlayerShell({
   const [typedName, setTypedName] = useState<string | null>(null);
 
   const name = typedName ?? user?.name ?? "INVITADO";
+
+  // Con el mando en pantalla, un dedo que se sale de un botón haría scroll,
+  // zoom o pull-to-refresh. La clase va en <html> porque es quien hace scroll;
+  // se retira al desmontar, así SALIR devuelve la página a la normalidad.
+  useEffect(() => {
+    if (!touch) return;
+    const root = document.documentElement;
+    root.classList.add("av-touch-lock");
+    return () => root.classList.remove("av-touch-lock");
+  }, [touch]);
 
   const restart = () => {
     setSaved(false);
