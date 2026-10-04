@@ -3203,6 +3203,171 @@ a {
   letter-spacing: 0;
 }
 
+/* ===== mando táctil =====
+   Teclas de máquina recreativa: cada botón tiene un canto inferior que se
+   hunde al pulsar, porque en cristal no hay tacto y la vista tiene que
+   confirmar la pulsación. Los colores salen de los tokens con color-mix, así
+   que el tema claro hereda sus versiones tintadas sin redefinir nada. */
+.touch-gamepad {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 20px 22px 26px;
+  background: var(--bg-2);
+  border-top: 1px solid var(--line);
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+.touch-gamepad button {
+  touch-action: none;
+  -webkit-tap-highlight-color: transparent;
+  cursor: pointer;
+}
+
+/* cruceta: una cruz de 3×3 con un buje en el centro */
+.gamepad-dpad {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(3, 56px);
+  grid-template-rows: repeat(3, 56px);
+  grid-template-areas:
+    ". up ."
+    "left hub right"
+    ". down .";
+}
+.gamepad-dpad::before {
+  content: "";
+  grid-area: hub;
+  background: var(--bg-3);
+  border: 1px solid color-mix(in srgb, var(--cyan) 30%, transparent);
+  background-image: radial-gradient(
+    circle at center,
+    color-mix(in srgb, var(--cyan) 35%, transparent) 0 6px,
+    transparent 7px
+  );
+}
+.pad-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  font-family: var(--pixel);
+  font-size: 16px;
+  color: var(--cyan);
+  background: var(--bg-3);
+  border: 1px solid color-mix(in srgb, var(--cyan) 50%, transparent);
+  box-shadow: 0 4px 0 color-mix(in srgb, var(--cyan) 28%, var(--bg));
+  transition:
+    transform 50ms ease,
+    box-shadow 50ms ease,
+    background 50ms ease;
+}
+.pad-btn.up {
+  grid-area: up;
+  border-radius: 8px 8px 0 0;
+}
+.pad-btn.down {
+  grid-area: down;
+  border-radius: 0 0 8px 8px;
+}
+.pad-btn.left {
+  grid-area: left;
+  border-radius: 8px 0 0 8px;
+}
+.pad-btn.right {
+  grid-area: right;
+  border-radius: 0 8px 8px 0;
+}
+.pad-btn:active {
+  transform: translateY(3px);
+  box-shadow: 0 1px 0 color-mix(in srgb, var(--cyan) 28%, var(--bg));
+  background: color-mix(in srgb, var(--cyan) 22%, var(--bg-3));
+}
+
+/* A y B en diagonal: A arriba a la derecha, como en los mandos clásicos */
+.gamepad-actions {
+  display: grid;
+  grid-template-columns: repeat(2, 64px);
+  grid-template-rows: 40px 64px 40px;
+  column-gap: 18px;
+}
+.act-btn {
+  --act: var(--magenta);
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  padding: 0;
+  border-radius: 50%;
+  background: var(--bg-3);
+  border: 2px solid var(--act);
+  box-shadow: 0 5px 0 color-mix(in srgb, var(--act) 35%, var(--bg));
+  transition:
+    transform 50ms ease,
+    box-shadow 50ms ease,
+    background 50ms ease;
+}
+.act-btn.a {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  align-self: start;
+}
+.act-btn.b {
+  --act: var(--yellow);
+  grid-column: 1;
+  grid-row: 2 / span 2;
+  align-self: end;
+}
+.act-key {
+  font-family: var(--pixel);
+  font-size: 18px;
+  color: var(--act);
+  text-shadow: 0 0 8px color-mix(in srgb, var(--act) 60%, transparent);
+}
+/* la etiqueta va bajo la tecla, fuera del círculo: el círculo dice qué tecla
+   es y la etiqueta qué hace en este juego */
+.act-label {
+  position: absolute;
+  top: calc(100% + 10px);
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: var(--pixel);
+  font-size: 7px;
+  letter-spacing: 0.12em;
+  white-space: nowrap;
+  color: var(--ink-dim);
+}
+.act-btn:active {
+  transform: translateY(4px);
+  box-shadow: 0 1px 0 color-mix(in srgb, var(--act) 35%, var(--bg));
+  background: color-mix(in srgb, var(--act) 28%, var(--bg-3));
+}
+
+/* botón que el juego no usa: presente para que el mando sea siempre el mismo,
+   pero sin color ni respuesta */
+.touch-gamepad .is-off {
+  --act: var(--ink-faint);
+  opacity: 0.35;
+  box-shadow: none;
+}
+.touch-gamepad .is-off .act-key {
+  text-shadow: none;
+}
+.touch-gamepad .is-off:active {
+  transform: none;
+  background: var(--bg-3);
+  box-shadow: none;
+}
+
+/* sobre papel claro el resplandor ensucia el texto en vez de iluminarlo */
+:root[data-theme="light"] .act-key {
+  text-shadow: none;
+}
+
 /* ===== tema claro =====
    Papel cálido en vez de negro. Los acentos neón puros no se leen sobre fondo
    claro (el amarillo #f5ff00 da 1.1:1), así que aquí son versiones tintadas
