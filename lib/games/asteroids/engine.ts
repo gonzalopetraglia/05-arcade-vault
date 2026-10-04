@@ -11,6 +11,8 @@
  *     button's job.
  *   - killShip() and forceGameOver() report the final score through onGameOver.
  *   - the game over subtitle points at the button instead of at SPACE.
+ *   - every color comes from the active skin palette (setPalette swaps it hot,
+ *     without touching the game state). CLÁSICO keeps the original colors.
  * Everything else — the 20/50/100 points, the 3x power-up, the 3 s of
  * invincibility, drawHUD, the overlay — is identical.
  */
@@ -30,6 +32,7 @@ import {
   rand,
   type Keys,
 } from "./entities";
+import { SKINS, type AsteroidsPalette } from "./skins";
 
 export type AsteroidsState = {
   score: number;
@@ -41,12 +44,15 @@ export type AsteroidsState = {
 type EngineOptions = {
   onState: (s: AsteroidsState) => void;
   onGameOver: (finalScore: number) => void;
+  /** Paleta inicial; sin ella, CLÁSICO oscuro (el aspecto original). */
+  palette?: AsteroidsPalette;
 };
 
 export class AsteroidsEngine {
   private ctx: CanvasRenderingContext2D;
   private onState: EngineOptions["onState"];
   private onGameOver: EngineOptions["onGameOver"];
+  private palette: AsteroidsPalette;
 
   private keys: Keys = {};
   private justPressed: Keys = {};
@@ -77,6 +83,7 @@ export class AsteroidsEngine {
     this.ctx = ctx;
     this.onState = opts.onState;
     this.onGameOver = opts.onGameOver;
+    this.palette = opts.palette ?? SKINS.clasico.dark;
   }
 
   // ── API pública ─────────────────────────────────────────────────────────────
@@ -124,6 +131,16 @@ export class AsteroidsEngine {
     } else {
       this.keys[code] = false;
     }
+  }
+
+  /**
+   * Cambia los colores en caliente. Solo toca la paleta: puntuación, vidas,
+   * nivel y entidades siguen donde estaban. Con el bucle parado (pausa) se
+   * pinta un frame a mano, porque si no el cambio no se vería hasta reanudar.
+   */
+  setPalette(palette: AsteroidsPalette): void {
+    this.palette = palette;
+    if (!this.running && !this.destroyed) this.draw();
   }
 
   destroy(): void {
@@ -319,7 +336,8 @@ export class AsteroidsEngine {
     ctx.save();
     ctx.translate(x, y);
     ctx.rotate(-Math.PI / 2);
-    ctx.strokeStyle = "#fff";
+    ctx.strokeStyle = this.palette.lifeIcon;
+    this.glow(this.palette.lifeIcon);
     ctx.lineWidth = 1.2;
     ctx.lineJoin = "round";
     ctx.beginPath();
@@ -334,7 +352,8 @@ export class AsteroidsEngine {
 
   private drawHUD(): void {
     const ctx = this.ctx;
-    ctx.fillStyle = "#fff";
+    ctx.fillStyle = this.palette.hudText;
+    this.glow(this.palette.hudText);
     ctx.font = "15px monospace";
 
     ctx.textAlign = "left";
@@ -347,7 +366,8 @@ export class AsteroidsEngine {
 
     if (this.ship.tripleShot > 0) {
       ctx.textAlign = "left";
-      ctx.fillStyle = "#0ff";
+      ctx.fillStyle = this.palette.hudAccent;
+      this.glow(this.palette.hudAccent);
       ctx.fillText(`3x  ${this.ship.tripleShot.toFixed(1)}s`, 14, 46);
     }
   }
@@ -355,24 +375,35 @@ export class AsteroidsEngine {
   private drawOverlay(title: string, sub: string): void {
     const ctx = this.ctx;
     ctx.textAlign = "center";
-    ctx.fillStyle = "#fff";
+    ctx.fillStyle = this.palette.overlayTitle;
+    this.glow(this.palette.overlayTitle);
     ctx.font = "bold 46px monospace";
     ctx.fillText(title, W / 2, H / 2 - 18);
     ctx.font = "18px monospace";
-    ctx.fillStyle = "rgba(255,255,255,0.65)";
+    ctx.fillStyle = this.palette.overlaySub;
+    this.glow(this.palette.overlaySub);
     ctx.fillText(sub, W / 2, H / 2 + 22);
+  }
+
+  /** Glow de NEON para el texto del canvas; con `glowBlur` 0 no hace nada. */
+  private glow(color: string): void {
+    this.ctx.shadowColor = color;
+    this.ctx.shadowBlur = this.palette.glowBlur;
   }
 
   private draw(): void {
     const ctx = this.ctx;
-    ctx.fillStyle = "#000";
+    const palette = this.palette;
+    // El glow del frame anterior no puede sobrevivir al borrado del fondo.
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = palette.background;
     ctx.fillRect(0, 0, W, H);
 
-    this.particles.forEach((p) => p.draw(ctx));
-    this.asteroids.forEach((a) => a.draw(ctx));
-    this.powerUps.forEach((p) => p.draw(ctx));
-    this.bullets.forEach((b) => b.draw(ctx));
-    this.ship.draw(ctx);
+    this.particles.forEach((p) => p.draw(ctx, palette));
+    this.asteroids.forEach((a) => a.draw(ctx, palette));
+    this.powerUps.forEach((p) => p.draw(ctx, palette));
+    this.bullets.forEach((b) => b.draw(ctx, palette));
+    this.ship.draw(ctx, palette);
 
     this.drawHUD();
 

@@ -14,6 +14,9 @@
  *   - the p/Escape pause shortcut, the level-skip click handler and the three
  *     canvas overlays are gone: pausing, ending and restarting belong to the
  *     shell, and the HUD is React's.
+ *   - every color comes from the active skin palette, and setPalette swaps it
+ *     hot without touching the game state. CLÁSICO draws the spritesheet over
+ *     black exactly as before; NEON and RETRO draw flat shapes in the same boxes.
  * Everything else — the speeds, the 10 points per block, the 3 lives, the five
  * levels and the block bounce that always flips vy — is identical.
  */
@@ -35,6 +38,7 @@ import {
   type Paddle,
 } from "./entities";
 import { LEVELS } from "./levels";
+import { SKINS, withAlpha, type ArkanoidPalette } from "./skins";
 import { EXPLOSION_FRAMES, SPRITES, drawFrame, drawSprite, loadSpritesheet } from "./sprites";
 
 export type ArkanoidState = {
@@ -47,6 +51,8 @@ export type ArkanoidState = {
 type EngineOptions = {
   onState: (s: ArkanoidState) => void;
   onGameOver: (finalScore: number) => void;
+  /** Paleta inicial; sin ella, CLÁSICO oscuro (el aspecto original). */
+  palette?: ArkanoidPalette;
 };
 
 const BOUNCE_SOUND_SRC = "/games/arkanoid/sounds/ball-bounce.mp3";
@@ -56,6 +62,7 @@ export class ArkanoidEngine {
   private ctx: CanvasRenderingContext2D;
   private onState: EngineOptions["onState"];
   private onGameOver: EngineOptions["onGameOver"];
+  private palette: ArkanoidPalette;
 
   private keys: Record<string, boolean> = {};
 
@@ -85,6 +92,7 @@ export class ArkanoidEngine {
     this.ctx = ctx;
     this.onState = opts.onState;
     this.onGameOver = opts.onGameOver;
+    this.palette = opts.palette ?? SKINS.clasico.dark;
 
     if (typeof Audio !== "undefined") {
       this.bounceSound = new Audio(BOUNCE_SOUND_SRC);
@@ -152,6 +160,17 @@ export class ArkanoidEngine {
   /** Ratón: centro de la paleta en coordenadas del mundo, recortado al área. */
   setPaddleX(worldX: number): void {
     this.paddle.x = Math.max(0, Math.min(W - this.paddle.w, worldX - this.paddle.w / 2));
+  }
+
+  /**
+   * Cambia los colores en caliente. Solo toca la paleta: puntuación, vidas,
+   * nivel, ladrillos y pelota siguen donde estaban. Con el bucle parado
+   * (pausa) se pinta un frame a mano para que el cambio se vea ya; antes de
+   * que cargue el spritesheet no, porque la partida aún no ha empezado.
+   */
+  setPalette(palette: ArkanoidPalette): void {
+    this.palette = palette;
+    if (!this.running && !this.destroyed && this.sheet) this.draw();
   }
 
   destroy(): void {
@@ -346,9 +365,19 @@ export class ArkanoidEngine {
 
   private draw(): void {
     const ctx = this.ctx;
-    ctx.fillStyle = "#000";
+    ctx.fillStyle = this.palette.background;
     ctx.fillRect(0, 0, W, H);
 
+    if (this.palette.render === "flat") this.drawFlat();
+    else this.drawSprites();
+
+    // El original pintaba aquí `Score:`, `Nivel:` y las pelotitas de vidas, más
+    // los overlays de fin y de pausa. Todo eso es del HUD y del shell de React.
+  }
+
+  /** CLÁSICO: el spritesheet tal cual, igual que antes de las skins. */
+  private drawSprites(): void {
+    const ctx = this.ctx;
     for (const block of this.blocks) {
       if (block.alive)
         drawSprite(
@@ -363,11 +392,10 @@ export class ArkanoidEngine {
     }
 
     for (const exp of this.explosions) {
-      const frameIndex = Math.min(Math.floor((exp.elapsed / EXPLOSION_DURATION) * 4), 3);
       drawFrame(
         ctx,
         this.sheet,
-        EXPLOSION_FRAMES[exp.color][frameIndex],
+        EXPLOSION_FRAMES[exp.color][this.explosionFrame(exp)],
         exp.x,
         exp.y,
         exp.w,
@@ -385,8 +413,68 @@ export class ArkanoidEngine {
       this.paddle.h,
     );
     drawSprite(ctx, this.sheet, SPRITES.ball, this.ball.x, this.ball.y, this.ball.w, this.ball.h);
+  }
 
-    // El original pintaba aquí `Score:`, `Nivel:` y las pelotitas de vidas, más
-    // los overlays de fin y de pausa. Todo eso es del HUD y del shell de React.
+  /** Mismo reparto en 4 fotogramas que la animación del spritesheet. */
+  private explosionFrame(exp: Explosion): number {
+    return Math.min(Math.floor((exp.elapsed / EXPLOSION_DURATION) * 4), 3);
+  }
+
+  /**
+   * NEON y RETRO: formas planas dentro de las mismas cajas que los sprites, así
+   * que lo que se ve coincide con la hitbox. El glow va a 0 en RETRO, y se
+   * resetea al final para no teñir el frame siguiente.
+   */
+  private drawFlat(): void {
+    const ctx = this.ctx;
+    const p = this.palette;
+    ctx.save();
+    ctx.shadowBlur = p.glowBlur;
+
+    // Ladrillos: la junta de 1 px por lado deja ver el fondo entre dos vecinos
+    // del mismo color; el trazo de 2 px es el que da el contraste.
+    for (const block of this.blocks) {
+      if (!block.alive) continue;
+      const color = p.blocks[block.color];
+      ctx.shadowColor = color;
+      ctx.fillStyle = p.blockFillAlpha < 1 ? withAlpha(color, p.blockFillAlpha) : color;
+      ctx.fillRect(block.x + 1, block.y + 1, block.w - 2, block.h - 2);
+      if (p.blockFillAlpha < 1) {
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 2;
+        ctx.strokeRect(block.x + 2, block.y + 2, block.w - 4, block.h - 4);
+      }
+    }
+
+    // Explosión: un marco que se encoge en los mismos 4 pasos que el sprite.
+    // Sin alfa, para que RETRO siga siendo plano.
+    for (const exp of this.explosions) {
+      const color = p.blocks[exp.color];
+      const inset = 2 + this.explosionFrame(exp) * 3;
+      ctx.shadowColor = color;
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 2;
+      ctx.strokeRect(exp.x + inset, exp.y + inset, exp.w - inset * 2, exp.h - inset * 2);
+    }
+
+    // Paleta: cuerpo y dos topes, como el sprite con sus remates rojos.
+    const { paddle } = this;
+    const cap = 10;
+    ctx.shadowColor = p.paddle;
+    ctx.fillStyle = p.paddle;
+    ctx.fillRect(paddle.x, paddle.y, paddle.w, paddle.h);
+    ctx.fillStyle = p.paddleCap;
+    ctx.fillRect(paddle.x, paddle.y, cap, paddle.h);
+    ctx.fillRect(paddle.x + paddle.w - cap, paddle.y, cap, paddle.h);
+
+    // Pelota: círculo inscrito en su caja de 16 px.
+    const { ball } = this;
+    ctx.shadowColor = p.ball;
+    ctx.fillStyle = p.ball;
+    ctx.beginPath();
+    ctx.arc(ball.x + ball.w / 2, ball.y + ball.h / 2, ball.w / 2, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.restore();
   }
 }

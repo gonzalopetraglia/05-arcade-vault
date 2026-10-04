@@ -59,6 +59,9 @@ Built with Spec Driven Design using the `/spec` and `/spec-impl` skills from [Kl
 
 - Usa siempre `/frontend-design` para diseñar la interfaz del usuario.
 - `/add-game` (`.claude/skills/add-game/`) writes the spec for a new game — engine port, player, catalog entry, seed migration, leaderboard — from a `references/started-games/` folder or from scratch. It only writes the spec; `/spec-impl` implements it. Its `reference.md` holds the platform contracts (catalog types, engine API, taken ids and `sort_order`); keep it in sync when those change.
+- `game-planner` (`.claude/agents/game-planner.md`) is a subagent, not a skill: it decides which game to port or invent next. It reads the catalog, `references/implemented-games.md` and its own memory in `references/games-suggestions-todo.md`, returns a ranked top 3 with one recommendation and updates that TODO. It only proposes — the spec is still `/add-game`'s job.
+- `game-jam` (`.claude/agents/game-jam.md`) is a subagent: give it a theme and it invents one game and writes three alternative specs for it in `specs/game-jam/<game-id>/` (`variante-a.md`, `variante-b.md`, `variante-c.md`), in the SPEC 07–09 format and `Borrador` state. It decides id, category, color, cover and controls on its own and records them under `Decisiones`. Pick one, move it to `specs/NN-juego-<id>.md`, approve it, then `/spec-impl`.
+- `skin-designer` (`.claude/agents/skin-designer.md`) is a subagent that works on **one game per call**, the one you name: it gives it the three skins — `clasico` (default, today's colors), `neon`, `retro` — each with a `light` and a `dark` palette that pass its contrast thresholds (`lib/games/<name>/skins.ts`), wires the skin selector into that game's player (shared `components/skin-selector.tsx`, optional `skin`/`onSkinChange` props on `PlayerShell`), and builds the shared base (`lib/skins.ts`) on first use. `references/games-with-skins.md` is the single source of truth for which games have skins; the agent only adds or updates the row of the game it was asked for.
 
 ## Hooks
 
@@ -68,5 +71,5 @@ Built with Spec Driven Design using the `/spec` and `/spec-impl` skills from [Kl
 
 - App Router with Server Components by default; add `"use client"` only where interactivity requires it.
 - Comments in the codebase are in Spanish and explain _why_, not _what_. Match that.
-- Dark mode is `prefers-color-scheme` driven via `dark:` variants — support both themes in new UI.
+- Theme is a light/dark toggle in the nav (`components/theme-toggle.tsx`, `lib/theme.ts`): it sets `data-theme` on `<html>`, persisted as `av_theme`, starting from `prefers-color-scheme` until the user picks. `app/layout.tsx` runs `THEME_SCRIPT` (`lib/theme-script.ts`) in `<head>` to avoid a flash. Light tokens override `:root[data-theme="light"]` at the end of `globals.css`; `.crt` and `.cover-bg` keep the dark neon tokens in both themes. `dark:` utilities follow the attribute via `@custom-variant`. Support both themes in new UI.
 - Typography tokens are `--font-pixel` (Press Start 2P) and `--font-mono`; `body` uses the mono token. Use the tokens, not raw font stacks.

@@ -26,7 +26,16 @@ export function formatScore(n: number): string; // Intl.NumberFormat("es-ES")
 
 `Game` **no** tiene `best` ni `plays`. Esos dos números salen de la vista `game_stats` y viajan en `GameWithStats` (`app/api/games/route.ts`).
 
-Ids ocupados y su `sort_order` (0..8): `bloque-buster`, `caida`, `serpentina`, `gloton`, `invasores`, `rocas`, `ranaria`, `asteroides`, `duelo-pixel`.
+Ids ocupados y su `sort_order`:
+
+- `0002_seed_games.sql` (0..8): `bloque-buster`, `caida`, `serpentina`, `gloton`, `invasores`, `rocas`, `ranaria`, `asteroides`, `duelo-pixel`.
+- `0003_seed_tetris.sql`: `tetris` (9).
+- `0004_seed_arkanoid.sql`: `arkanoid` (10).
+- `0005_seed_snake.sql`: `snake` (11).
+
+Siguiente `sort_order` libre: **12**. Siguiente migración: `0006_seed_<id>.sql`. Antes de fiarte de esto, revisa `supabase/migrations/`: si hay migraciones más nuevas, mandan ellas.
+
+Las entradas simuladas del catálogo (`duelo-pixel`, `invasores`, `ranaria`, `gloton`…) ya tienen fila en `games`. Si se porta una de ellas sin cambiarle el id, no lleva seed nuevo: `on conflict (id) do nothing` la ignoraría. Si cambian sus textos, hace falta un `update` en su lugar.
 
 ## API del motor — patrón de `lib/games/asteroids/engine.ts`
 
@@ -47,11 +56,11 @@ export class AsteroidsEngine {
   constructor(canvas: HTMLCanvasElement, opts: EngineOptions);
   start(): void;
   pause(): void;
-  resume(): void;      // pone lastTime = null: el primer dt tras la pausa es 0
+  resume(): void; // pone lastTime = null: el primer dt tras la pausa es 0
   restart(): void;
-  forceGameOver(): void;  // botón FIN
-  setKey(code: string, down: boolean): void;  // teclado y táctil entran por aquí
-  destroy(): void;     // cancela el rAF pendiente
+  forceGameOver(): void; // botón FIN
+  setKey(code: string, down: boolean): void; // teclado y táctil entran por aquí
+  destroy(): void; // cancela el rAF pendiente
 }
 ```
 
@@ -75,10 +84,22 @@ type Props = {
   onEnd: () => void;
   onRestart: () => void;
   children: ReactNode; // lo que se ve dentro de la pantalla del CRT
+  skin?: SkinId; // opcional: con skin + onSkinChange aparece el selector
+  onSkinChange?: (id: SkinId) => void;
 };
 ```
 
 El shell ya trae cabecera de HUD, marco CRT, botones PAUSA/FIN/SALIR, cartel de pausa y el modal de fin de partida con el guardado. Un player nuevo no duplica nada de eso.
+
+## Skins — `lib/skins.ts`
+
+Un juego puede tener tres skins (`clasico` por defecto, `neon`, `retro`), cada una con paleta `light` y `dark`. Las añade el subagente `skin-designer`, un juego por llamada; `references/games-with-skins.md` dice cuáles las tienen.
+
+- `lib/skins.ts` (sin React): `SkinId`, `SKIN_IDS`, `DEFAULT_SKIN`, `SKIN_LABELS`, `Scheme`, `SkinSet<P> = Record<SkinId, { light: P; dark: P }>`.
+- `lib/use-skin.ts`: `useSkin(gameId)` → `{ skin, setSkin, scheme }`. Persiste en `localStorage` (`av_skin:<gameId>`) y toma `scheme` del tema del sitio (`useTheme()` de `lib/theme.ts`, toggle del nav); el primer render es `clasico` + `dark` para cuadrar con el HTML del servidor.
+- Por juego, `lib/games/<name>/skins.ts`: `type <Name>Palette` con todos los colores que pinta el motor y `SKINS: SkinSet<<Name>Palette>`. `clasico.dark` son los colores originales; el motor no tiene literales de color.
+- Motor: opción `palette?` en el constructor y `setPalette(p)`, que cambia colores en caliente sin tocar el estado y redibuja un frame si está en pausa.
+- Player: `const { skin, setSkin, scheme } = useSkin(game.id)`, `SKINS[skin][scheme]` al canvas, `engine.setPalette` en un efecto, y `skin` / `onSkinChange` a `PlayerShell`.
 
 ## Guardado de puntuaciones — `app/api/scores/route.ts`
 

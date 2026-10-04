@@ -7,6 +7,7 @@
  * coordenadas de las celdas son columnas y filas, nunca píxeles.
  */
 
+import type { SnakePalette } from "./skins";
 import type { FruitName } from "./sprites";
 import { FRUIT_NAMES, FRUITS } from "./sprites";
 
@@ -135,21 +136,20 @@ export function spawnFruit(occupied: Cell[]): Fruit | null {
 }
 
 // ── Dibujo ────────────────────────────────────────────────────────────────────
-// Los colores salen del tema: --green es #00ff88. El canvas no puede leer
-// variables CSS sin un getComputedStyle por frame, así que los literales viven
-// aquí; si el tema cambia, cambian también estas dos constantes.
-const SNAKE_BODY = "#00ff88";
-const SNAKE_HEAD = "#b6ffd9";
-const GRID_LINE = "rgba(0, 255, 136, 0.08)";
+// Los colores salen de la paleta de la skin activa (skins.ts). El canvas no
+// puede leer variables CSS sin un getComputedStyle por frame, así que el motor
+// recibe la paleta ya resuelta y la pasa a cada función de dibujo.
 const CELL_GAP = 2; // px de separación entre celdas de la serpiente
 const FRUIT_H = 36; // alto fijo de la fruta; el ancho sale de sw / sh
 
-/** Fondo negro y rejilla tenue de COLS x ROWS. */
-export function drawBoard(ctx: CanvasRenderingContext2D): void {
-  ctx.fillStyle = "#000";
+/** Fondo y rejilla tenue de COLS x ROWS. */
+export function drawBoard(ctx: CanvasRenderingContext2D, palette: SnakePalette): void {
+  // El glow del frame anterior no puede sobrevivir al borrado del fondo.
+  ctx.shadowBlur = 0;
+  ctx.fillStyle = palette.background;
   ctx.fillRect(0, 0, W, H);
 
-  ctx.strokeStyle = GRID_LINE;
+  ctx.strokeStyle = palette.grid;
   ctx.lineWidth = 1;
   ctx.beginPath();
   for (let x = 1; x < COLS; x++) {
@@ -163,34 +163,47 @@ export function drawBoard(ctx: CanvasRenderingContext2D): void {
   ctx.stroke();
 }
 
-/** La serpiente, celda a celda: cabeza en verde claro, cuerpo en verde del tema. */
-export function drawSnake(ctx: CanvasRenderingContext2D, snake: SnakeBody): void {
+/**
+ * La serpiente, celda a celda, con la cabeza en un color distinto del cuerpo.
+ * El glow (solo NEON) toma el color de cada celda; con glowBlur 0 no cuesta nada.
+ */
+export function drawSnake(
+  ctx: CanvasRenderingContext2D,
+  snake: SnakeBody,
+  palette: SnakePalette,
+): void {
   const size = CELL - CELL_GAP * 2;
   const radius = Math.floor(size / 4);
 
+  ctx.shadowBlur = palette.glowBlur;
   snake.cells.forEach((c, i) => {
-    ctx.fillStyle = i === 0 ? SNAKE_HEAD : SNAKE_BODY;
+    const color = i === 0 ? palette.snakeHead : palette.snakeBody;
+    ctx.fillStyle = color;
+    ctx.shadowColor = color;
     ctx.beginPath();
     ctx.roundRect(c.x * CELL + CELL_GAP, c.y * CELL + CELL_GAP, size, size, radius);
     ctx.fill();
   });
+  ctx.shadowBlur = 0;
 }
 
 /**
  * La fruta, escalada a FRUIT_H de alto conservando la proporción del recorte y
- * centrada en su celda. Sin imagen —la carga falló— se pinta un círculo verde
- * para que la partida siga siendo jugable.
+ * centrada en su celda. Sin imagen —la carga falló— se pinta un círculo del
+ * color `fruitFallback` para que la partida siga siendo jugable. El PNG no se
+ * tinta por skin: sus colores se leen bien sobre cualquiera de los fondos.
  */
 export function drawFruit(
   ctx: CanvasRenderingContext2D,
   img: HTMLImageElement | null,
   fruit: Fruit,
+  palette: SnakePalette,
 ): void {
   const cx = fruit.cell.x * CELL + CELL / 2;
   const cy = fruit.cell.y * CELL + CELL / 2;
 
   if (!img) {
-    ctx.fillStyle = SNAKE_BODY;
+    ctx.fillStyle = palette.fruitFallback;
     ctx.beginPath();
     ctx.arc(cx, cy, FRUIT_H / 3, 0, Math.PI * 2);
     ctx.fill();

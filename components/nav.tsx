@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { useSession } from "@/components/session-provider";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 export function Nav() {
   const [open, setOpen] = useState(false);
@@ -11,9 +12,7 @@ export function Nav() {
   const { user, signOut } = useSession();
 
   const isLibrary =
-    pathname === "/games" ||
-    pathname.startsWith("/games/") ||
-    pathname.startsWith("/jugar/");
+    pathname === "/games" || pathname.startsWith("/games/") || pathname.startsWith("/jugar/");
   const isActive = (name: "home" | "biblioteca" | "salon" | "about" | "auth") => {
     if (name === "home") return pathname === "/";
     if (name === "biblioteca") return isLibrary;
@@ -52,6 +51,7 @@ export function Nav() {
           <span className="coin"></span>
           <span>CRÉDITOS · 03</span>
         </div>
+        <ThemeToggle />
         {user ? (
           <button className="btn ghost auth-btn" onClick={signOut}>
             {user.name} ▾
@@ -61,19 +61,12 @@ export function Nav() {
             Iniciar Sesión
           </Link>
         )}
-        <button
-          className="btn ghost hamburger"
-          onClick={() => setOpen(true)}
-          aria-label="Menú"
-        >
+        <button className="btn ghost hamburger" onClick={() => setOpen(true)} aria-label="Menú">
           ≡
         </button>
       </nav>
 
-      <div
-        className={"av-mobile-backdrop" + (open ? " open" : "")}
-        onClick={close}
-      ></div>
+      <div className={"av-mobile-backdrop" + (open ? " open" : "")} onClick={close}></div>
       <aside className={"av-mobile-panel" + (open ? " open" : "")}>
         <div className="pixel neon-cyan" style={{ fontSize: 11, marginBottom: 16 }}>
           MENÚ

@@ -7,7 +7,12 @@
  * map instead of closing over one. Do not rebalance anything here; the physics,
  * the spawn distances and the collision radii are calibrated for the fixed
  * 800×600 world.
+ *
+ * Los colores no son literales: cada draw() recibe la paleta de la skin activa
+ * (lib/games/asteroids/skins.ts). Con CLÁSICO los valores son los del original.
  */
+
+import { withAlpha, type AsteroidsPalette } from "./skins";
 
 export const W = 800;
 export const H = 600;
@@ -20,6 +25,15 @@ export const dist = (a: { x: number; y: number }, b: { x: number; y: number }): 
   Math.hypot(a.x - b.x, a.y - b.y);
 export const rand = (min: number, max: number): number => min + Math.random() * (max - min);
 export const randInt = (min: number, max: number): number => Math.floor(rand(min, max + 1));
+
+/**
+ * Enciende el glow de NEON con el color del trazo. Con `glowBlur` 0 (CLÁSICO y
+ * RETRO) no dibuja nada extra, así que el original queda intacto.
+ */
+const glow = (ctx: CanvasRenderingContext2D, color: string, palette: AsteroidsPalette): void => {
+  ctx.shadowColor = color;
+  ctx.shadowBlur = palette.glowBlur;
+};
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 export const POWERUP_DROP_CHANCE = 0.15;
@@ -56,8 +70,9 @@ export class Bullet {
     if (this.ttl <= 0) this.dead = true;
   }
 
-  draw(ctx: CanvasRenderingContext2D): void {
-    ctx.fillStyle = "#fff";
+  draw(ctx: CanvasRenderingContext2D, palette: AsteroidsPalette): void {
+    ctx.fillStyle = palette.bullet;
+    glow(ctx, palette.bullet, palette);
     ctx.beginPath();
     ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
     ctx.fill();
@@ -113,11 +128,12 @@ export class Asteroid {
     ];
   }
 
-  draw(ctx: CanvasRenderingContext2D): void {
+  draw(ctx: CanvasRenderingContext2D, palette: AsteroidsPalette): void {
     ctx.save();
     ctx.translate(this.x, this.y);
     ctx.rotate(this.rot);
-    ctx.strokeStyle = "#fff";
+    ctx.strokeStyle = palette.asteroid;
+    glow(ctx, palette.asteroid, palette);
     ctx.lineWidth = 1.5;
     ctx.lineJoin = "round";
     ctx.beginPath();
@@ -155,18 +171,20 @@ export class PowerUp {
     if (this.ttl <= 0) this.dead = true;
   }
 
-  draw(ctx: CanvasRenderingContext2D): void {
+  draw(ctx: CanvasRenderingContext2D, palette: AsteroidsPalette): void {
     if (this.ttl < 2 && Math.floor(this.ttl * 8) % 2 === 0) return;
     const pulse = 0.85 + Math.sin(performance.now() / 150) * 0.15;
     ctx.save();
     ctx.translate(this.x, this.y);
     ctx.rotate(Math.PI / 4);
-    ctx.strokeStyle = "#0ff";
+    ctx.strokeStyle = palette.powerUp;
+    glow(ctx, palette.powerUp, palette);
     ctx.lineWidth = 2;
     const r = this.radius * pulse;
     ctx.strokeRect(-r, -r, r * 2, r * 2);
     ctx.restore();
-    ctx.fillStyle = "#0ff";
+    ctx.fillStyle = palette.powerUp;
+    glow(ctx, palette.powerUp, palette);
     ctx.font = "bold 12px monospace";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
@@ -246,7 +264,7 @@ export class Ship {
     return [new Bullet(ox, oy, this.angle)];
   }
 
-  draw(ctx: CanvasRenderingContext2D): void {
+  draw(ctx: CanvasRenderingContext2D, palette: AsteroidsPalette): void {
     if (this.dead) return;
     // Parpadeo durante invencibilidad de reaparición
     if (this.invincible > 0 && Math.floor(this.invincible * 8) % 2 === 0) return;
@@ -254,7 +272,8 @@ export class Ship {
     ctx.save();
     ctx.translate(this.x, this.y);
     ctx.rotate(this.angle);
-    ctx.strokeStyle = "#fff";
+    ctx.strokeStyle = palette.ship;
+    glow(ctx, palette.ship, palette);
     ctx.lineWidth = 1.5;
     ctx.lineJoin = "round";
 
@@ -273,7 +292,8 @@ export class Ship {
       ctx.moveTo(-8, -4);
       ctx.lineTo(-8 - rand(6, 14), 0);
       ctx.lineTo(-8, 4);
-      ctx.strokeStyle = "rgba(255, 130, 0, 0.85)";
+      ctx.strokeStyle = palette.thrust;
+      ctx.shadowColor = palette.thrust;
       ctx.stroke();
     }
 
@@ -309,9 +329,12 @@ export class Particle {
     if (this.ttl <= 0) this.dead = true;
   }
 
-  draw(ctx: CanvasRenderingContext2D): void {
+  draw(ctx: CanvasRenderingContext2D, palette: AsteroidsPalette): void {
     const alpha = this.ttl / this.life;
-    ctx.strokeStyle = `rgba(255,255,255,${alpha.toFixed(2)})`;
+    const color = withAlpha(palette.particle, alpha);
+    ctx.strokeStyle = color;
+    // El halo se apaga con la chispa: con el color opaco quedaría flotando.
+    glow(ctx, color, palette);
     ctx.lineWidth = 1;
     ctx.beginPath();
     ctx.moveTo(this.x, this.y);

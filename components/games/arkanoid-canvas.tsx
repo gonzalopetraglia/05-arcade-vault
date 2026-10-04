@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef } from "react";
 import { ArkanoidEngine, type ArkanoidState } from "@/lib/games/arkanoid/engine";
 import { H, W } from "@/lib/games/arkanoid/entities";
+import type { ArkanoidPalette } from "@/lib/games/arkanoid/skins";
 
 /** Teclas de juego: se les corta el scroll de la página mientras se juega. */
 const GAME_KEYS = ["ArrowLeft", "ArrowRight"];
@@ -50,9 +51,21 @@ type Props = {
   onEngineReady: (engine: ArkanoidEngine | null) => void;
   /** El juego se ha pausado solo (pestaña oculta o ventana sin foco). */
   onAutoPause: () => void;
+  /**
+   * Paleta de la skin activa. Aquí solo se usa para crear el motor y para el
+   * fondo CSS previo al primer frame; los cambios posteriores los aplica el
+   * player con `engine.setPalette`, sin remontar el canvas.
+   */
+  palette: ArkanoidPalette;
 };
 
-export function ArkanoidCanvas({ onState, onGameOver, onEngineReady, onAutoPause }: Props) {
+export function ArkanoidCanvas({
+  onState,
+  onGameOver,
+  onEngineReady,
+  onAutoPause,
+  palette,
+}: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const engineRef = useRef<ArkanoidEngine | null>(null);
   // El efecto se monta una sola vez; los callbacks van por ref para que cambiar
@@ -61,6 +74,9 @@ export function ArkanoidCanvas({ onState, onGameOver, onEngineReady, onAutoPause
   useEffect(() => {
     cbs.current = { onState, onGameOver, onEngineReady, onAutoPause };
   });
+  // Por ref por el mismo motivo: el motor nace con la paleta del momento y no
+  // debe recrearse (perdiendo la partida) cuando cambia la skin.
+  const initialPalette = useRef(palette);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -76,6 +92,7 @@ export function ArkanoidCanvas({ onState, onGameOver, onEngineReady, onAutoPause
     const engine = new ArkanoidEngine(canvas, {
       onState: (s) => cbs.current.onState(s),
       onGameOver: (s) => cbs.current.onGameOver(s),
+      palette: initialPalette.current,
     });
 
     const onKeyDown = (e: KeyboardEvent) => {
@@ -143,7 +160,7 @@ export function ArkanoidCanvas({ onState, onGameOver, onEngineReady, onAutoPause
           display: "block",
           width: "100%",
           aspectRatio: "4 / 3",
-          background: "#000",
+          background: palette.background,
           touchAction: "none",
         }}
       />

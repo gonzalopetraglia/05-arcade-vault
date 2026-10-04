@@ -1,5 +1,10 @@
 @import "tailwindcss";
 
+/* `dark:` sigue al toggle del nav (atributo `data-theme` en <html>), no solo a
+   prefers-color-scheme: el sistema decide el punto de partida, no la palabra
+   final. */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
 /* ===== ARCADE VAULT — theme ===== */
 :root {
   --bg: #0a0a0f;
@@ -19,6 +24,7 @@
   --line-2: rgba(255, 255, 255, 0.06);
   --pixel: var(--font-press-start), system-ui, monospace;
   --mono: var(--font-jetbrains-mono), var(--font-courier-prime), "Courier New", monospace;
+  color-scheme: dark;
 }
 
 /* Tokens exposed to Tailwind utilities (bg-bg-2, text-cyan, font-pixel, ...) */
@@ -1169,6 +1175,101 @@ a {
 .hud-actions {
   display: flex;
   gap: 10px;
+}
+
+/* ===== selector de skin del player =====
+   Tres "fichas de canal" en una regleta: la muestra de color de cada ficha
+   anticipa la skin antes de pulsarla, y la activa se enciende como el resto
+   del HUD. Las muestras son genéricas por skin, no la paleta de ningún juego. */
+.skin-selector {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.skin-selector-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--ink-faint);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+.skin-selector-group {
+  display: flex;
+  gap: 3px;
+  padding: 3px;
+  border: 1px solid var(--line);
+  background: var(--bg);
+}
+.skin-opt {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 36px;
+  padding: 0 10px;
+  font-family: var(--pixel);
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  color: var(--ink-dim);
+  background: transparent;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition:
+    color 160ms,
+    border-color 160ms,
+    box-shadow 160ms;
+}
+.skin-opt:hover {
+  color: var(--ink);
+  border-color: var(--ink-faint);
+}
+.skin-opt[aria-checked="true"] {
+  color: var(--cyan);
+  border-color: var(--cyan);
+  box-shadow: inset 0 0 8px rgba(0, 245, 255, 0.3);
+  text-shadow: 0 0 6px rgba(0, 245, 255, 0.5);
+}
+/* Amarillo y no cian: el foco tiene que distinguirse de la opción activa. */
+.skin-opt:focus-visible {
+  outline: 2px solid var(--yellow);
+  outline-offset: 2px;
+}
+.skin-swatch {
+  flex: none;
+  width: 12px;
+  height: 12px;
+  border: 1px solid var(--ink-faint);
+}
+/* Cortes duros, sin degradado suave: son muestras de color, no adornos. */
+.skin-opt-clasico .skin-swatch {
+  background: linear-gradient(135deg, #ffffff 50%, #000000 50%);
+}
+.skin-opt-neon .skin-swatch {
+  background: linear-gradient(135deg, var(--cyan) 50%, var(--magenta) 50%);
+  box-shadow: 0 0 6px rgba(255, 0, 110, 0.6);
+}
+.skin-opt-retro .skin-swatch {
+  background: conic-gradient(#55ffff 0 25%, #ff55ff 0 50%, #ffffff 0 75%, #000000 0);
+}
+/* En móvil la regleta ocupa su propia fila y reparte el ancho: sin esto las
+   tres fichas empujarían el HUD a scroll horizontal. */
+@media (max-width: 520px) {
+  .skin-selector {
+    width: 100%;
+  }
+  .skin-selector-group {
+    flex: 1;
+  }
+  .skin-opt {
+    flex: 1;
+    padding: 0 6px;
+    gap: 6px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .skin-opt {
+    transition: none;
+  }
 }
 
 .crt {
@@ -3100,4 +3201,164 @@ a {
 .touch-btn.rot {
   font-size: 18px;
   letter-spacing: 0;
+}
+
+/* ===== tema claro =====
+   Papel cálido en vez de negro. Los acentos neón puros no se leen sobre fondo
+   claro (el amarillo #f5ff00 da 1.1:1), así que aquí son versiones tintadas
+   que pasan 4.5:1 como texto sobre --bg y --bg-2. Lo que es "pantalla" (CRT,
+   portadas) sigue siendo oscuro en los dos temas y recupera los tokens neón. */
+:root[data-theme="light"] {
+  --bg: #f3f0e6;
+  --bg-2: #ebe7da;
+  --bg-3: #e0dbc9;
+  --ink: #14141f;
+  --ink-dim: #45496a;
+  --ink-faint: #62668a;
+  --cyan: #006f7c;
+  --magenta: #b8005a;
+  --yellow: #725f00;
+  --green: #00714a;
+  --gold: #8a6300;
+  --silver: #4f5a6e;
+  --bronze: #96470f;
+  --line: rgba(0, 111, 124, 0.3);
+  --line-2: rgba(20, 20, 31, 0.1);
+  color-scheme: light;
+}
+
+/* Pantallas: siempre oscuras, con los acentos originales. */
+:root[data-theme="light"] :is(.crt, .cover-bg) {
+  --bg: #0a0a0f;
+  --bg-2: #0f0f18;
+  --bg-3: #15151f;
+  --ink: #e6e9ff;
+  --ink-dim: #8a8fb5;
+  --ink-faint: #4a4f70;
+  --cyan: #00f5ff;
+  --magenta: #ff006e;
+  --yellow: #f5ff00;
+  --green: #00ff88;
+  --line: rgba(0, 245, 255, 0.18);
+  --line-2: rgba(255, 255, 255, 0.06);
+  color-scheme: dark;
+}
+
+/* Las scanlines y el ruido son blancos sobre negro; sobre papel ensucian. */
+:root[data-theme="light"] .av-bg::after {
+  background-image: repeating-linear-gradient(
+    to bottom,
+    rgba(20, 20, 31, 0.035) 0 1px,
+    transparent 1px 3px
+  );
+  mix-blend-mode: multiply;
+}
+:root[data-theme="light"] .av-noise {
+  opacity: 0;
+}
+:root[data-theme="light"] .av-bg::before {
+  opacity: 0.4;
+}
+
+/* El resplandor neón sobre papel se vuelve borrón: queda un halo corto. */
+:root[data-theme="light"] :is(.neon-cyan, .neon-magenta, .neon-yellow, .neon-green) {
+  text-shadow: 0 0 8px color-mix(in srgb, currentColor 22%, transparent);
+}
+:root[data-theme="light"] :is(.crt, .cover-bg) .neon-cyan {
+  text-shadow:
+    0 0 6px rgba(0, 245, 255, 0.65),
+    0 0 16px rgba(0, 245, 255, 0.45);
+}
+:root[data-theme="light"] :is(.crt, .cover-bg) .neon-magenta {
+  text-shadow:
+    0 0 6px rgba(255, 0, 110, 0.65),
+    0 0 16px rgba(255, 0, 110, 0.45);
+}
+:root[data-theme="light"] :is(.crt, .cover-bg) .neon-yellow {
+  text-shadow:
+    0 0 6px rgba(245, 255, 0, 0.7),
+    0 0 16px rgba(245, 255, 0, 0.4);
+}
+:root[data-theme="light"] :is(.crt, .cover-bg) .neon-green {
+  text-shadow:
+    0 0 6px rgba(0, 255, 136, 0.6),
+    0 0 16px rgba(0, 255, 136, 0.35);
+}
+
+:root[data-theme="light"] .av-nav {
+  background: linear-gradient(180deg, rgba(243, 240, 230, 0.94), rgba(243, 240, 230, 0.82));
+}
+:root[data-theme="light"] .av-nav .links a.active {
+  text-shadow: none;
+}
+:root[data-theme="light"] .av-nav .links a.active::after {
+  box-shadow: none;
+}
+
+/* Títulos con degradado: arrancaban en blanco y desaparecerían sobre papel. */
+:root[data-theme="light"] .av-hero h1 {
+  background-image: linear-gradient(180deg, var(--ink) 0%, var(--cyan) 60%, var(--magenta) 110%);
+  filter: none;
+}
+:root[data-theme="light"] .home-title .line-1 {
+  color: var(--ink);
+  text-shadow: none;
+}
+:root[data-theme="light"] .home-title .line-2 {
+  background-image: linear-gradient(180deg, var(--cyan), #00889a);
+  filter: none;
+}
+:root[data-theme="light"] .home-title .line-3 {
+  background-image: linear-gradient(180deg, var(--magenta), #d8306f);
+  filter: none;
+}
+:root[data-theme="light"] .final-title {
+  background-image: linear-gradient(180deg, var(--ink), var(--yellow));
+  filter: none;
+}
+:root[data-theme="light"] .pc-amount-n {
+  background-image: linear-gradient(180deg, var(--ink), var(--green));
+}
+:root[data-theme="light"] .about-title {
+  background-image: linear-gradient(180deg, var(--ink), var(--cyan) 80%);
+  filter: none;
+}
+
+/* Fondos fijados a casi-negro fuera de las pantallas. */
+:root[data-theme="light"] .home-stats {
+  background: linear-gradient(180deg, var(--bg-2), var(--bg-3));
+}
+:root[data-theme="light"] .price-card {
+  background: linear-gradient(180deg, var(--bg-2), var(--bg-3));
+}
+:root[data-theme="light"] .pc-stamp {
+  background: rgba(243, 240, 230, 0.92);
+}
+:root[data-theme="light"] .tp-bar {
+  background: rgba(20, 20, 31, 0.08);
+}
+:root[data-theme="light"] .home-silos .s8 {
+  color: #00809c;
+}
+
+/* ===== toggle de tema (nav) ===== */
+.theme-toggle {
+  gap: 8px;
+  padding: 10px 12px;
+  font-size: 9px;
+}
+.theme-toggle-icon {
+  font-family: var(--mono);
+  font-size: 14px;
+  line-height: 1;
+}
+.theme-toggle:focus-visible {
+  outline: 2px solid var(--yellow);
+  outline-offset: 2px;
+}
+/* En móvil solo el icono: el nav ya va justo de ancho (ver .auth-btn). */
+@media (max-width: 980px) {
+  .theme-toggle-text {
+    display: none;
+  }
 }

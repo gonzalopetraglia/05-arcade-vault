@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Press_Start_2P, JetBrains_Mono, Courier_Prime } from "next/font/google";
 import { Nav } from "@/components/nav";
 import { SessionProvider } from "@/components/session-provider";
+import { THEME_SCRIPT } from "@/lib/theme-script";
 import "./globals.css";
 
 const pressStart = Press_Start_2P({
@@ -36,7 +37,13 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html
       lang="es"
       className={`${pressStart.variable} ${jetbrainsMono.variable} ${courierPrime.variable}`}
+      // El script de abajo pone `data-theme` antes de hidratar: el atributo
+      // nunca coincidirá con el HTML del servidor, y es a propósito.
+      suppressHydrationWarning
     >
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
+      </head>
       <body>
         <div className="av-bg" />
         <div className="av-noise" />

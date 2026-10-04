@@ -1,11 +1,13 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { SnakeCanvas } from "@/components/games/snake-canvas";
 import { PlayerShell } from "@/components/player-shell";
 import type { SnakeEngine, SnakeState } from "@/lib/games/snake/engine";
 import { LIVES } from "@/lib/games/snake/entities";
+import { SKINS } from "@/lib/games/snake/skins";
 import type { Game } from "@/lib/games";
+import { useSkin } from "@/lib/use-skin";
 
 const INITIAL: SnakeState = { score: 0, lives: LIVES, level: 1, status: "playing" };
 
@@ -20,6 +22,14 @@ export function SnakePlayer({ game }: { game: Game }) {
   const [hud, setHud] = useState<SnakeState>(INITIAL);
   const [paused, setPaused] = useState(false);
   const [over, setOver] = useState(false);
+  const { skin, setSkin, scheme } = useSkin(game.id);
+  const palette = SKINS[skin][scheme];
+
+  // Skin o tema del sitio cambian en caliente: el motor solo cambia de
+  // colores, sin reiniciar la partida ni tocar puntuación, vidas o nivel.
+  useEffect(() => {
+    engineRef.current?.setPalette(palette);
+  }, [palette]);
 
   const onEngineReady = useCallback((engine: SnakeEngine | null) => {
     engineRef.current = engine;
@@ -59,12 +69,15 @@ export function SnakePlayer({ game }: { game: Game }) {
       onTogglePause={onTogglePause}
       onEnd={onEnd}
       onRestart={onRestart}
+      skin={skin}
+      onSkinChange={setSkin}
     >
       <SnakeCanvas
         onState={onState}
         onGameOver={onGameOver}
         onEngineReady={onEngineReady}
         onAutoPause={onAutoPause}
+        palette={palette}
       />
     </PlayerShell>
   );
