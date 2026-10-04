@@ -3174,6 +3174,10 @@ a {
   --gp-glow-on:
     inset 0 0 16px color-mix(in srgb, var(--gp-lit) 45%, transparent),
     0 0 16px color-mix(in srgb, var(--gp-lit) 50%, transparent);
+  /* la comparten la carcasa entera y las dos medias carcasas de horizontal */
+  --gp-shell-shadow:
+    0 30px 80px -30px var(--gp-shell-glow), 0 0 0 1px rgba(255, 255, 255, 0.02),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06), inset 0 -2px 0 rgba(0, 0, 0, 0.6);
   position: relative;
   display: none;
   align-items: center;
@@ -3185,11 +3189,7 @@ a {
   background: linear-gradient(180deg, var(--gp-shell-top) 0%, var(--gp-shell-bot) 100%);
   border: 1px solid var(--line);
   border-radius: 22px;
-  box-shadow:
-    0 30px 80px -30px var(--gp-shell-glow),
-    0 0 0 1px rgba(255, 255, 255, 0.02),
-    inset 0 1px 0 rgba(255, 255, 255, 0.06),
-    inset 0 -2px 0 rgba(0, 0, 0, 0.6);
+  box-shadow: var(--gp-shell-shadow);
   user-select: none;
   -webkit-user-select: none;
   -webkit-touch-callout: none;
@@ -3448,9 +3448,76 @@ a {
   display: none;
 }
 
-/* sobre papel claro el resplandor ensucia el texto en vez de iluminarlo */
+/* tema claro: carcasa de papel con botones en relieve. Sin resplandores: sobre
+   papel el glow ensucia en vez de iluminar, así que la pulsación se lee por el
+   hundimiento y el tinte cian. Las sombras negras del diseño oscuro se cambian
+   por grises suaves por la misma razón. */
+:root[data-theme="light"] .touch-gamepad {
+  --gp-shell-top: var(--bg-2);
+  --gp-shell-bot: var(--bg-3);
+  --gp-shell-glow: rgba(20, 20, 31, 0.18);
+  --gp-dots: rgba(20, 20, 31, 0.05);
+  --gp-key-top: #f7f4ec;
+  --gp-key-bot: #e0dbc9;
+  --gp-key-edge: #b9b3a0;
+  --gp-arrow: var(--ink-dim);
+  --gp-lit: var(--cyan);
+  /* "ninguno", pero como sombra válida: va dentro de listas de box-shadow y
+     un `none` ahí anularía la declaración entera */
+  --gp-glow-on: 0 0 0 transparent;
+  --gp-shell-shadow:
+    0 30px 80px -30px var(--gp-shell-glow), 0 1px 2px rgba(20, 20, 31, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6), inset 0 -2px 0 rgba(20, 20, 31, 0.08);
+}
+:root[data-theme="light"] .pad-btn {
+  border-color: rgba(20, 20, 31, 0.1);
+  box-shadow:
+    0 4px 0 var(--gp-key-edge),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8),
+    inset 0 -2px 4px rgba(20, 20, 31, 0.08);
+}
+:root[data-theme="light"] .pad-btn:active {
+  background: color-mix(in srgb, var(--gp-lit) 18%, var(--gp-key-top));
+  border-color: var(--gp-lit);
+  box-shadow: 0 1px 0 var(--gp-key-edge);
+}
+:root[data-theme="light"] .pad-btn:active .pad-arrow {
+  filter: none;
+}
+:root[data-theme="light"] .pad-hub {
+  box-shadow:
+    inset 0 0 8px rgba(20, 20, 31, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+:root[data-theme="light"] .pad-hub-gem {
+  box-shadow: none;
+}
+/* relleno lleno del color de tema claro (no al 70% como en oscuro) para que
+   la letra blanca siga pasando 4.5:1 */
+:root[data-theme="light"] .act-btn {
+  background:
+    radial-gradient(circle at 32% 26%, rgba(255, 255, 255, 0.25), transparent 50%),
+    radial-gradient(circle at 50% 55%, var(--act), color-mix(in srgb, var(--act) 80%, black) 75%);
+  box-shadow:
+    0 6px 0 var(--gp-key-edge),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3),
+    inset 0 -4px 8px rgba(0, 0, 0, 0.2);
+}
+:root[data-theme="light"] .act-btn:active {
+  box-shadow:
+    0 1px 0 var(--gp-key-edge),
+    inset 0 0 12px rgba(0, 0, 0, 0.25);
+}
 :root[data-theme="light"] .act-key {
   text-shadow: none;
+}
+/* las reglas claras de .act-btn pesan más que las de .is-off: se repite aquí
+   que el botón sin uso no se hunde */
+:root[data-theme="light"] .touch-gamepad .is-off,
+:root[data-theme="light"] .touch-gamepad .is-off:active {
+  box-shadow:
+    0 6px 0 var(--gp-key-edge),
+    inset 0 -4px 8px rgba(0, 0, 0, 0.2);
 }
 
 /* ===== layout táctil del player =====
@@ -3704,11 +3771,7 @@ html.av-touch-lock body {
     background: linear-gradient(180deg, var(--gp-shell-top) 0%, var(--gp-shell-bot) 100%);
     border: 1px solid var(--line);
     border-radius: 22px;
-    box-shadow:
-      0 30px 80px -30px var(--gp-shell-glow),
-      0 0 0 1px rgba(255, 255, 255, 0.02),
-      inset 0 1px 0 rgba(255, 255, 255, 0.06),
-      inset 0 -2px 0 rgba(0, 0, 0, 0.6);
+    box-shadow: var(--gp-shell-shadow);
   }
   .av-player.has-gamepad .gamepad-dpad {
     /* el grid de 3×56 queda centrado dentro del panel */
