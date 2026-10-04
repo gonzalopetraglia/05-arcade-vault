@@ -3457,6 +3457,46 @@ html.av-touch-lock body {
   }
 }
 
+/* iconos de pausa y pantalla completa sobre la pantalla (solo táctil, los
+   renderiza el shell). Encima del cartel de pausa (z-index 5) para que ⏸
+   siga respondiendo con el menú abierto. */
+.screen-icons {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 6;
+  display: flex;
+  gap: 8px;
+}
+.screen-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  color: var(--cyan);
+  background: rgba(0, 0, 0, 0.55);
+  border: 1px solid color-mix(in srgb, var(--cyan) 45%, transparent);
+  border-radius: 8px;
+  -webkit-tap-highlight-color: transparent;
+  cursor: pointer;
+}
+.screen-icon:active {
+  background: color-mix(in srgb, var(--cyan) 25%, #000);
+}
+.screen-icon svg {
+  width: 16px;
+  height: 16px;
+  fill: currentColor;
+  stroke: currentColor;
+  stroke-width: 0;
+}
+.screen-icon svg path {
+  fill: none;
+  stroke-width: 2;
+}
+
 /* horizontal: pantalla en el centro con todo el alto, cruceta a la izquierda
    y A/B a la derecha. El mando se parte con `display: contents`: sus dos
    grupos pasan a ser hijos directos del player y `order` los coloca a cada

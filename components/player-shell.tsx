@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useSession } from "@/components/session-provider";
 import { SkinSelector } from "@/components/skin-selector";
 import { TouchGamepad, type GamepadConfig } from "@/components/touch-gamepad";
@@ -56,6 +56,8 @@ export function PlayerShell({
   const { user, saveScore } = useSession();
   const coarse = useCoarsePointer();
   const touch = coarse && gamepad !== undefined;
+  const playerRef = useRef<HTMLDivElement>(null);
+  const [fullscreen, setFullscreen] = useState(false);
   const [saved, setSaved] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -74,6 +76,24 @@ export function PlayerShell({
     root.classList.add("av-touch-lock");
     return () => root.classList.remove("av-touch-lock");
   }, [touch]);
+
+  // El estado sale del evento y no del clic: el jugador también sale de
+  // pantalla completa con el gesto o el botón atrás del sistema.
+  useEffect(() => {
+    if (!touch) return;
+    const sync = () => setFullscreen(document.fullscreenElement === playerRef.current);
+    document.addEventListener("fullscreenchange", sync);
+    return () => document.removeEventListener("fullscreenchange", sync);
+  }, [touch]);
+
+  // iPhone no tiene Fullscreen API fuera de <video>: allí el icono no existe.
+  // Solo se lee con `touch`, que en el servidor y al hidratar es falso.
+  const canFullscreen = touch && document.fullscreenEnabled;
+
+  const toggleFullscreen = () => {
+    if (document.fullscreenElement) void document.exitFullscreen();
+    else void playerRef.current?.requestFullscreen();
+  };
 
   const restart = () => {
     setSaved(false);
@@ -101,7 +121,10 @@ export function PlayerShell({
   };
 
   return (
-    <div className={gamepad ? "av-player has-gamepad fade-in" : "av-player fade-in"}>
+    <div
+      ref={playerRef}
+      className={gamepad ? "av-player has-gamepad fade-in" : "av-player fade-in"}
+    >
       <div className="player-hud">
         <div style={{ display: "flex", gap: 24, flexWrap: "wrap" }}>
           <div className="hud-stat">
@@ -140,6 +163,39 @@ export function PlayerShell({
       <div className="crt">
         <div className="crt-screen">
           {children}
+          {/* Sin HUD en táctil, pausa y pantalla completa viven sobre la
+              pantalla, en la esquina donde el mando no llega. */}
+          {touch && (
+            <div className="screen-icons">
+              <button
+                type="button"
+                className="screen-icon"
+                aria-label={paused ? "Reanudar" : "Pausa"}
+                onClick={onTogglePause}
+              >
+                <svg viewBox="0 0 16 16" aria-hidden>
+                  <rect x="3" y="2" width="3.5" height="12" />
+                  <rect x="9.5" y="2" width="3.5" height="12" />
+                </svg>
+              </button>
+              {canFullscreen && (
+                <button
+                  type="button"
+                  className="screen-icon"
+                  aria-label={fullscreen ? "Salir de pantalla completa" : "Pantalla completa"}
+                  onClick={toggleFullscreen}
+                >
+                  <svg viewBox="0 0 16 16" aria-hidden>
+                    {fullscreen ? (
+                      <path d="M6 1v5H1M10 1v5h5M6 15v-5H1M10 15v-5h5" />
+                    ) : (
+                      <path d="M1 6V1h5M15 6V1h-5M1 10v5h5M15 10v5h-5" />
+                    )}
+                  </svg>
+                </button>
+              )}
+            </div>
+          )}
           {paused && (
             <div className="crt-content" style={{ background: "rgba(0,0,0,0.6)", zIndex: 5 }}>
               <div>
