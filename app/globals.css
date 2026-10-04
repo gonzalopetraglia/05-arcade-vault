@@ -3536,6 +3536,26 @@ html.av-touch-lock body {
   font-size: 9px;
 }
 
+/* cartel de arranque táctil: toda la pantalla es el botón */
+.tap-to-start {
+  z-index: 5;
+  width: 100%;
+  border: 0;
+  background: rgba(0, 0, 0, 0.7);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.tap-to-start-label {
+  font-size: 14px;
+  letter-spacing: 0.08em;
+  animation: blink 1s steps(1) infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .tap-to-start-label {
+    animation: none;
+  }
+}
+
 /* horizontal: pantalla en el centro con todo el alto, cruceta a la izquierda
    y A/B a la derecha. El mando se parte con `display: contents`: sus dos
    grupos pasan a ser hijos directos del player y `order` los coloca a cada

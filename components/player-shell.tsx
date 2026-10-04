@@ -58,6 +58,9 @@ export function PlayerShell({
   const touch = coarse && gamepad !== undefined;
   const playerRef = useRef<HTMLDivElement>(null);
   const [fullscreen, setFullscreen] = useState(false);
+  // Solo cuenta en táctil: hasta el primer toque el motor espera en pausa.
+  const [started, setStarted] = useState(false);
+  const holdRef = useRef(false);
   const [saved, setSaved] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -76,6 +79,23 @@ export function PlayerShell({
     root.classList.add("av-touch-lock");
     return () => root.classList.remove("av-touch-lock");
   }, [touch]);
+
+  // En móvil el juego arrancaría mientras el jugador aún hace scroll o mira
+  // el mando. Se pausa el motor una sola vez al detectar el táctil, sin tocar
+  // su `start()`; si ya estaba en pausa (pestaña sin foco) no hay que hacer
+  // nada, el toque del cartel lo reanudará.
+  useEffect(() => {
+    if (!touch || holdRef.current) return;
+    holdRef.current = true;
+    if (!paused) onTogglePause();
+  }, [touch, paused, onTogglePause]);
+
+  const start = () => {
+    setStarted(true);
+    if (paused) onTogglePause();
+  };
+
+  const waiting = touch && !started;
 
   // El estado sale del evento y no del clic: el jugador también sale de
   // pantalla completa con el gesto o el botón atrás del sistema.
@@ -167,7 +187,9 @@ export function PlayerShell({
           {children}
           {/* Sin HUD en táctil, pausa y pantalla completa viven sobre la
               pantalla, en la esquina donde el mando no llega. */}
-          {touch && (
+          {/* Mientras espera el primer toque los iconos no salen: ⏸
+              reanudaría el motor por debajo del cartel. */}
+          {touch && !waiting && (
             <div className="screen-icons">
               <button
                 type="button"
@@ -198,7 +220,12 @@ export function PlayerShell({
               )}
             </div>
           )}
-          {paused && touch && (
+          {waiting && (
+            <button type="button" className="crt-content tap-to-start" onClick={start}>
+              <span className="pixel neon-cyan tap-to-start-label">TOCA PARA EMPEZAR</span>
+            </button>
+          )}
+          {paused && touch && !waiting && (
             // Sin HUD, la pausa es el único sitio donde ver la partida y salir.
             <div className="crt-content pause-menu" style={{ zIndex: 5 }}>
               <div className="pause-menu-inner">
