@@ -1,48 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useRef } from "react";
+import { useEffect, useRef } from "react";
 import { SnakeEngine, type SnakeState } from "@/lib/games/snake/engine";
 import { H, W } from "@/lib/games/snake/entities";
 import type { SnakePalette } from "@/lib/games/snake/skins";
 
 /** Teclas de juego: se les corta el scroll de la página mientras se juega. */
 const GAME_KEYS = ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Space"];
-
-/**
- * Botón táctil: traduce pointerdown/pointerup/pointercancel a la misma entrada
- * de teclado que usa el motor, así que el dedo y la tecla son indistinguibles.
- * pointercancel y pointerleave se tratan como pointerup para que ninguna tecla
- * se quede pegada.
- */
-function TouchButton({
-  code,
-  label,
-  setKey,
-  children,
-}: {
-  code: string;
-  label: string;
-  setKey: (code: string, down: boolean) => void;
-  children: React.ReactNode;
-}) {
-  const release = () => setKey(code, false);
-  return (
-    <button
-      type="button"
-      className="touch-btn rot"
-      aria-label={label}
-      onPointerDown={(e) => {
-        e.preventDefault();
-        setKey(code, true);
-      }}
-      onPointerUp={release}
-      onPointerCancel={release}
-      onPointerLeave={release}
-    >
-      {children}
-    </button>
-  );
-}
 
 type Props = {
   onState: (s: SnakeState) => void;
@@ -132,11 +96,6 @@ export function SnakeCanvas({ onState, onGameOver, onEngineReady, onAutoPause, p
     };
   }, []);
 
-  // El dedo entra por la misma puerta que la tecla: el motor no distingue.
-  const setKey = useCallback((code: string, down: boolean) => {
-    engineRef.current?.setKey(code, down);
-  }, []);
-
   return (
     <div style={{ position: "absolute", inset: 0 }}>
       <canvas
@@ -149,24 +108,6 @@ export function SnakeCanvas({ onState, onGameOver, onEngineReady, onAutoPause, p
           touchAction: "none",
         }}
       />
-      {/* Cruceta repartida en los dos pads que ya existen: horizontales a la
-          izquierda, verticales a la derecha. Ninguna clase CSS nueva. */}
-      <div className="touch-pad left">
-        <TouchButton code="ArrowLeft" label="Girar a la izquierda" setKey={setKey}>
-          ◀
-        </TouchButton>
-        <TouchButton code="ArrowRight" label="Girar a la derecha" setKey={setKey}>
-          ▶
-        </TouchButton>
-      </div>
-      <div className="touch-pad right">
-        <TouchButton code="ArrowUp" label="Girar hacia arriba" setKey={setKey}>
-          ▲
-        </TouchButton>
-        <TouchButton code="ArrowDown" label="Girar hacia abajo" setKey={setKey}>
-          ▼
-        </TouchButton>
-      </div>
     </div>
   );
 }

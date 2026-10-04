@@ -50,6 +50,12 @@ export function TetrisPlayer({ game }: { game: Game }) {
     engineRef.current?.restart();
   }, []);
 
+  // El mando táctil entra por la misma puerta que el teclado; estable para
+  // que el mando no reciba una función nueva en cada render.
+  const setKey = useCallback((code: string, down: boolean) => {
+    engineRef.current?.setKey(code, down);
+  }, []);
+
   return (
     <PlayerShell
       game={game}
@@ -61,6 +67,7 @@ export function TetrisPlayer({ game }: { game: Game }) {
       onTogglePause={onTogglePause}
       onEnd={onEnd}
       onRestart={onRestart}
+      gamepad={{ setKey, a: "CAÍDA", b: "ROTAR" }}
     >
       <TetrisCanvas
         onState={onState}

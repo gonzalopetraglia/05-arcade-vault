@@ -3153,54 +3153,409 @@ a {
   text-shadow: 0 0 6px rgba(255, 0, 110, 0.45);
 }
 
-/* controles táctiles de asteroides: solo aparecen en punteros gruesos */
-.touch-pad {
+/* ===== mando táctil =====
+   Teclas de máquina recreativa: cada botón tiene un canto inferior que se
+   hunde al pulsar, porque en cristal no hay tacto y la vista tiene que
+   confirmar la pulsación. Los colores salen de los tokens con color-mix, así
+   que el tema claro hereda sus versiones tintadas sin redefinir nada. */
+/* fuera de un puntero grueso el mando no existe: el escritorio queda igual */
+.touch-gamepad {
   display: none;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 20px 22px 26px;
+  background: var(--bg-2);
+  border-top: 1px solid var(--line);
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
 }
-@media (pointer: coarse) {
-  .touch-pad {
-    position: absolute;
-    bottom: 12px;
-    z-index: 6;
-    display: flex;
-    gap: 10px;
-  }
-  .touch-pad.left {
-    left: 12px;
-  }
-  /* en columna: en pantallas estrechas, PROPULSAR y DISPARAR en fila se
-     comerían el pad de rotación */
-  .touch-pad.right {
-    right: 12px;
-    flex-direction: column;
-    align-items: flex-end;
-  }
+.touch-gamepad button {
+  touch-action: none;
+  -webkit-tap-highlight-color: transparent;
+  cursor: pointer;
 }
-.touch-btn {
+
+/* cruceta: una cruz de 3×3 con un buje en el centro */
+.gamepad-dpad {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(3, 56px);
+  grid-template-rows: repeat(3, 56px);
+  grid-template-areas:
+    ". up ."
+    "left hub right"
+    ". down .";
+}
+.gamepad-dpad::before {
+  content: "";
+  grid-area: hub;
+  background: var(--bg-3);
+  border: 1px solid color-mix(in srgb, var(--cyan) 30%, transparent);
+  background-image: radial-gradient(
+    circle at center,
+    color-mix(in srgb, var(--cyan) 35%, transparent) 0 6px,
+    transparent 7px
+  );
+}
+.pad-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  min-width: 56px;
-  height: 48px;
-  padding: 0 12px;
-  background: rgba(0, 0, 0, 0.45);
-  border: 1px solid rgba(0, 245, 255, 0.45);
-  color: var(--cyan);
+  padding: 0;
   font-family: var(--pixel);
+  font-size: 16px;
+  color: var(--cyan);
+  background: var(--bg-3);
+  border: 1px solid color-mix(in srgb, var(--cyan) 50%, transparent);
+  box-shadow: 0 4px 0 color-mix(in srgb, var(--cyan) 28%, var(--bg));
+  transition:
+    transform 50ms ease,
+    box-shadow 50ms ease,
+    background 50ms ease;
+}
+.pad-btn.up {
+  grid-area: up;
+  border-radius: 8px 8px 0 0;
+}
+.pad-btn.down {
+  grid-area: down;
+  border-radius: 0 0 8px 8px;
+}
+.pad-btn.left {
+  grid-area: left;
+  border-radius: 8px 0 0 8px;
+}
+.pad-btn.right {
+  grid-area: right;
+  border-radius: 0 8px 8px 0;
+}
+/* triángulos dibujados y no glifos: la fuente pixel no tiene ▲◀▶▼ y la de
+   reserva pinta ◀▶ más pequeños que ▲▼ */
+.pad-arrow {
+  width: 18px;
+  height: 16px;
+  background: currentColor;
+  clip-path: polygon(50% 0, 100% 100%, 0 100%);
+}
+.pad-btn.down .pad-arrow {
+  rotate: 180deg;
+}
+.pad-btn.left .pad-arrow {
+  rotate: -90deg;
+}
+.pad-btn.right .pad-arrow {
+  rotate: 90deg;
+}
+.pad-btn:active {
+  transform: translateY(3px);
+  box-shadow: 0 1px 0 color-mix(in srgb, var(--cyan) 28%, var(--bg));
+  background: color-mix(in srgb, var(--cyan) 22%, var(--bg-3));
+}
+
+/* A y B en diagonal: A arriba a la derecha, como en los mandos clásicos */
+.gamepad-actions {
+  display: grid;
+  grid-template-columns: repeat(2, 64px);
+  grid-template-rows: 40px 64px 40px;
+  column-gap: 18px;
+}
+.act-btn {
+  --act: var(--magenta);
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  padding: 0;
+  border-radius: 50%;
+  background: var(--bg-3);
+  border: 2px solid var(--act);
+  box-shadow: 0 5px 0 color-mix(in srgb, var(--act) 35%, var(--bg));
+  transition:
+    transform 50ms ease,
+    box-shadow 50ms ease,
+    background 50ms ease;
+}
+.act-btn.a {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  align-self: start;
+}
+.act-btn.b {
+  --act: var(--yellow);
+  grid-column: 1;
+  grid-row: 2 / span 2;
+  align-self: end;
+}
+.act-key {
+  font-family: var(--pixel);
+  font-size: 18px;
+  color: var(--act);
+  text-shadow: 0 0 8px color-mix(in srgb, var(--act) 60%, transparent);
+}
+/* la etiqueta va bajo la tecla, fuera del círculo: el círculo dice qué tecla
+   es y la etiqueta qué hace en este juego */
+.act-label {
+  position: absolute;
+  top: calc(100% + 10px);
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: var(--pixel);
+  font-size: 7px;
+  letter-spacing: 0.12em;
+  white-space: nowrap;
+  color: var(--ink-dim);
+}
+.act-btn:active {
+  transform: translateY(4px);
+  box-shadow: 0 1px 0 color-mix(in srgb, var(--act) 35%, var(--bg));
+  background: color-mix(in srgb, var(--act) 28%, var(--bg-3));
+}
+
+/* botón que el juego no usa: presente para que el mando sea siempre el mismo,
+   pero sin color ni respuesta */
+.touch-gamepad .is-off {
+  --act: var(--ink-faint);
+  opacity: 0.35;
+  box-shadow: none;
+}
+.touch-gamepad .is-off .act-key {
+  text-shadow: none;
+}
+.touch-gamepad .is-off:active {
+  transform: none;
+  background: var(--bg-3);
+  box-shadow: none;
+}
+
+/* sobre papel claro el resplandor ensucia el texto en vez de iluminarlo */
+:root[data-theme="light"] .act-key {
+  text-shadow: none;
+}
+
+/* ===== layout táctil del player =====
+   Solo con puntero grueso y un juego que pase `gamepad`. Se decide en CSS y no
+   con el hook para que el HTML del servidor ya salga con este layout. El
+   player tapa todo el viewport (por encima de la nav, z-index 50, y por
+   debajo de su propio modal, 80): pantalla arriba, mando abajo, nada más. */
+@media (pointer: coarse) {
+  .av-player.has-gamepad {
+    position: fixed;
+    inset: 0;
+    z-index: 70;
+    display: flex;
+    flex-direction: column;
+    max-width: none;
+    /* 100dvh y no 100vh: el vh móvil incluye la barra del navegador y cortaría
+       el mando */
+    height: 100dvh;
+    margin: 0;
+    padding: 0;
+    background: var(--bg);
+  }
+  .av-player.has-gamepad :is(.player-hud, .crt-bottom) {
+    display: none;
+  }
+  .av-player.has-gamepad .crt {
+    flex: none;
+    padding: 0;
+    border-radius: 0;
+    box-shadow: none;
+  }
+  /* la pantalla ocupa el ancho, salvo que el alto no deje sitio al mando
+     (~240px): entonces se estrecha manteniendo 4:3 */
+  .av-player.has-gamepad .crt-screen {
+    width: min(100%, (100dvh - 240px) * 4 / 3);
+    margin-inline: auto;
+    border-radius: 0;
+  }
+  /* el mando se queda con todo el alto que sobra y centra los controles */
+  .av-player.has-gamepad .touch-gamepad {
+    display: flex;
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+}
+
+/* bloqueo de página mientras se juega con el mando: el shell pone la clase
+   solo con puntero grueso. `touch-action` y `user-select` van además dentro
+   del media query para que el player de escritorio no cambie. */
+html.av-touch-lock,
+html.av-touch-lock body {
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+@media (pointer: coarse) {
+  .av-player.has-gamepad {
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  /* el modal de fin de partida es la excepción: hay que poder tocar el campo,
+     escribir el nombre y desplazarse si el teclado virtual lo encoge */
+  .av-player.has-gamepad .modal-bd {
+    touch-action: auto;
+    user-select: auto;
+    -webkit-user-select: auto;
+  }
+  .av-player.has-gamepad .modal-bd input {
+    user-select: text;
+    -webkit-user-select: text;
+  }
+}
+
+/* iconos de pausa y pantalla completa sobre la pantalla (solo táctil, los
+   renderiza el shell). Encima del cartel de pausa (z-index 5) para que ⏸
+   siga respondiendo con el menú abierto. */
+.screen-icons {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 6;
+  display: flex;
+  gap: 8px;
+}
+.screen-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  color: var(--cyan);
+  background: rgba(0, 0, 0, 0.55);
+  border: 1px solid color-mix(in srgb, var(--cyan) 45%, transparent);
+  border-radius: 8px;
+  -webkit-tap-highlight-color: transparent;
+  cursor: pointer;
+}
+.screen-icon:active {
+  background: color-mix(in srgb, var(--cyan) 25%, #000);
+}
+.screen-icon svg {
+  width: 16px;
+  height: 16px;
+  fill: currentColor;
+  stroke: currentColor;
+  stroke-width: 0;
+}
+.screen-icon svg path {
+  fill: none;
+  stroke-width: 2;
+}
+
+/* menú de pausa táctil: ocupa el sitio del HUD, así que reutiliza sus
+   `.hud-stat`, pero compacto para caber en una pantalla de ~290px de alto */
+.pause-menu {
+  background: rgba(0, 0, 0, 0.82);
+  overflow-y: auto;
+}
+.pause-menu-inner {
+  /* margen automático y no solo centrado: si el menú no cabe, el centrado
+     cortaría la parte de arriba sin poder hacer scroll hasta ella */
+  margin: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 16px;
+}
+.pause-menu-title {
+  font-size: 16px;
+}
+.pause-menu-stats {
+  display: flex;
+  gap: 22px;
+}
+.pause-menu-stats .hud-stat {
+  align-items: center;
+}
+.pause-menu-stats .hud-stat .v {
+  font-size: 12px;
+}
+.pause-menu .skin-selector {
+  width: auto;
+}
+.pause-menu-settings {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.pause-menu .theme-toggle {
+  min-height: 44px;
+}
+/* el nav móvil esconde el texto por falta de ancho; aquí hay sitio y solo la
+   luna no dice qué hace el botón */
+.pause-menu .theme-toggle-text {
+  display: inline;
+}
+.pause-menu-actions {
+  display: flex;
+  gap: 8px;
+}
+.pause-menu-actions .btn {
+  min-height: 44px;
+  padding: 0 12px;
   font-size: 9px;
-  letter-spacing: 0.14em;
-  border-radius: 10px;
-  touch-action: none;
-  user-select: none;
-  -webkit-user-select: none;
+}
+
+/* cartel de arranque táctil: toda la pantalla es el botón */
+.tap-to-start {
+  z-index: 5;
+  width: 100%;
+  border: 0;
+  background: rgba(0, 0, 0, 0.7);
+  cursor: pointer;
   -webkit-tap-highlight-color: transparent;
 }
-.touch-btn:active {
-  background: rgba(0, 245, 255, 0.22);
+.tap-to-start-label {
+  font-size: 14px;
+  letter-spacing: 0.08em;
+  animation: blink 1s steps(1) infinite;
 }
-.touch-btn.rot {
-  font-size: 18px;
-  letter-spacing: 0;
+@media (prefers-reduced-motion: reduce) {
+  .tap-to-start-label {
+    animation: none;
+  }
+}
+
+/* horizontal: pantalla en el centro con todo el alto, cruceta a la izquierda
+   y A/B a la derecha. El mando se parte con `display: contents`: sus dos
+   grupos pasan a ser hijos directos del player y `order` los coloca a cada
+   lado del CRT, sin duplicar el componente ni cambiar su marcado. */
+@media (pointer: coarse) and (orientation: landscape) {
+  .av-player.has-gamepad {
+    flex-direction: row;
+    align-items: center;
+    background: var(--bg-2);
+  }
+  .av-player.has-gamepad .touch-gamepad {
+    display: contents;
+  }
+  .av-player.has-gamepad .gamepad-dpad {
+    order: 0;
+  }
+  .av-player.has-gamepad .crt {
+    order: 1;
+  }
+  .av-player.has-gamepad .gamepad-actions {
+    order: 2;
+  }
+  .av-player.has-gamepad :is(.gamepad-dpad, .gamepad-actions) {
+    flex: 1 1 0;
+    justify-content: center;
+    align-content: center;
+  }
+  /* 4:3 con todo el alto, salvo que los lados no dejen ~180px a cada grupo
+     del mando: entonces manda el ancho */
+  .av-player.has-gamepad .crt-screen {
+    width: min(100dvh * 4 / 3, 100vw - 360px);
+  }
 }
 
 /* ===== tema claro =====
