@@ -60,6 +60,7 @@ Built with Spec Driven Design using the `/spec` and `/spec-impl` skills from [Kl
 - Usa siempre `/frontend-design` para diseñar la interfaz del usuario.
 - `/add-game` (`.claude/skills/add-game/`) writes the spec for a new game — engine port, player, catalog entry, seed migration, leaderboard — from a `references/started-games/` folder or from scratch. It only writes the spec; `/spec-impl` implements it. Its `reference.md` holds the platform contracts (catalog types, engine API, taken ids and `sort_order`); keep it in sync when those change.
 - `game-planner` (`.claude/agents/game-planner.md`) is a subagent, not a skill: it decides which game to port or invent next. It reads the catalog, `references/implemented-games.md` and its own memory in `references/games-suggestions-todo.md`, returns a ranked top 3 with one recommendation and updates that TODO. It only proposes — the spec is still `/add-game`'s job.
+- `game-jam` (`.claude/agents/game-jam.md`) is a subagent: give it a theme and it invents one game and writes three alternative specs for it in `specs/game-jam/<game-id>/` (`variante-a.md`, `variante-b.md`, `variante-c.md`), in the SPEC 07–09 format and `Borrador` state. It decides id, category, color, cover and controls on its own and records them under `Decisiones`. Pick one, move it to `specs/NN-juego-<id>.md`, approve it, then `/spec-impl`.
 
 ## Hooks
 
