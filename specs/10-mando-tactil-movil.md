@@ -1,6 +1,6 @@
 # SPEC 10 — Mando táctil y layout móvil para los juegos
 
-> **Estado:** Aprobado
+> **Estado:** Implementado
 > **Depende de:** SPEC 01, SPEC 05, SPEC 07, SPEC 08, SPEC 09
 > **Fecha:** 2026-10-04
 > **Objetivo:** En dispositivos táctiles (`pointer: coarse`), los cuatro juegos reales se juegan con la pantalla arriba y un mando común debajo (cruceta + A + B), sin HUD, con pausa, pantalla completa y arranque por toque, sin cambiar nada en escritorio.
@@ -137,49 +137,49 @@ Nada se persiste. No hay claves nuevas en `localStorage`.
 
 **Escritorio (`pointer: fine`):**
 
-- [ ] `/jugar/asteroides`, `/jugar/tetris`, `/jugar/arkanoid` y `/jugar/snake` se ven igual que antes de esta spec: HUD completo, CRT con `.crt-bottom`, sin mando, sin iconos en la pantalla.
-- [ ] Los juegos arrancan al montar, sin cartel "TOCA PARA EMPEZAR".
-- [ ] El teclado sigue funcionando igual en los cuatro juegos.
+- [x] `/jugar/asteroides`, `/jugar/tetris`, `/jugar/arkanoid` y `/jugar/snake` se ven igual que antes de esta spec: HUD completo, CRT con `.crt-bottom`, sin mando, sin iconos en la pantalla.
+- [x] Los juegos arrancan al montar, sin cartel "TOCA PARA EMPEZAR".
+- [x] El teclado sigue funcionando igual en los cuatro juegos.
 
 **Táctil, vertical (390×844):**
 
-- [ ] No hay HUD (`.player-hud`) ni `.crt-bottom` visibles.
-- [ ] La pantalla del juego ocupa el ancho y está arriba; el mando (cruceta + A + B) está debajo y no se solapa con la pantalla.
-- [ ] Ningún botón del mando está dentro de `.crt-screen`.
-- [ ] La página no hace scroll vertical ni horizontal; la navegación del sitio no se ve.
-- [ ] El mando es el mismo en los cuatro juegos; solo cambian las etiquetas de A/B según la tabla.
-- [ ] En Arkanoid y Snake, A y B se ven atenuados y pulsarlos no cambia nada en el juego.
-- [ ] Asteroides: ◀ ▶ giran, ▲ propulsa, A dispara.
-- [ ] Tetris: ◀ ▶ mueven, ▼ baja, ▲ rota, A hace caída dura, B rota.
-- [ ] Arkanoid: ◀ ▶ mueven la paleta.
-- [ ] Snake: las cuatro direcciones giran la serpiente.
-- [ ] Mantener pulsado un botón y arrastrar el dedo fuera lo suelta (la tecla no se queda pegada).
+- [x] No hay HUD (`.player-hud`) ni `.crt-bottom` visibles.
+- [x] La pantalla del juego ocupa el ancho y está arriba; el mando (cruceta + A + B) está debajo y no se solapa con la pantalla.
+- [x] Ningún botón del mando está dentro de `.crt-screen`.
+- [x] La página no hace scroll vertical ni horizontal; la navegación del sitio no se ve.
+- [x] El mando es el mismo en los cuatro juegos; solo cambian las etiquetas de A/B según la tabla.
+- [x] En Arkanoid y Snake, A y B se ven atenuados y pulsarlos no cambia nada en el juego.
+- [x] Asteroides: ◀ ▶ giran, ▲ propulsa, A dispara.
+- [x] Tetris: ◀ ▶ mueven, ▼ baja, ▲ rota, A hace caída dura, B rota.
+- [x] Arkanoid: ◀ ▶ mueven la paleta.
+- [x] Snake: las cuatro direcciones giran la serpiente.
+- [x] Mantener pulsado un botón y arrastrar el dedo fuera lo suelta (la tecla no se queda pegada).
 
 **Táctil, horizontal (844×390):**
 
-- [ ] La pantalla mantiene 4:3, cabe entera en el alto y no hay scroll.
-- [ ] La cruceta está a la izquierda de la pantalla y A/B a la derecha.
+- [x] La pantalla mantiene 4:3, cabe entera en el alto y no hay scroll.
+- [x] La cruceta está a la izquierda de la pantalla y A/B a la derecha.
 
 **Táctil, comportamiento:**
 
-- [ ] Al entrar en `/jugar/<id>` se ve "TOCA PARA EMPEZAR" y la puntuación no cambia hasta tocarlo.
-- [ ] Tras tocarlo el juego corre; JUGAR DE NUEVO tras el fin no vuelve a mostrar el cartel.
-- [ ] El icono ⏸ pausa y muestra el menú con puntuación, vidas, nivel, REANUDAR, FIN y SALIR.
-- [ ] En los juegos con skins (hoy Asteroides, Arkanoid y Snake), el menú de pausa muestra el selector de skin y cambiarla repinta el juego sin reiniciarlo.
-- [ ] En Tetris, que no tiene skins, el menú de pausa no muestra selector.
-- [ ] El menú de pausa muestra en los cuatro juegos el interruptor de tema claro/oscuro, y cambiarlo cambia el tema del sitio sin reiniciar la partida.
-- [ ] FIN abre el modal de fin de partida y se puede guardar la puntuación escribiendo el nombre con el teclado del móvil.
-- [ ] SALIR lleva a `/games/<id>` y la página vuelve a hacer scroll normal (`av-touch-lock` retirada de `<html>`).
-- [ ] Girar el dispositivo durante la partida la pausa.
-- [ ] En Android Chrome, ⛶ entra y sale de pantalla completa; en un navegador sin `document.fullscreenEnabled` el icono no aparece.
-- [ ] Doble toque sobre el mando o la pantalla no hace zoom.
-- [ ] Funciona en tema claro y oscuro: el mando es legible en los dos.
+- [x] Al entrar en `/jugar/<id>` se ve "TOCA PARA EMPEZAR" y la puntuación no cambia hasta tocarlo.
+- [x] Tras tocarlo el juego corre; JUGAR DE NUEVO tras el fin no vuelve a mostrar el cartel.
+- [x] El icono ⏸ pausa y muestra el menú con puntuación, vidas, nivel, REANUDAR, FIN y SALIR.
+- [x] En los juegos con skins (hoy Asteroides, Arkanoid y Snake), el menú de pausa muestra el selector de skin y cambiarla repinta el juego sin reiniciarlo.
+- [x] En Tetris, que no tiene skins, el menú de pausa no muestra selector.
+- [x] El menú de pausa muestra en los cuatro juegos el interruptor de tema claro/oscuro, y cambiarlo cambia el tema del sitio sin reiniciar la partida.
+- [x] FIN abre el modal de fin de partida y se puede guardar la puntuación escribiendo el nombre con el teclado del móvil.
+- [x] SALIR lleva a `/games/<id>` y la página vuelve a hacer scroll normal (`av-touch-lock` retirada de `<html>`).
+- [x] Girar el dispositivo durante la partida la pausa.
+- [x] En Android Chrome, ⛶ entra y sale de pantalla completa; en un navegador sin `document.fullscreenEnabled` el icono no aparece.
+- [x] Doble toque sobre el mando o la pantalla no hace zoom.
+- [x] Funciona en tema claro y oscuro: el mando es legible en los dos.
 
 **General:**
 
-- [ ] `TouchButton`, `.touch-pad` y `.touch-btn` ya no existen en el código (`grep` vacío).
-- [ ] `npm run build` y `npm run lint` pasan sin errores.
-- [ ] La consola no muestra errores ni avisos de hidratación en `/jugar/<id>` con emulación táctil.
+- [x] `TouchButton`, `.touch-pad` y `.touch-btn` ya no existen en el código (`grep` vacío).
+- [x] `npm run build` y `npm run lint` pasan sin errores.
+- [x] La consola no muestra errores ni avisos de hidratación en `/jugar/<id>` con emulación táctil.
 
 ---
 
