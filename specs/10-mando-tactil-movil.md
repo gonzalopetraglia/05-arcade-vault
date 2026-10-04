@@ -33,7 +33,7 @@ La solución es un layout táctil único en `PlayerShell` y un mando único en `
   - pantalla del juego arriba, mando abajo en vertical; pantalla en el centro y mando partido a los lados en horizontal;
   - dos iconos superpuestos en la esquina superior derecha de la pantalla: pausa (⏸) y pantalla completa (⛶);
   - cartel "TOCA PARA EMPEZAR" antes de la primera partida;
-  - menú de pausa con puntuación, vidas, nivel, REANUDAR, FIN, SALIR y el selector de skin si el juego tiene skins;
+  - menú de pausa con puntuación, vidas, nivel, REANUDAR, FIN, SALIR, el interruptor de tema claro/oscuro y el selector de skin si el juego tiene skins;
   - pausa automática al cambiar de orientación;
   - bloqueo de zoom, scroll, pull-to-refresh y selección de texto mientras el player está montado.
 - Nueva prop opcional `gamepad` en `PlayerShell`, que pasan los cuatro players reales con sus etiquetas.
@@ -124,7 +124,7 @@ Nada se persiste. No hay claves nuevas en `localStorage`.
 5. **Orientación horizontal.** Bajo `@media (pointer: coarse) and (orientation: landscape)`: la pantalla toma el alto disponible manteniendo 4:3, centrada; la cruceta va a la izquierda y A/B a la derecha. El mando se parte en dos grupos con `display: contents` o dos contenedores; la decisión se toma al implementar y se deja comentada.
 6. **Bloqueo de página.** Con `coarse && gamepad`, el shell pone la clase `av-touch-lock` en `<html>` al montar y la quita al desmontar. CSS: `overflow: hidden; overscroll-behavior: none` en `html.av-touch-lock` y `body`; `touch-action: none` y `user-select: none` en `.av-player.has-gamepad` salvo el `<input>` del modal de guardado.
 7. **Iconos de pausa y pantalla completa.** Dentro de `.crt-screen`, solo con `coarse`, dos botones en la esquina superior derecha con `z-index` sobre el canvas. Pausa llama a `onTogglePause`. Pantalla completa llama a `requestFullscreen()` sobre `.av-player` o `exitFullscreen()`; se escucha `fullscreenchange` para el estado; el icono no se renderiza si `document.fullscreenEnabled` es falso (iPhone).
-8. **Menú de pausa táctil.** Con `coarse`, el cartel "EN PAUSA" pasa a ser un menú: puntuación, vidas y nivel con el formato del HUD; botones REANUDAR (`onTogglePause`), FIN (`onEnd`), SALIR (enlace a `/games/[id]`); y `SkinSelector` si llegan `skin` y `onSkinChange`. En escritorio el cartel sigue como hoy.
+8. **Menú de pausa táctil.** Con `coarse`, el cartel "EN PAUSA" pasa a ser un menú: puntuación, vidas y nivel con el formato del HUD; botones REANUDAR (`onTogglePause`), FIN (`onEnd`), SALIR (enlace a `/games/[id]`); `ThemeToggle` (la nav queda tapada en táctil) y `SkinSelector` si llegan `skin` y `onSkinChange`. En escritorio el cartel sigue como hoy.
 9. **Toca para empezar.** Con `coarse && gamepad && !started`, el shell llama una vez a `onTogglePause()` tras montar para dejar el motor en pausa y muestra el cartel "TOCA PARA EMPEZAR" en lugar del menú de pausa. Un toque en el cartel pone `started = true` y llama a `onTogglePause()`. JUGAR DE NUEVO no vuelve a pedir el toque.
 10. **Pausa al girar.** Con `coarse`, el shell escucha `matchMedia("(orientation: portrait)")` `change` y, si el juego está en marcha (`!paused && !over && started`), llama a `onTogglePause()`. La pausa por `visibilitychange`/`blur` que ya hacen los canvas no cambia.
 11. **Players.** Pasar `gamepad` en los cuatro players con `setKey: (code, down) => engineRef.current?.setKey(code, down)` (estable con `useCallback`) y las etiquetas de la tabla.
@@ -167,6 +167,7 @@ Nada se persiste. No hay claves nuevas en `localStorage`.
 - [ ] El icono ⏸ pausa y muestra el menú con puntuación, vidas, nivel, REANUDAR, FIN y SALIR.
 - [ ] En los juegos con skins (hoy Asteroides, Arkanoid y Snake), el menú de pausa muestra el selector de skin y cambiarla repinta el juego sin reiniciarlo.
 - [ ] En Tetris, que no tiene skins, el menú de pausa no muestra selector.
+- [ ] El menú de pausa muestra en los cuatro juegos el interruptor de tema claro/oscuro, y cambiarlo cambia el tema del sitio sin reiniciar la partida.
 - [ ] FIN abre el modal de fin de partida y se puede guardar la puntuación escribiendo el nombre con el teclado del móvil.
 - [ ] SALIR lleva a `/games/<id>` y la página vuelve a hacer scroll normal (`av-touch-lock` retirada de `<html>`).
 - [ ] Girar el dispositivo durante la partida la pausa.

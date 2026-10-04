@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useSession } from "@/components/session-provider";
 import { SkinSelector } from "@/components/skin-selector";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { TouchGamepad, type GamepadConfig } from "@/components/touch-gamepad";
 import type { Game } from "@/lib/games";
 import { useCoarsePointer } from "@/lib/use-coarse-pointer";
@@ -254,7 +255,12 @@ export function PlayerShell({
                     <div className="v">{String(level).padStart(2, "0")}</div>
                   </div>
                 </div>
-                {skin && onSkinChange && <SkinSelector value={skin} onChange={onSkinChange} />}
+                {/* La nav queda tapada en táctil: el tema se cambia aquí. La
+                    skin solo si el juego tiene skins. */}
+                <div className="pause-menu-settings">
+                  {skin && onSkinChange && <SkinSelector value={skin} onChange={onSkinChange} />}
+                  <ThemeToggle />
+                </div>
                 <div className="pause-menu-actions">
                   <button className="btn yellow" onClick={onTogglePause}>
                     REANUDAR

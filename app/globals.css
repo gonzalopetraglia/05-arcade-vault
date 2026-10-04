@@ -3454,6 +3454,9 @@ html.av-touch-lock body {
   overflow-y: auto;
 }
 .pause-menu-inner {
+  /* margen automático y no solo centrado: si el menú no cabe, el centrado
+     cortaría la parte de arriba sin poder hacer scroll hasta ella */
+  margin: auto;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -3475,6 +3478,21 @@ html.av-touch-lock body {
 }
 .pause-menu .skin-selector {
   width: auto;
+}
+.pause-menu-settings {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.pause-menu .theme-toggle {
+  min-height: 44px;
+}
+/* el nav móvil esconde el texto por falta de ancho; aquí hay sitio y solo la
+   luna no dice qué hace el botón */
+.pause-menu .theme-toggle-text {
+  display: inline;
 }
 .pause-menu-actions {
   display: flex;
