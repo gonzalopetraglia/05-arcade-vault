@@ -3665,15 +3665,62 @@ html.av-touch-lock body {
   .av-player.has-gamepad .gamepad-actions {
     order: 2;
   }
+  /* la carcasa entera no existe en horizontal: su decoración pasa a cada
+     media carcasa */
+  .av-player.has-gamepad .touch-gamepad::before,
+  .av-player.has-gamepad .touch-gamepad::after {
+    display: none;
+  }
+  /* media carcasa por lado, con la misma piel que la entera. Las dos miden lo
+     mismo de ancho y reparten el sobrante con márgenes automáticos, así el CRT
+     queda centrado aunque la cruceta sea más ancha que A/B. */
   .av-player.has-gamepad :is(.gamepad-dpad, .gamepad-actions) {
-    flex: 1 1 0;
+    flex: none;
+    box-sizing: border-box;
+    width: 194px;
+    margin-inline: auto;
+    padding: 10px;
     justify-content: center;
     align-content: center;
+    background: linear-gradient(180deg, var(--gp-shell-top) 0%, var(--gp-shell-bot) 100%);
+    border: 1px solid var(--line);
+    border-radius: 22px;
+    box-shadow:
+      0 30px 80px -30px var(--gp-shell-glow),
+      0 0 0 1px rgba(255, 255, 255, 0.02),
+      inset 0 1px 0 rgba(255, 255, 255, 0.06),
+      inset 0 -2px 0 rgba(0, 0, 0, 0.6);
   }
-  /* 4:3 con todo el alto, salvo que los lados no dejen ~180px a cada grupo
-     del mando: entonces manda el ancho */
+  .av-player.has-gamepad .gamepad-dpad {
+    /* el grid de 3×56 queda centrado dentro del panel */
+    grid-template-columns: repeat(3, 56px);
+  }
+  .av-player.has-gamepad .gamepad-actions {
+    padding-block: 34px;
+  }
+  .av-player.has-gamepad :is(.gamepad-dpad, .gamepad-actions)::before,
+  .av-player.has-gamepad :is(.gamepad-dpad, .gamepad-actions)::after {
+    content: "";
+    position: absolute;
+    pointer-events: none;
+    z-index: -1;
+  }
+  .av-player.has-gamepad :is(.gamepad-dpad, .gamepad-actions)::before {
+    inset: 4px;
+    border: 1px solid color-mix(in srgb, var(--gp-lit) 14%, transparent);
+    border-radius: calc(22px - 4px);
+  }
+  .av-player.has-gamepad :is(.gamepad-dpad, .gamepad-actions)::after {
+    inset: 0;
+    background-image: radial-gradient(var(--gp-dots) 1px, transparent 1px);
+    background-size: 8px 8px;
+    border-radius: inherit;
+    opacity: 0.6;
+  }
+  /* 4:3 con todo el alto, salvo que los lados no dejen sitio a cada media
+     carcasa (194px + 8px de margen a cada lado): entonces manda el ancho */
   .av-player.has-gamepad .crt-screen {
-    width: min(100dvh * 4 / 3, 100vw - 360px);
+    width: min(100dvh * 4 / 3, 100vw - 420px);
   }
 }
 
