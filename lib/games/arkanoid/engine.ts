@@ -84,6 +84,13 @@ export class ArkanoidEngine {
   private lastTime: number | null = null;
   private running = false;
   private destroyed = false;
+  /**
+   * Alguien pidió pausa y aún no ha reanudado. La carga del sprite es
+   * asíncrona: sin esto, un `pause()` llegado antes de que termine (el
+   * "toca para empezar" del móvil, o PAUSA nada más entrar) se desharía solo
+   * cuando la imagen llega.
+   */
+  private held = false;
   private lastEmitted: ArkanoidState | null = null;
 
   constructor(canvas: HTMLCanvasElement, opts: EngineOptions) {
@@ -115,7 +122,9 @@ export class ArkanoidEngine {
       .then((img) => {
         if (this.destroyed) return;
         this.sheet = img;
-        this.resume();
+        // En pausa se pinta un fotograma para que la pantalla no quede vacía.
+        if (this.held) this.draw();
+        else this.resume();
       })
       .catch(() => {
         // Sin spritesheet no hay nada que pintar; el juego no arranca en vez de
@@ -124,6 +133,7 @@ export class ArkanoidEngine {
   }
 
   pause(): void {
+    this.held = true;
     this.running = false;
     if (this.rafId !== null) {
       cancelAnimationFrame(this.rafId);
@@ -132,6 +142,7 @@ export class ArkanoidEngine {
   }
 
   resume(): void {
+    this.held = false;
     if (this.destroyed || this.running || !this.sheet) return;
     this.running = true;
     // Sin esto, el primer dt tras la pausa vale lo que haya durado la pausa y la

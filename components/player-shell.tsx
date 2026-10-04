@@ -60,7 +60,6 @@ export function PlayerShell({
   const [fullscreen, setFullscreen] = useState(false);
   // Solo cuenta en táctil: hasta el primer toque el motor espera en pausa.
   const [started, setStarted] = useState(false);
-  const holdRef = useRef(false);
   const [saved, setSaved] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -81,14 +80,13 @@ export function PlayerShell({
   }, [touch]);
 
   // En móvil el juego arrancaría mientras el jugador aún hace scroll o mira
-  // el mando. Se pausa el motor una sola vez al detectar el táctil, sin tocar
-  // su `start()`; si ya estaba en pausa (pestaña sin foco) no hay que hacer
-  // nada, el toque del cartel lo reanudará.
+  // el mando: hasta el primer toque el motor se pausa, sin tocar su `start()`.
+  // Sin ref de "ya pausado": el doble montaje de desarrollo crea un segundo
+  // motor que también hay que pausar, y la condición basta para no repetir
+  // (en cuanto `paused` es true, o el jugador ya tocó, no hace nada).
   useEffect(() => {
-    if (!touch || holdRef.current) return;
-    holdRef.current = true;
-    if (!paused) onTogglePause();
-  }, [touch, paused, onTogglePause]);
+    if (touch && !started && !paused) onTogglePause();
+  }, [touch, started, paused, onTogglePause]);
 
   const start = () => {
     setStarted(true);

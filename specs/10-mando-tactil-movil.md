@@ -47,7 +47,7 @@ La solución es un layout táctil único en `PlayerShell` y un mando único en `
 - Gestos (deslizar, tocar el canvas para mover). Solo botones.
 - Vibración (`navigator.vibrate`).
 - Más de dos botones de acción, o botones remapeables por el usuario.
-- Cambios en los motores `lib/games/*/engine.ts` o en sus códigos de tecla.
+- Cambios en los motores `lib/games/*/engine.ts` o en sus códigos de tecla, salvo la excepción de Arkanoid y Snake descrita en Decisiones.
 - Bloquear la orientación con `screen.orientation.lock()`.
 - Gamepads físicos (Gamepad API).
 - La IP de `allowedDevOrigins` en `next.config.ts`; es configuración local de desarrollo.
@@ -199,6 +199,7 @@ Nada se persiste. No hay claves nuevas en `localStorage`.
 - **Sí:** pausa y pantalla completa como iconos en la esquina de la pantalla. Elección del usuario frente a START/SELECT en el mando.
 - **Sí:** "TOCA PARA EMPEZAR" solo en táctil. En escritorio todo se queda igual, como pidió el usuario.
 - **Sí:** el arranque en espera se hace pausando el motor con `onTogglePause()`, sin tocar `start()`. No cambia el contrato de los motores ni de los canvas.
+- **Sí (añadido al implementar):** Arkanoid y Snake recuerdan una pausa pedida mientras cargan su sprite (`held`). Su `start()` llamaba a `resume()` al terminar la carga asíncrona y deshacía la pausa del arranque táctil; ahora, si hay pausa pendiente, pintan un fotograma y esperan. No cambia la API ni los códigos de tecla, y arregla el mismo fallo en escritorio (PAUSA pulsada antes de que cargue la imagen).
 - **Sí:** pantalla completa con la Fullscreen API sobre `.av-player`, oculta donde no existe. iOS Safari no la soporta fuera de `<video>`.
 - **No:** `screen.orientation.lock()`. Solo funciona en pantalla completa y en Android; vertical y horizontal tienen layout propio.
 - **No:** vibración. No funciona en iOS y no se pidió.
@@ -224,7 +225,7 @@ Nada se persiste. No hay claves nuevas en `localStorage`.
 - Cambios en escritorio.
 - El player simulado de los juegos mock.
 - Gestos, vibración, gamepads físicos, botones remapeables.
-- Cambios en los motores.
+- Cambios en los motores (salvo la pausa pendiente de Arkanoid y Snake).
 - Bloqueo de orientación.
 - `allowedDevOrigins` en `next.config.ts`.
 - Tests automatizados.

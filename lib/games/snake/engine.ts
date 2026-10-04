@@ -83,6 +83,13 @@ export class SnakeEngine {
   private lastTime: number | null = null;
   private running = false;
   private destroyed = false;
+  /**
+   * Alguien pidió pausa y aún no ha reanudado. La carga del sprite es
+   * asíncrona: sin esto, un `pause()` llegado antes de que termine (el
+   * "toca para empezar" del móvil, o PAUSA nada más entrar) se desharía solo
+   * cuando la imagen llega.
+   */
+  private held = false;
   private lastEmitted: SnakeState | null = null;
 
   constructor(canvas: HTMLCanvasElement, opts: EngineOptions) {
@@ -108,17 +115,22 @@ export class SnakeEngine {
       .then((img) => {
         if (this.destroyed) return;
         this.img = img;
-        this.resume();
+        // En pausa se pinta un fotograma para que la pantalla no quede vacía.
+        if (this.held) this.draw();
+        else this.resume();
       })
       .catch(() => {
         if (this.destroyed) return;
         // Sin atlas la fruta se pinta como un círculo verde y la partida sigue.
         this.imgFailed = true;
-        this.resume();
+        // En pausa se pinta un fotograma para que la pantalla no quede vacía.
+        if (this.held) this.draw();
+        else this.resume();
       });
   }
 
   pause(): void {
+    this.held = true;
     this.running = false;
     if (this.rafId !== null) {
       cancelAnimationFrame(this.rafId);
@@ -127,6 +139,7 @@ export class SnakeEngine {
   }
 
   resume(): void {
+    this.held = false;
     if (this.destroyed || this.running) return;
     if (!this.img && !this.imgFailed) return;
     this.running = true;
