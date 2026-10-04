@@ -94,6 +94,9 @@ export function TouchGamepad({ config }: { config: GamepadConfig }) {
         <PadButton code="ArrowDown" label="Abajo" className="pad-btn down" setKey={setKey}>
           <span className="pad-arrow" aria-hidden />
         </PadButton>
+        <div className="pad-hub" aria-hidden>
+          <span className="pad-hub-gem" />
+        </div>
       </div>
       <div className="gamepad-actions">
         <PadButton
@@ -103,6 +106,7 @@ export function TouchGamepad({ config }: { config: GamepadConfig }) {
           setKey={setKey}
           off={!b}
         >
+          <span className="act-ring" aria-hidden />
           <span className="act-key">B</span>
           {b && <span className="act-label">{b}</span>}
         </PadButton>
@@ -113,6 +117,7 @@ export function TouchGamepad({ config }: { config: GamepadConfig }) {
           setKey={setKey}
           off={!a}
         >
+          <span className="act-ring" aria-hidden />
           <span className="act-key">A</span>
           {a && <span className="act-label">{a}</span>}
         </PadButton>
