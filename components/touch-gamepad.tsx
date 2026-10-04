@@ -1,6 +1,6 @@
 "use client";
 
-import type { PointerEvent, ReactNode } from "react";
+import { useRef, type PointerEvent, type ReactNode } from "react";
 
 /** Lo que un player le dice al mando. Las teclas son fijas; solo cambian las etiquetas. */
 export type GamepadConfig = {
@@ -27,8 +27,13 @@ function PadButton({
   off?: boolean;
   children: ReactNode;
 }) {
+  // Si la tecla está pulsada por este botón: evita soltarla dos veces
+  // (al salir y luego al levantar el dedo).
+  const held = useRef(false);
   const release = () => {
-    if (!off) setKey(code, false);
+    if (!held.current) return;
+    held.current = false;
+    setKey(code, false);
   };
   return (
     <button
@@ -38,13 +43,22 @@ function PadButton({
       aria-disabled={off || undefined}
       onPointerDown={(e: PointerEvent<HTMLButtonElement>) => {
         e.preventDefault();
-        // El dedo captura el puntero por defecto y entonces `pointerleave` no
-        // llega hasta levantarlo: se libera para que arrastrar fuera suelte
-        // la tecla. `pointerup`/`pointercancel` siguen cubriendo el resto.
-        if (e.currentTarget.hasPointerCapture(e.pointerId)) {
-          e.currentTarget.releasePointerCapture(e.pointerId);
-        }
-        if (!off) setKey(code, true);
+        if (off) return;
+        held.current = true;
+        setKey(code, true);
+      }}
+      // El dedo captura el puntero y Chrome no deja liberarlo: `pointerleave`
+      // no llega hasta levantarlo. Se mira a mano si el dedo sigue encima,
+      // para que arrastrar fuera suelte la tecla.
+      onPointerMove={(e: PointerEvent<HTMLButtonElement>) => {
+        if (!held.current) return;
+        const r = e.currentTarget.getBoundingClientRect();
+        const inside =
+          e.clientX >= r.left &&
+          e.clientX <= r.right &&
+          e.clientY >= r.top &&
+          e.clientY <= r.bottom;
+        if (!inside) release();
       }}
       onPointerUp={release}
       onPointerCancel={release}
