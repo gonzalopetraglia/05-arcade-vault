@@ -3154,10 +3154,9 @@ a {
 }
 
 /* ===== mando táctil =====
-   Teclas de máquina recreativa: cada botón tiene un canto inferior que se
-   hunde al pulsar, porque en cristal no hay tacto y la vista tiene que
-   confirmar la pulsación. Los colores salen de los tokens con color-mix, así
-   que el tema claro hereda sus versiones tintadas sin redefinir nada. */
+   Piel del Gamepad MK-II: carcasa con doble borde y textura, teclas en
+   relieve con un canto inferior que se hunde al pulsar, porque en cristal no
+   hay tacto y la vista tiene que confirmar la pulsación. */
 /* fuera de un puntero grueso el mando no existe: el escritorio queda igual */
 .touch-gamepad {
   /* Paleta del Gamepad MK-II (references/gamepad-assets). Vive en la carcasa
@@ -3175,16 +3174,50 @@ a {
   --gp-glow-on:
     inset 0 0 16px color-mix(in srgb, var(--gp-lit) 45%, transparent),
     0 0 16px color-mix(in srgb, var(--gp-lit) 50%, transparent);
+  position: relative;
   display: none;
   align-items: center;
   justify-content: space-between;
-  gap: 24px;
-  padding: 20px 22px 26px;
-  background: var(--bg-2);
-  border-top: 1px solid var(--line);
+  /* ajustado para que cruceta (174px) y A/B (166px) quepan a 390px de ancho
+     con el margen de la carcasa */
+  gap: 8px;
+  padding: 16px 12px;
+  background: linear-gradient(180deg, var(--gp-shell-top) 0%, var(--gp-shell-bot) 100%);
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  box-shadow:
+    0 30px 80px -30px var(--gp-shell-glow),
+    0 0 0 1px rgba(255, 255, 255, 0.02),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    inset 0 -2px 0 rgba(0, 0, 0, 0.6);
   user-select: none;
   -webkit-user-select: none;
   -webkit-touch-callout: none;
+}
+/* borde interior y textura de puntos: decoración pura, nunca reciben toques */
+.touch-gamepad::before,
+.touch-gamepad::after {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+}
+.touch-gamepad::before {
+  inset: 4px;
+  border: 1px solid color-mix(in srgb, var(--gp-lit) 14%, transparent);
+  border-radius: calc(22px - 4px);
+}
+.touch-gamepad::after {
+  inset: 0;
+  background-image: radial-gradient(var(--gp-dots) 1px, transparent 1px);
+  background-size: 8px 8px;
+  border-radius: inherit;
+  opacity: 0.6;
+}
+/* los controles por encima de la textura */
+.gamepad-dpad,
+.gamepad-actions {
+  position: relative;
+  z-index: 1;
 }
 .touch-gamepad button {
   touch-action: none;
@@ -3456,11 +3489,13 @@ a {
     margin-inline: auto;
     border-radius: 0;
   }
-  /* el mando se queda con todo el alto que sobra y centra los controles */
+  /* el mando se queda con todo el alto que sobra y centra los controles; el
+     margen sale de ese sobrante para que la carcasa se vea como un panel */
   .av-player.has-gamepad .touch-gamepad {
     display: flex;
     flex: 1 1 auto;
     min-height: 0;
+    margin: 8px;
   }
 }
 
