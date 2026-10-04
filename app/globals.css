@@ -3499,6 +3499,25 @@ a {
   }
 }
 
+/* pantallas estrechas: encogen A/B, su separación y la carcasa, nunca la
+   cruceta, que ya está en el mínimo táctil de 56px */
+@media (pointer: coarse) and (max-width: 379px) {
+  .av-player.has-gamepad .touch-gamepad {
+    padding-inline: 8px;
+    border-radius: 16px;
+  }
+  .av-player.has-gamepad .touch-gamepad::before {
+    border-radius: calc(16px - 4px);
+  }
+  .av-player.has-gamepad .gamepad-actions {
+    gap: 16px;
+  }
+  .av-player.has-gamepad .act-btn {
+    width: 64px;
+    height: 64px;
+  }
+}
+
 /* bloqueo de página mientras se juega con el mando: el shell pone la clase
    solo con puntero grueso. `touch-action` y `user-select` van además dentro
    del media query para que el player de escritorio no cambie. */
