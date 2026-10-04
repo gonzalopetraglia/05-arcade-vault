@@ -97,6 +97,18 @@ export function PlayerShell({
 
   const waiting = touch && !started;
 
+  // Girar el móvil recoloca la pantalla y el mando bajo los dedos: se pausa
+  // para que el jugador no pierda una vida mientras se reubica.
+  useEffect(() => {
+    if (!touch) return;
+    const mql = window.matchMedia("(orientation: portrait)");
+    const onRotate = () => {
+      if (!paused && !over && started) onTogglePause();
+    };
+    mql.addEventListener("change", onRotate);
+    return () => mql.removeEventListener("change", onRotate);
+  }, [touch, paused, over, started, onTogglePause]);
+
   // El estado sale del evento y no del clic: el jugador también sale de
   // pantalla completa con el gesto o el botón atrás del sistema.
   useEffect(() => {
