@@ -3304,12 +3304,14 @@ a {
   animation: pulse-led 2s ease-in-out infinite;
 }
 
-/* A y B en diagonal: A arriba a la derecha, como en los mandos clásicos */
+/* A y B en fila como en el MK-II: B a la izquierda y A a la derecha, que es
+   donde cae el pulgar para la acción principal. El relleno vertical deja sitio
+   a las etiquetas, que cuelgan bajo cada botón sin descentrar la fila. */
 .gamepad-actions {
-  display: grid;
-  grid-template-columns: repeat(2, 64px);
-  grid-template-rows: 40px 64px 40px;
-  column-gap: 18px;
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  padding: 24px 0;
 }
 .act-btn {
   --act: var(--magenta);
@@ -3317,40 +3319,60 @@ a {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 64px;
-  height: 64px;
+  width: 72px;
+  height: 72px;
   padding: 0;
   border-radius: 50%;
-  background: var(--bg-3);
   border: 2px solid var(--act);
-  box-shadow: 0 5px 0 color-mix(in srgb, var(--act) 35%, var(--bg));
+  /* brillo arriba a la izquierda sobre una esfera que oscurece hacia el borde */
+  background:
+    radial-gradient(circle at 32% 26%, rgba(255, 255, 255, 0.25), transparent 50%),
+    radial-gradient(
+      circle at 50% 55%,
+      color-mix(in srgb, var(--act) 70%, transparent),
+      color-mix(in srgb, color-mix(in srgb, var(--act) 43%, black) 95%, transparent) 75%
+    );
+  box-shadow:
+    0 6px 0 var(--gp-key-edge),
+    0 0 22px color-mix(in srgb, var(--act) 40%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    inset 0 -4px 8px rgba(0, 0, 0, 0.4);
   transition:
-    transform 50ms ease,
-    box-shadow 50ms ease,
-    background 50ms ease;
-}
-.act-btn.a {
-  grid-column: 2;
-  grid-row: 1 / span 2;
-  align-self: start;
+    transform 80ms,
+    box-shadow 140ms;
 }
 .act-btn.b {
-  --act: var(--yellow);
-  grid-column: 1;
-  grid-row: 2 / span 2;
-  align-self: end;
+  --act: var(--cyan);
 }
 .act-key {
+  position: relative;
+  z-index: 2;
   font-family: var(--pixel);
-  font-size: 18px;
-  color: var(--act);
-  text-shadow: 0 0 8px color-mix(in srgb, var(--act) 60%, transparent);
+  font-size: 22px;
+  letter-spacing: 0.02em;
+  color: #fff;
+  text-shadow:
+    0 0 8px var(--act),
+    0 0 18px var(--act),
+    0 1px 0 rgba(0, 0, 0, 0.6);
+}
+/* anillo discontinuo: solo aparece al pulsar, como eco de la pulsación */
+.act-ring {
+  position: absolute;
+  inset: -8px;
+  border-radius: 50%;
+  border: 1px dashed var(--act);
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    opacity 140ms,
+    transform 200ms;
 }
 /* la etiqueta va bajo la tecla, fuera del círculo: el círculo dice qué tecla
    es y la etiqueta qué hace en este juego */
 .act-label {
   position: absolute;
-  top: calc(100% + 10px);
+  top: calc(100% + 12px);
   left: 50%;
   transform: translateX(-50%);
   font-family: var(--pixel);
@@ -3360,9 +3382,15 @@ a {
   color: var(--ink-dim);
 }
 .act-btn:active {
-  transform: translateY(4px);
-  box-shadow: 0 1px 0 color-mix(in srgb, var(--act) 35%, var(--bg));
-  background: color-mix(in srgb, var(--act) 28%, var(--bg-3));
+  transform: translateY(4px) scale(0.97);
+  box-shadow:
+    0 1px 0 var(--gp-key-edge),
+    0 0 36px color-mix(in srgb, var(--act) 40%, transparent),
+    inset 0 0 18px rgba(0, 0, 0, 0.5);
+}
+.act-btn:active .act-ring {
+  opacity: 1;
+  transform: scale(1.08);
 }
 
 /* botón que el juego no usa: presente para que el mando sea siempre el mismo,
@@ -3370,15 +3398,21 @@ a {
 .touch-gamepad .is-off {
   --act: var(--ink-faint);
   opacity: 0.35;
-  box-shadow: none;
+  box-shadow:
+    0 6px 0 var(--gp-key-edge),
+    inset 0 -4px 8px rgba(0, 0, 0, 0.4);
 }
 .touch-gamepad .is-off .act-key {
   text-shadow: none;
 }
 .touch-gamepad .is-off:active {
   transform: none;
-  background: var(--bg-3);
-  box-shadow: none;
+  box-shadow:
+    0 6px 0 var(--gp-key-edge),
+    inset 0 -4px 8px rgba(0, 0, 0, 0.4);
+}
+.touch-gamepad .is-off .act-ring {
+  display: none;
 }
 
 /* sobre papel claro el resplandor ensucia el texto en vez de iluminarlo */
