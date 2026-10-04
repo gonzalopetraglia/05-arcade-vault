@@ -3160,6 +3160,21 @@ a {
    que el tema claro hereda sus versiones tintadas sin redefinir nada. */
 /* fuera de un puntero grueso el mando no existe: el escritorio queda igual */
 .touch-gamepad {
+  /* Paleta del Gamepad MK-II (references/gamepad-assets). Vive en la carcasa
+     y no en :root porque en horizontal la carcasa pasa a display: contents y
+     las variables tienen que seguir bajando a cada media carcasa por el DOM. */
+  --gp-shell-top: #1c1c28;
+  --gp-shell-bot: #0c0c14;
+  --gp-shell-glow: rgba(0, 245, 255, 0.4);
+  --gp-dots: rgba(255, 255, 255, 0.03);
+  --gp-key-top: #1a1a25;
+  --gp-key-bot: #0a0a12;
+  --gp-key-edge: #050507;
+  --gp-arrow: var(--ink-dim);
+  --gp-lit: var(--cyan);
+  --gp-glow-on:
+    inset 0 0 16px color-mix(in srgb, var(--gp-lit) 45%, transparent),
+    0 0 16px color-mix(in srgb, var(--gp-lit) 50%, transparent);
   display: none;
   align-items: center;
   justify-content: space-between;
