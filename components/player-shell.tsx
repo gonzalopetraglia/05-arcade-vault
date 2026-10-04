@@ -146,7 +146,9 @@ export function PlayerShell({
             <div className="v">{String(level).padStart(2, "0")}</div>
           </div>
         </div>
-        {skin && onSkinChange && <SkinSelector value={skin} onChange={onSkinChange} />}
+        {/* En táctil el HUD está oculto y el selector vive en el menú de pausa;
+            uno solo en el DOM para no repetir el id de su etiqueta. */}
+        {skin && onSkinChange && !touch && <SkinSelector value={skin} onChange={onSkinChange} />}
         <div className="hud-actions">
           <button className="btn yellow" onClick={onTogglePause}>
             {paused ? "REANUDAR" : "PAUSA"}
@@ -196,7 +198,41 @@ export function PlayerShell({
               )}
             </div>
           )}
-          {paused && (
+          {paused && touch && (
+            // Sin HUD, la pausa es el único sitio donde ver la partida y salir.
+            <div className="crt-content pause-menu" style={{ zIndex: 5 }}>
+              <div className="pause-menu-inner">
+                <div className="pixel neon-yellow pause-menu-title">EN PAUSA</div>
+                <div className="pause-menu-stats">
+                  <div className="hud-stat">
+                    <div className="l">Puntuación</div>
+                    <div className="v">{score.toLocaleString("es-ES")}</div>
+                  </div>
+                  <div className="hud-stat lives">
+                    <div className="l">Vidas</div>
+                    <div className="v">{"♥ ".repeat(lives).trim() || "—"}</div>
+                  </div>
+                  <div className="hud-stat level">
+                    <div className="l">Nivel</div>
+                    <div className="v">{String(level).padStart(2, "0")}</div>
+                  </div>
+                </div>
+                {skin && onSkinChange && <SkinSelector value={skin} onChange={onSkinChange} />}
+                <div className="pause-menu-actions">
+                  <button className="btn yellow" onClick={onTogglePause}>
+                    REANUDAR
+                  </button>
+                  <button className="btn magenta" onClick={onEnd}>
+                    FIN
+                  </button>
+                  <Link className="btn ghost" href={`/games/${game.id}`}>
+                    SALIR
+                  </Link>
+                </div>
+              </div>
+            </div>
+          )}
+          {paused && !touch && (
             <div className="crt-content" style={{ background: "rgba(0,0,0,0.6)", zIndex: 5 }}>
               <div>
                 <div className="pixel neon-yellow" style={{ fontSize: 22 }}>
