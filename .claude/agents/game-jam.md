@@ -111,8 +111,9 @@ Aplica estos defaults salvo que el prompt diga otra cosa, y registra cada uno en
 - **Seed:** `supabase/migrations/000N_seed_<id>.sql` con el siguiente número y el
   siguiente `sort_order` libres, `insert ... on conflict (id) do nothing`, aplicada con
   `apply_migration` y commiteada.
-- **Despacho:** entrada `<id>: <Juego>Player` en el mapa `PLAYERS` de
-  `app/jugar/[id]/page.tsx`.
+- **Despacho:** id nuevo en `IMPLEMENTED_GAME_IDS` (`lib/games.ts`) y entrada
+  `<id>: <Juego>Player` en el mapa `PLAYERS` de `app/jugar/[id]/page.tsx`. Sin el id
+  en esa lista el juego queda oculto en todo el sitio.
 - **Registro:** fila nueva en `references/implemented-games.md` como paso del plan.
 
 ---

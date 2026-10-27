@@ -2,15 +2,11 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { GameLeaderboard } from "@/components/game-leaderboard";
 import { GameStatStrip } from "@/components/game-stat-strip";
-import { GAMES, getGame } from "@/lib/games";
-
-export function generateStaticParams() {
-  return GAMES.map((g) => ({ id: g.id }));
-}
+import { getCatalogGame } from "@/lib/catalog";
 
 export default async function GameDetailPage({ params }: PageProps<"/games/[id]">) {
   const { id } = await params;
-  const game = getGame(id);
+  const game = await getCatalogGame(id);
   if (!game) notFound();
 
   return (
