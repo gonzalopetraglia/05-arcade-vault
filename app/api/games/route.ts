@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import type { Game } from "@/lib/games";
+import { GAMES, visibleGames, type Game } from "@/lib/games";
 
 /** Un juego del catálogo con sus métricas derivadas de `scores`. */
 export type GameWithStats = Game & { best: number; plays: number };
@@ -47,7 +47,12 @@ export async function GET() {
 
     const byGame = new Map(stats.data.map((s) => [s.game_id, s]));
 
-    const withStats: GameWithStats[] = games.data.map((game) => {
+    // La tabla manda: el catálogo sembrado en `lib/games.ts` solo aparece si
+    // la base no tiene ningún juego todavía. Los simulacros, solo si no hay
+    // ninguno jugable.
+    const catalog: Game[] = visibleGames(games.data.length > 0 ? games.data : GAMES);
+
+    const withStats: GameWithStats[] = catalog.map((game) => {
       const s = byGame.get(game.id);
       return {
         id: game.id,

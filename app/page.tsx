@@ -2,7 +2,8 @@ import Link from "next/link";
 import { FeatureIcon } from "@/components/home/feature-icon";
 import { RevealSection } from "@/components/home/reveal-section";
 import { Silhouettes } from "@/components/home/silhouettes";
-import { formatScore, GAMES } from "@/lib/games";
+import { getCatalog } from "@/lib/catalog";
+import { formatScore } from "@/lib/games";
 import {
   HOME_FAQ,
   HOME_FEATURES,
@@ -12,7 +13,9 @@ import {
   PLAN_FEATURES,
 } from "@/lib/home-content";
 
-export default function Home() {
+export default async function Home() {
+  const games = await getCatalog();
+
   return (
     <div className="home fade-in">
       {/* HERO */}
@@ -77,7 +80,7 @@ export default function Home() {
           <div className="section-rule"></div>
         </div>
         <div className="mini-rail">
-          {GAMES.slice(0, 6).map((g) => (
+          {games.slice(0, 6).map((g) => (
             <Link key={g.id} className="mini-card" href={`/games/${g.id}`}>
               <div className="mini-cover">
                 <div className={"cover-bg " + g.cover}></div>

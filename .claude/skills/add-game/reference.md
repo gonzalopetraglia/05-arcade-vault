@@ -22,7 +22,14 @@ export const GAMES: Game[];
 export const CATS: string[]; // ["TODOS", "ARCADE", "PUZZLE", "SHOOTER", "VERSUS"]
 export function getGame(id: string): Game | undefined;
 export function formatScore(n: number): string; // Intl.NumberFormat("es-ES")
+
+export const IMPLEMENTED_GAME_IDS: readonly ["asteroides", "tetris", "arkanoid", "snake"];
+export type ImplementedGameId = (typeof IMPLEMENTED_GAME_IDS)[number];
+export function isImplemented(id: string): id is ImplementedGameId;
+export function visibleGames<T extends Pick<Game, "id">>(games: T[]): T[];
 ```
+
+**Qué se muestra.** Las páginas no pintan `GAMES`: leen la tabla `games` vía `lib/catalog.ts` (`getCatalog`, `getCatalogGame`) o `GET /api/games`. Un juego sin fila en la tabla no aparece; `GAMES` solo es respaldo si la tabla está vacía. Encima, `visibleGames()` oculta los simulacros en cuanto hay algún jugable, y un id oculto da 404 en `/games/[id]` y `/jugar/[id]`. Por eso un juego nuevo necesita **las tres cosas**: fila en `games` (seed), id en `IMPLEMENTED_GAME_IDS` y entrada en `PLAYERS`.
 
 `Game` **no** tiene `best` ni `plays`. Esos dos números salen de la vista `game_stats` y viajan en `GameWithStats` (`app/api/games/route.ts`).
 

@@ -24,11 +24,12 @@ Built with Spec Driven Design using the `/spec` and `/spec-impl` skills from [Kl
 ### Routes (`app/`)
 
 - `/` landing, `/about` + contact form, `/games` library (cards + sortable table), `/games/[id]` detail with leaderboard, `/jugar/[id]` the player, `/salon` hall of fame, `/auth` sign-in.
-- `/jugar/[id]` holds the player registry: `PLAYERS: Record<string, ComponentType<{ game: Game }>>` maps each implemented game (listed in `references/implemented-games.md`) to its real player; every other id falls back to the `GamePlayer` mock. Adding a ported game means adding a line there.
+- `/jugar/[id]` holds the player registry: `PLAYERS: Record<ImplementedGameId, ComponentType<{ game: Game }>>` maps each implemented game to its real player; every other id falls back to the `GamePlayer` mock. Adding a ported game means adding its id to `IMPLEMENTED_GAME_IDS` in `lib/games.ts` and a line to `PLAYERS` — the type makes one fail without the other.
+- **What is shown comes from the `games` table, filtered.** `lib/catalog.ts` (`getCatalog`, `getCatalogGame`) feeds `/`, `/salon`, `/games/[id]` and `/jugar/[id]`; `GET /api/games` feeds `/games`. Both apply the same rules: a game missing from the table is never shown; `GAMES` is only a fallback when the table is empty (or unreachable); and `visibleGames()` hides the mocks whenever at least one implemented game is present. A hidden id 404s in detail and player. These pages are dynamic (`ƒ`), no `generateStaticParams`.
 
 ### API (Route Handlers)
 
-- `GET /api/games` — catalog joined with the `game_stats` view; returns `GameWithStats = Game & { best, plays }`. Read with the publishable key through RLS.
+- `GET /api/games` — catalog joined with the `game_stats` view, passed through `visibleGames()`; returns `GameWithStats = Game & { best, plays }`. Read with the publishable key through RLS.
 - `GET|POST /api/scores` — top N for a game (`rank` is computed per response, not stored) and score insert. The insert is the only place `lib/supabase/admin.ts` and the secret key are used.
 - `POST /api/contact` — Resend email.
 - `GET /api/health/supabase` — diagnostics.
@@ -48,8 +49,8 @@ Built with Spec Driven Design using the `/spec` and `/spec-impl` skills from [Kl
 - Per game, two client components in `components/games/`: `<name>-canvas.tsx` (canvas + input) and `<name>-player.tsx` (state, wiring).
 - `components/player-shell.tsx` is the shared frame: HUD, CRT border, pause/end/restart buttons and the save-score modal. It never computes score or level — the game passes them in.
 - Binary assets live in `public/games/<id>/`; the untouched originals stay in `references/`.
-- `lib/games.ts` is the seeded catalog (`Game`, `GAMES`, `CATS`, `getGame`, `formatScore`). `Game` has no `best`/`plays` — those come from the API.
-- `references/implemented-games.md` lists which games are actually playable — id, title, category, color, tagline. It is the single source of truth for that list: add a row there when a new game ships, and never copy the list back into this file. Every other id in `GAMES` is still a mock catalog entry with no engine.
+- `lib/games.ts` is the seeded catalog (`Game`, `GAMES`, `CATS`, `getGame`, `formatScore`) plus `IMPLEMENTED_GAME_IDS`, `isImplemented` and `visibleGames`. `GAMES` is not what pages render — they go through `lib/catalog.ts`. `Game` has no `best`/`plays` — those come from the API.
+- `references/implemented-games.md` lists which games are actually playable — id, title, category, color, tagline. It is the single source of truth for that list: add a row there when a new game ships, and never copy the list back into this file. `IMPLEMENTED_GAME_IDS` is its code mirror and must hold the same ids. Every other id in `GAMES` is still a mock catalog entry with no engine.
 
 ### Session
 

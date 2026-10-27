@@ -1,6 +1,6 @@
 import { HallOfFame } from "@/components/hall-of-fame";
-import { GAMES } from "@/lib/games";
+import { getCatalog } from "@/lib/catalog";
 
-export default function SalonPage() {
-  return <HallOfFame games={GAMES} />;
+export default async function SalonPage() {
+  return <HallOfFame games={await getCatalog()} />;
 }

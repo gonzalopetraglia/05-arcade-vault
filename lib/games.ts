@@ -129,6 +129,27 @@ export const GAMES: Game[] = [
 
 export const CATS: string[] = ["TODOS", "ARCADE", "PUZZLE", "SHOOTER", "VERSUS"];
 
+/**
+ * Juegos con motor y player propios (los de `references/implemented-games.md`).
+ * `PLAYERS` en `/jugar/[id]` se tipa con esta lista, así que añadir un juego
+ * jugable obliga a declararlo aquí.
+ */
+export const IMPLEMENTED_GAME_IDS = ["asteroides", "tetris", "arkanoid", "snake"] as const;
+export type ImplementedGameId = (typeof IMPLEMENTED_GAME_IDS)[number];
+
+export function isImplemented(id: string): id is ImplementedGameId {
+  return (IMPLEMENTED_GAME_IDS as readonly string[]).includes(id);
+}
+
+/**
+ * Qué juegos del catálogo se enseñan: los simulacros solo hacen bulto mientras
+ * no haya ninguno jugable; en cuanto hay uno, se ocultan.
+ */
+export function visibleGames<T extends Pick<Game, "id">>(games: T[]): T[] {
+  const playable = games.filter((g) => isImplemented(g.id));
+  return playable.length > 0 ? playable : games;
+}
+
 export function getGame(id: string): Game | undefined {
   return GAMES.find((g) => g.id === id);
 }
