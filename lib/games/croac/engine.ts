@@ -10,7 +10,7 @@
  * y reiniciar son del shell, y el HUD es de React.
  */
 
-import { COLORS, LIVES, drawFrog, drawWorld, spawnFrog, type Frog } from "./entities";
+import { COLORS, LIVES, drawFrog, drawWorld, spawnFrog, type Dir, type Frog } from "./entities";
 import { LANES, buildLane, drawLane, stepLane, type Piece } from "./lanes";
 
 export type CroacState = {
@@ -27,6 +27,18 @@ type EngineOptions = {
 
 const MAX_DT = 0.1; // s; techo del delta entre frames
 
+// WASD como alias de las flechas; el mando táctil manda los códigos de flecha.
+const DIR_BY_KEY: Record<string, Dir | undefined> = {
+  ArrowUp: "up",
+  ArrowDown: "down",
+  ArrowLeft: "left",
+  ArrowRight: "right",
+  KeyW: "up",
+  KeyS: "down",
+  KeyA: "left",
+  KeyD: "right",
+};
+
 export class CroacEngine {
   private ctx: CanvasRenderingContext2D;
   private onState: EngineOptions["onState"];
@@ -35,6 +47,9 @@ export class CroacEngine {
   private frog: Frog = spawnFrog();
   private lanes: Piece[][] = [];
   private occupied: boolean[] = [];
+  private keysDown = new Set<string>();
+  /** Una pulsación llegada con la rana en el aire; se consume al aterrizar. */
+  private queued: Dir | null = null;
 
   private score = 0;
   private lives = LIVES;
@@ -74,6 +89,9 @@ export class CroacEngine {
 
   pause(): void {
     this.held = true;
+    // Con la ventana sin foco el keyup no llega: una tecla que quedara "abajo"
+    // se tragaría la primera pulsación al reanudar.
+    this.keysDown.clear();
     this.running = false;
     if (this.rafId !== null) {
       cancelAnimationFrame(this.rafId);
@@ -103,9 +121,26 @@ export class CroacEngine {
     this.onGameOver(this.score);
   }
 
+  /**
+   * Teclado y táctil entran por aquí; el motor no distingue dedo de tecla. Un
+   * salto solo se dispara en la transición de suelta a pulsada: la
+   * autorrepetición del teclado y un dedo apoyado en la cruceta no encadenan
+   * saltos. Las teclas se registran siempre, para que soltar una durante la
+   * muerte no la deje "abajo", pero solo se actúa en status "playing".
+   */
   setKey(code: string, down: boolean): void {
-    void code;
-    void down;
+    const dir = DIR_BY_KEY[code];
+    if (!dir) return;
+    if (!down) {
+      this.keysDown.delete(code);
+      return;
+    }
+    if (this.keysDown.has(code)) return;
+    this.keysDown.add(code);
+    if (this.state !== "playing" || !this.running) return;
+    // En el aire se guarda una sola pulsación; la última manda.
+    if (this.frog.hop) this.queued = dir;
+    else this.startHop(dir);
   }
 
   destroy(): void {
@@ -158,6 +193,7 @@ export class CroacEngine {
     this.occupied = [false, false, false, false, false];
     this.lanes = LANES.map((def) => buildLane(def, this.level));
     this.frog = spawnFrog();
+    this.queued = null;
   }
 
   // ── Update ──────────────────────────────────────────────────────────────────
@@ -167,6 +203,10 @@ export class CroacEngine {
     this.time += dt;
     // El tráfico sigue moviéndose también mientras la rana está muerta.
     LANES.forEach((def, i) => stepLane(this.lanes[i], def, this.level, dt));
+  }
+
+  private startHop(dir: Dir): void {
+    void dir;
   }
 
   // ── Draw ────────────────────────────────────────────────────────────────────
