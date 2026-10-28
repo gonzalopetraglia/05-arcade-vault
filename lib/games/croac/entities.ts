@@ -81,11 +81,12 @@ export function setGlow(ctx: CanvasRenderingContext2D, color: string, blur: numb
   ctx.shadowColor = blur > 0 ? color : "transparent";
 }
 
-const HOP_SCALE = 0.12; // cuánto crece la rana en el punto alto del salto
+export const HOP_SCALE = 0.12; // cuánto crece la rana en el punto alto del salto
 
 /**
- * La rana: una elipse con vientre y dos ojos. En el aire se pinta un poco más
- * grande para que el salto se lea sin sombra ni sprite.
+ * La rana: una elipse con vientre y dos ojos. Solo la usa buildSprites, con la
+ * rana quieta en el origen; el crecimiento del salto lo hace drawFrogSprite
+ * escalando el sprite.
  */
 export function drawFrog(ctx: CanvasRenderingContext2D, frog: Frog, colors: CroacPalette): void {
   const { x, y } = frogPos(frog);

@@ -28,7 +28,6 @@ import {
   H,
   W,
   drawDeadFrog,
-  drawFrog,
   spawnFrog,
   type DeathKind,
   type Dir,
@@ -45,7 +44,7 @@ import {
   type Piece,
 } from "./lanes";
 import { SKINS, type CroacPalette } from "./skins";
-import { buildBackground } from "./sprites";
+import { buildBackground, buildSprites, drawFrogSprite, type SpriteSet } from "./sprites";
 
 export type CroacState = {
   score: number;
@@ -114,6 +113,8 @@ export class CroacEngine {
   private lastEmitted: CroacState | null = null;
   private palette: CroacPalette;
   private dpr: number;
+  /** Piezas con el glow ya horneado; se rehacen solo en setPalette. */
+  private sprites: SpriteSet;
   /** Fondo con los nenúfares ocupados ya pintados; ver rebuildBackground. */
   private background: HTMLCanvasElement;
 
@@ -125,7 +126,8 @@ export class CroacEngine {
     this.onGameOver = opts.onGameOver;
     this.palette = opts.palette ?? SKINS.clasico.dark;
     this.dpr = opts.dpr ?? 1;
-    this.background = buildBackground(this.occupied, this.palette, this.dpr);
+    this.sprites = buildSprites(this.palette, this.dpr);
+    this.background = buildBackground(this.occupied, this.palette, this.dpr, this.sprites);
   }
 
   // ── API pública ─────────────────────────────────────────────────────────────
@@ -201,6 +203,7 @@ export class CroacEngine {
    */
   setPalette(palette: CroacPalette): void {
     this.palette = palette;
+    this.sprites = buildSprites(palette, this.dpr);
     this.rebuildBackground();
     if (this.running || this.destroyed || this.lanes.length === 0) return;
     this.draw();
@@ -455,15 +458,16 @@ export class CroacEngine {
    * en lugar de repintarlo entero cada frame.
    */
   private rebuildBackground(): void {
-    this.background = buildBackground(this.occupied, this.palette, this.dpr);
+    this.background = buildBackground(this.occupied, this.palette, this.dpr, this.sprites);
   }
 
+  /** Solo `drawImage` de capas y sprites: ningún `shadowBlur` por frame. */
   private draw(): void {
-    const { ctx, palette } = this;
+    const { ctx, palette, sprites } = this;
     ctx.drawImage(this.background, 0, 0, W, H);
-    LANES.forEach((def, i) => drawLane(ctx, this.lanes[i], def, palette, this.time));
+    LANES.forEach((def, i) => drawLane(ctx, this.lanes[i], def, sprites, palette, this.time));
     // Muerta, o recién acabada la partida por vidas, se pinta aplastada o hundida.
-    if (this.state === "playing") drawFrog(ctx, this.frog, palette);
+    if (this.state === "playing") drawFrogSprite(ctx, this.frog, sprites.frog);
     else drawDeadFrog(ctx, this.frog, this.deathKind, palette);
   }
 }

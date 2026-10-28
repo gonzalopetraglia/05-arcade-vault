@@ -112,15 +112,17 @@ type Props = {
 ### Sprites y capa de fondo — `lib/games/croac/sprites.ts`
 
 ```ts
-/** Canvas offscreen con un dibujo ya hecho, glow incluido, y su origen. */
-export type Sprite = { canvas: HTMLCanvasElement; ox: number; oy: number };
+/** Canvas offscreen con un dibujo ya hecho, glow incluido; caja w×h y margen ox/oy. */
+export type Sprite = { canvas: HTMLCanvasElement; ox: number; oy: number; w: number; h: number };
+
+type ByDir = Record<1 | -1, Sprite>;
 
 /** Uno por combinación pieza/color/tamaño/estado que se pinte con glow. */
 export type SpriteSet = {
   frog: Sprite;
-  car: Sprite;
-  carAlt: Sprite;
-  truck: Record<1 | -1, Sprite>; // la cabina va hacia la marcha
+  car: ByDir; // la ventanilla va hacia la marcha
+  carAlt: ByDir;
+  truck: Record<number, ByDir>; // por `len`; la cabina va hacia la marcha
   log: Record<number, Sprite>; // por `len`
   leaf: Record<"float" | "warn", Sprite>;
   lily: Sprite;
@@ -131,12 +133,14 @@ export function buildBackground(
   occupied: readonly boolean[],
   palette: CroacPalette,
   dpr: number,
+  sprites: SpriteSet,
 ): HTMLCanvasElement;
 ```
 
 - El margen de cada sprite (`ox`, `oy`) cubre `glowBlur` para que el halo no se recorte.
 - Los sprites se hacen a la resolución real (`dpr` ya topado) para que no se vean borrosos.
 - Con `glowBlur === 0` (CLÁSICO, RETRO) los sprites también se usan: mismo camino para las tres skins.
+- `buildBackground` recibe los sprites y pinta nenúfares y ranas ocupantes con ellos: se llama desde el bucle (al ocupar un nenúfar) y no puede usar `shadowBlur`. Por eso coches van por sentido y camiones por `len` y sentido (en `LANES` hay de 2 y 3 celdas, y ventanilla y cabina miran a la marcha); `w`/`h` dan la caja de la pieza para escalar el salto desde el centro.
 - El motor guarda `sprites` y `background` en campos privados. `setPalette` rehace los dos; ocupar un nenúfar o empezar ronda rehace solo `background`.
 
 ### Constantes nuevas
@@ -155,7 +159,7 @@ export function buildBackground(
 6. **`CroacPlayer` con la regla de estado.** Quitar el `useState` del HUD; `onState` llama a `hudRef.current?.set(...)`. `over` pasa a `finalScore: number | null` (estado, lo pinta el modal). `pausedRef` espejo de `paused` para que `onTogglePause` sea estable. `gamepad` en un objeto estable (ref o `useMemo` sin dependencias variables). Comprobar con `?perf=1`: sumar puntos no re-renderiza `shell`, `screen` ni `gamepad`.
 7. **`CroacCanvas`.** `dpr = Math.min(window.devicePixelRatio || 1, MAX_DPR)`; `getContext("2d", { alpha: false })`. Pasar `dpr` al motor para los sprites.
 8. **Capa de fondo.** `buildBackground` en `sprites.ts` con lo que hoy pinta `drawWorld`. El motor la pinta con un `drawImage` por frame y la rehace al ocupar nenúfar, al empezar ronda, en `initGame` y en `setPalette`.
-9. **Sprites con glow.** `buildSprites` en `sprites.ts`. `drawLane`, `drawFrog` y los nenúfares pintan con `drawImage` del sprite. El salto escala el sprite de la rana con `drawImage` (sin redibujar). Las hojas hundidas no se pintan, como hoy. `setGlow` desaparece del bucle; solo se usa dentro de `buildSprites`.
+9. **Sprites con glow.** `buildSprites` en `sprites.ts`. `drawLane`, `drawFrog` y los nenúfares pintan con `drawImage` del sprite. El salto escala el sprite de la rana con `drawImage` (sin redibujar). Las hojas hundidas se siguen pintando como hoy, con su contorno sin glow trazado en el bucle, sin sprite. `setGlow` desaparece del bucle; solo se usa dentro de `buildSprites`.
 10. **Bucle sin alocaciones.** `for` en lugar de `forEach` en `update` y `draw`; `frogPos` escribe en un objeto reutilizado; índice fila→carril precalculado en lugar de `findIndex`. Comprobar con DevTools → Memory → Allocation sampling que el bucle no aloca por frame.
 11. **Medición final.** Repetir el paso 2 exacto y anotar la fila "después".
 12. **Patrón documentado.** Escribir `references/performance-checklist.md` (la regla de estado, props estables, `hudRef`, tope de dpr, `alpha: false`, fondo cacheado, glow en sprites, bucle sin alocaciones, cómo medir) y completar la fila `croac` de `references/games-performance.md`. Añadir las dos líneas de `CLAUDE.md`.
