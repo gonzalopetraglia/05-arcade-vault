@@ -10,7 +10,21 @@
  * y reiniciar son del shell, y el HUD es de React.
  */
 
-import { COLORS, LIVES, drawFrog, drawWorld, spawnFrog, type Dir, type Frog } from "./entities";
+import {
+  CELL,
+  COLORS,
+  HOP_MS,
+  LIVES,
+  ROW_RIVER_BOT,
+  ROW_RIVER_TOP,
+  ROW_START,
+  W,
+  drawFrog,
+  drawWorld,
+  spawnFrog,
+  type Dir,
+  type Frog,
+} from "./entities";
 import { LANES, buildLane, drawLane, stepLane, type Piece } from "./lanes";
 
 export type CroacState = {
@@ -203,10 +217,51 @@ export class CroacEngine {
     this.time += dt;
     // El tráfico sigue moviéndose también mientras la rana está muerta.
     LANES.forEach((def, i) => stepLane(this.lanes[i], def, this.level, dt));
+    if (this.state !== "playing") return;
+
+    const hop = this.frog.hop;
+    if (hop) {
+      hop.t += (dt * 1000) / HOP_MS;
+      if (hop.t >= 1) this.land();
+    }
   }
 
+  /**
+   * Arriba o abajo cambia de fila; a los lados mueve exactamente CELL píxeles
+   * desde donde esté, aunque el río la haya dejado entre celdas. Al caer en
+   * tierra o carretera x se alinea a la celda más cercana: sin eso la rana
+   * saldría del río "flotando" entre dos celdas de la orilla.
+   */
   private startHop(dir: Dir): void {
-    void dir;
+    const { frog } = this;
+    let { x, row } = frog;
+    if (dir === "up") row--;
+    else if (dir === "down") row++;
+    else if (dir === "left") x -= CELL;
+    else x += CELL;
+
+    if (row < 0 || row > ROW_START || x < 0 || x > W - CELL) return;
+    if (!isRiver(row)) x = Math.round(x / CELL) * CELL;
+
+    frog.hop = { from: { x: frog.x, row: frog.row }, to: { x, row }, t: 0 };
+  }
+
+  /**
+   * Fin del salto: la rana queda en su destino y, si había una pulsación
+   * guardada, salta otra vez. En el aire no colisiona; las reglas de la fila
+   * se resuelven a partir de aquí.
+   */
+  private land(): void {
+    const { frog } = this;
+    const hop = frog.hop;
+    if (!hop) return;
+    frog.x = hop.to.x;
+    frog.row = hop.to.row;
+    frog.hop = null;
+
+    const next = this.queued;
+    this.queued = null;
+    if (next) this.startHop(next);
   }
 
   // ── Draw ────────────────────────────────────────────────────────────────────
@@ -217,4 +272,8 @@ export class CroacEngine {
     LANES.forEach((def, i) => drawLane(ctx, this.lanes[i], def, COLORS, this.time));
     drawFrog(ctx, this.frog, COLORS);
   }
+}
+
+function isRiver(row: number): boolean {
+  return row >= ROW_RIVER_TOP && row <= ROW_RIVER_BOT;
 }
