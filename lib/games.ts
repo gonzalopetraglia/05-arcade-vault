@@ -125,6 +125,15 @@ export const GAMES: Game[] = [
     cover: "cover-snake",
     color: "green",
   },
+  {
+    id: "croac",
+    title: "CROAC",
+    short: "Salta carriles, cruza el río y llena la charca.",
+    long: "Una rana tiene que cruzar cinco carriles de tráfico y un río de troncos y hojas que se hunden para llegar a los cinco nenúfares del otro lado. Cada fila nueva suma 10 puntos y cada nenúfar 100; llena los cinco y el tráfico acelera. Tres vidas para llegar lo más lejos posible.",
+    cat: "ARCADE",
+    cover: "cover-rana",
+    color: "green",
+  },
 ];
 
 export const CATS: string[] = ["TODOS", "ARCADE", "PUZZLE", "SHOOTER", "VERSUS"];
@@ -134,7 +143,7 @@ export const CATS: string[] = ["TODOS", "ARCADE", "PUZZLE", "SHOOTER", "VERSUS"]
  * `PLAYERS` en `/jugar/[id]` se tipa con esta lista, así que añadir un juego
  * jugable obliga a declararlo aquí.
  */
-export const IMPLEMENTED_GAME_IDS = ["asteroides", "tetris", "arkanoid", "snake"] as const;
+export const IMPLEMENTED_GAME_IDS = ["asteroides", "tetris", "arkanoid", "snake", "croac"] as const;
 export type ImplementedGameId = (typeof IMPLEMENTED_GAME_IDS)[number];
 
 export function isImplemented(id: string): id is ImplementedGameId {
