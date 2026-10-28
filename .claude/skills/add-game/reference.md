@@ -23,7 +23,7 @@ export const CATS: string[]; // ["TODOS", "ARCADE", "PUZZLE", "SHOOTER", "VERSUS
 export function getGame(id: string): Game | undefined;
 export function formatScore(n: number): string; // Intl.NumberFormat("es-ES")
 
-export const IMPLEMENTED_GAME_IDS: readonly ["asteroides", "tetris", "arkanoid", "snake"];
+export const IMPLEMENTED_GAME_IDS: readonly ["asteroides", "tetris", "arkanoid", "snake", "croac"];
 export type ImplementedGameId = (typeof IMPLEMENTED_GAME_IDS)[number];
 export function isImplemented(id: string): id is ImplementedGameId;
 export function visibleGames<T extends Pick<Game, "id">>(games: T[]): T[];
@@ -39,8 +39,9 @@ Ids ocupados y su `sort_order`:
 - `0003_seed_tetris.sql`: `tetris` (9).
 - `0004_seed_arkanoid.sql`: `arkanoid` (10).
 - `0005_seed_snake.sql`: `snake` (11).
+- `0006_seed_croac.sql`: `croac` (12).
 
-Siguiente `sort_order` libre: **12**. Siguiente migración: `0006_seed_<id>.sql`. Antes de fiarte de esto, revisa `supabase/migrations/`: si hay migraciones más nuevas, mandan ellas.
+Siguiente `sort_order` libre: **13**. Siguiente migración: `0007_seed_<id>.sql`. Antes de fiarte de esto, revisa `supabase/migrations/`: si hay migraciones más nuevas, mandan ellas.
 
 Las entradas simuladas del catálogo (`duelo-pixel`, `invasores`, `ranaria`, `gloton`…) ya tienen fila en `games`. Si se porta una de ellas sin cambiarle el id, no lleva seed nuevo: `on conflict (id) do nothing` la ignoraría. Si cambian sus textos, hace falta un `update` en su lugar.
 
