@@ -17,6 +17,7 @@ import {
   HOP_MS,
   LIVES,
   POINTS_GOAL,
+  POINTS_ROUND,
   POINTS_ROW,
   ROW_GOALS,
   ROW_ROAD_BOT,
@@ -311,6 +312,18 @@ export class CroacEngine {
     this.score += POINTS_GOAL;
     this.frog = spawnFrog();
     this.queued = null;
+    if (this.occupied.every(Boolean)) this.nextRound();
+  }
+
+  /**
+   * Charca llena: bonus, nivel nuevo, nenúfares vacíos y carriles rehechos con
+   * la velocidad del nivel. La rana ya está en la salida.
+   */
+  private nextRound(): void {
+    this.score += POINTS_ROUND;
+    this.level++;
+    this.occupied = this.occupied.map(() => false);
+    this.lanes = LANES.map((def) => buildLane(def, this.level));
   }
 
   /**
