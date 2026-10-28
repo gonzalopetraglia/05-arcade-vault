@@ -58,6 +58,11 @@ type EngineOptions = {
   onGameOver: (finalScore: number) => void;
   /** Colores de la skin activa; sin ella, CLÁSICO oscuro (el aspecto original). */
   palette?: CroacPalette;
+  /**
+   * Densidad del búfer del canvas (ya topada por quien lo crea). Los sprites
+   * offscreen se hacen a esta resolución para no verse borrosos.
+   */
+  dpr?: number;
 };
 
 const MAX_DT = 0.1; // s; techo del delta entre frames
@@ -107,6 +112,7 @@ export class CroacEngine {
   private held = false;
   private lastEmitted: CroacState | null = null;
   private palette: CroacPalette;
+  private dpr: number;
 
   constructor(canvas: HTMLCanvasElement, opts: EngineOptions) {
     const ctx = canvas.getContext("2d");
@@ -115,6 +121,7 @@ export class CroacEngine {
     this.onState = opts.onState;
     this.onGameOver = opts.onGameOver;
     this.palette = opts.palette ?? SKINS.clasico.dark;
+    this.dpr = opts.dpr ?? 1;
   }
 
   // ── API pública ─────────────────────────────────────────────────────────────
