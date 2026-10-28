@@ -189,7 +189,11 @@ export function PlayerShell({
     hudRef,
     () => ({
       set(v: HudValues) {
+        // Los motores también avisan cuando solo cambia su `status` (muerte,
+        // respawn): con los mismos tres números el HUD no tiene nada que pintar.
         if (!hub) return;
+        const { last } = hub;
+        if (v.score === last.score && v.lives === last.lives && v.level === last.level) return;
         hub.last = v;
         hub.subs.forEach((sub) => sub(v));
       },

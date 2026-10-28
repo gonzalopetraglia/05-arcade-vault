@@ -1,27 +1,32 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { CroacCanvas } from "@/components/games/croac-canvas";
-import { PlayerShell } from "@/components/player-shell";
+import { PlayerShell, type HudHandle } from "@/components/player-shell";
 import type { CroacEngine, CroacState } from "@/lib/games/croac/engine";
-import { LIVES } from "@/lib/games/croac/entities";
 import { SKINS } from "@/lib/games/croac/skins";
 import type { Game } from "@/lib/games";
 import { useSkin } from "@/lib/use-skin";
-
-const INITIAL: CroacState = { score: 0, lives: LIVES, level: 1, status: "playing" };
 
 /**
  * Player de CROAC. Mismo reparto que en los otros juegos: React manda sobre el
  * motor (PAUSA, FIN y JUGAR DE NUEVO), y el motor es la única fuente de
  * puntuación, vidas y nivel. El HUD, el marco CRT, el mando táctil y el modal
  * de fin de partida los pone PlayerShell.
+ *
+ * Regla de estado (SPEC 13): `useState` solo para lo que se pinta aquí
+ * (`paused`, `finalScore`). Puntuación, vidas y nivel van directos al HUD por
+ * `hudRef`, así un punto no re-renderiza este player ni nada de lo que cuelga
+ * de él; y ningún callback cambia de identidad durante la partida.
  */
 export function CroacPlayer({ game }: { game: Game }) {
   const engineRef = useRef<CroacEngine | null>(null);
-  const [hud, setHud] = useState<CroacState>(INITIAL);
-  const [paused, setPaused] = useState(false);
-  const [over, setOver] = useState(false);
+  const hudRef = useRef<HudHandle>(null);
+  const [paused, setPausedState] = useState(false);
+  // Copia de `paused` para que onTogglePause la lea sin depender de ella.
+  const pausedRef = useRef(false);
+  // null mientras se juega; el número es la puntuación que enseña el modal.
+  const [finalScore, setFinalScore] = useState<number | null>(null);
   const { skin, setSkin, scheme } = useSkin(game.id);
   const palette = SKINS[skin][scheme];
 
@@ -35,47 +40,54 @@ export function CroacPlayer({ game }: { game: Game }) {
     engineRef.current = engine;
   }, []);
 
-  const onState = useCallback((s: CroacState) => setHud(s), []);
+  const setPaused = useCallback((next: boolean) => {
+    pausedRef.current = next;
+    setPausedState(next);
+  }, []);
 
-  const onGameOver = useCallback(() => setOver(true), []);
+  const onState = useCallback((s: CroacState) => {
+    hudRef.current?.set({ score: s.score, lives: s.lives, level: s.level });
+  }, []);
 
-  const onAutoPause = useCallback(() => setPaused(true), []);
+  const onGameOver = useCallback((score: number) => setFinalScore(score), []);
+
+  const onAutoPause = useCallback(() => setPaused(true), [setPaused]);
 
   const onTogglePause = useCallback(() => {
     const engine = engineRef.current;
-    if (paused) engine?.resume();
+    if (pausedRef.current) engine?.resume();
     else engine?.pause();
-    setPaused(!paused);
-  }, [paused]);
+    setPaused(!pausedRef.current);
+  }, [setPaused]);
 
   const onEnd = useCallback(() => {
     engineRef.current?.forceGameOver();
   }, []);
 
   const onRestart = useCallback(() => {
-    setOver(false);
+    setFinalScore(null);
     setPaused(false);
     engineRef.current?.restart();
-  }, []);
+  }, [setPaused]);
 
   // El mando táctil entra por la misma puerta que el teclado; estable para
   // que el mando no reciba una función nueva en cada render.
   const setKey = useCallback((code: string, down: boolean) => {
     engineRef.current?.setKey(code, down);
   }, []);
+  const gamepad = useMemo(() => ({ setKey }), [setKey]);
 
   return (
     <PlayerShell
       game={game}
-      score={hud.score}
-      lives={hud.lives}
-      level={hud.level}
+      hudRef={hudRef}
+      finalScore={finalScore ?? undefined}
       paused={paused}
-      over={over}
+      over={finalScore !== null}
       onTogglePause={onTogglePause}
       onEnd={onEnd}
       onRestart={onRestart}
-      gamepad={{ setKey }}
+      gamepad={gamepad}
       skin={skin}
       onSkinChange={setSkin}
     >
