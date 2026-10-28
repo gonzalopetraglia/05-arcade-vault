@@ -23,6 +23,7 @@ import {
   frogPos,
   setGlow,
   type Frog,
+  type Point,
 } from "./entities";
 import { LANES, paintCar, paintLeaf, paintLog, paintTruck } from "./lanes";
 import type { CroacPalette } from "./skins";
@@ -103,9 +104,12 @@ export function drawSprite(
   ctx.drawImage(s.canvas, x + s.w / 2 - fw / 2, y + s.h / 2 - fh / 2, fw, fh);
 }
 
+// Destino reutilizado de frogPos: drawFrogSprite corre cada frame.
+const pos: Point = { x: 0, y: 0 };
+
 /** La rana viva: el sprite en su posición, más grande en lo alto del salto. */
 export function drawFrogSprite(ctx: CanvasRenderingContext2D, frog: Frog, s: Sprite): void {
-  const { x, y } = frogPos(frog);
+  const { x, y } = frogPos(frog, pos);
   // Parábola de 0 a 1 a 0: el tamaño máximo cae a mitad del salto.
   const lift = frog.hop ? Math.sin(frog.hop.t * Math.PI) : 0;
   drawSprite(ctx, s, x, y, 1 + HOP_SCALE * lift);

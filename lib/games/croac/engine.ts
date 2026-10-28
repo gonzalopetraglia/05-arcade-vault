@@ -35,12 +35,12 @@ import {
 } from "./entities";
 import {
   LANES,
+  LANE_INDEX_BY_ROW,
   buildLane,
   drawLane,
   isSunk,
   speedFor,
   stepLane,
-  type LaneDef,
   type Piece,
 } from "./lanes";
 import { SKINS, type CroacPalette } from "./skins";
@@ -101,7 +101,9 @@ export class CroacEngine {
   private deathKind: DeathKind = "squash";
 
   private rafId: number | null = null;
-  private lastTime: number | null = null;
+  // -1 y no null: un campo que puede ser null guarda cada timestamp en una
+  // caja nueva del heap (un double por frame); solo numérico se escribe en sitio.
+  private lastTime = -1;
   private running = false;
   private destroyed = false;
   /**
@@ -157,7 +159,7 @@ export class CroacEngine {
     if (this.destroyed || this.running || this.state === "gameover") return;
     this.running = true;
     // Sin esto, el primer dt tras la pausa vale lo que haya durado la pausa.
-    this.lastTime = null;
+    this.lastTime = -1;
     this.rafId = requestAnimationFrame(this.loop);
   }
 
@@ -218,7 +220,7 @@ export class CroacEngine {
 
   private loop = (ts: number): void => {
     if (!this.running) return;
-    const dt = this.lastTime === null ? 0 : Math.min(MAX_DT, (ts - this.lastTime) / 1000);
+    const dt = this.lastTime < 0 ? 0 : Math.min(MAX_DT, (ts - this.lastTime) / 1000);
     this.lastTime = ts;
     this.update(dt);
     this.draw();
@@ -271,7 +273,7 @@ export class CroacEngine {
     if (this.state === "gameover") return;
     this.time += dt;
     // El tráfico sigue moviéndose también mientras la rana está muerta.
-    LANES.forEach((def, i) => stepLane(this.lanes[i], def, this.level, dt));
+    for (let i = 0; i < LANES.length; i++) stepLane(this.lanes[i], LANES[i], this.level, dt);
 
     if (this.state === "dead") {
       this.deadFor += dt * 1000;
@@ -379,21 +381,36 @@ export class CroacEngine {
    * hundida o arrastrada fuera de la pantalla, muere.
    */
   private checkGround(dt: number): void {
+    // Bucles a mano y sin closures: corre cada frame con la rana en el suelo.
     const { frog } = this;
-    const lane = this.laneAt(frog.row);
-    if (!lane) return;
-    const { def, pieces } = lane;
+    const li = LANE_INDEX_BY_ROW[frog.row] ?? -1;
+    if (li === -1) return;
+    const def = LANES[li];
+    const pieces = this.lanes[li];
 
     if (frog.row >= ROW_ROAD_TOP && frog.row <= ROW_ROAD_BOT) {
       const left = frog.x + HIT_INSET;
       const right = frog.x + CELL - HIT_INSET;
-      if (pieces.some((p) => p.x < right && p.x + p.len * CELL > left)) this.die("squash");
+      for (let i = 0; i < pieces.length; i++) {
+        const p = pieces[i];
+        if (p.x < right && p.x + p.len * CELL > left) {
+          this.die("squash");
+          return;
+        }
+      }
       return;
     }
 
     if (isRiver(frog.row)) {
       const cx = frog.x + CELL / 2;
-      const under = pieces.find((p) => cx >= p.x && cx < p.x + p.len * CELL);
+      let under: Piece | null = null;
+      for (let i = 0; i < pieces.length; i++) {
+        const p = pieces[i];
+        if (cx >= p.x && cx < p.x + p.len * CELL) {
+          under = p;
+          break;
+        }
+      }
       if (!under || isSunk(under, this.time)) {
         this.die("sink");
         return;
@@ -402,11 +419,6 @@ export class CroacEngine {
       const ncx = frog.x + CELL / 2;
       if (ncx < 0 || ncx > W) this.die("sink");
     }
-  }
-
-  private laneAt(row: number): { def: LaneDef; pieces: Piece[] } | null {
-    const i = LANES.findIndex((def) => def.row === row);
-    return i === -1 ? null : { def: LANES[i], pieces: this.lanes[i] };
   }
 
   /**
@@ -465,7 +477,9 @@ export class CroacEngine {
   private draw(): void {
     const { ctx, palette, sprites } = this;
     ctx.drawImage(this.background, 0, 0, W, H);
-    LANES.forEach((def, i) => drawLane(ctx, this.lanes[i], def, sprites, palette, this.time));
+    for (let i = 0; i < LANES.length; i++) {
+      drawLane(ctx, this.lanes[i], LANES[i], sprites, palette, this.time);
+    }
     // Muerta, o recién acabada la partida por vidas, se pinta aplastada o hundida.
     if (this.state === "playing") drawFrogSprite(ctx, this.frog, sprites.frog);
     else drawDeadFrog(ctx, this.frog, this.deathKind, palette);

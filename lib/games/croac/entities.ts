@@ -57,18 +57,29 @@ export function spawnFrog(): Frog {
   return { x: START_COL * CELL, row: ROW_START, hop: null, bestRow: ROW_START };
 }
 
+export type Point = { x: number; y: number };
+
 /**
  * Posición en píxeles de la esquina superior izquierda de la rana. Durante el
- * salto se interpola entre origen y destino; `hop.t` va de 0 a 1.
+ * salto se interpola entre origen y destino; `hop.t` va de 0 a 1. Escribe en
+ * `out` y lo devuelve: se llama cada frame y no debe alocar.
  */
-export function frogPos(frog: Frog): { x: number; y: number } {
-  if (!frog.hop) return { x: frog.x, y: frog.row * CELL };
+export function frogPos(frog: Frog, out: Point): Point {
+  if (!frog.hop) {
+    out.x = frog.x;
+    out.y = frog.row * CELL;
+    return out;
+  }
   const { from, to, t } = frog.hop;
-  return {
-    x: from.x + (to.x - from.x) * t,
-    y: (from.row + (to.row - from.row) * t) * CELL,
-  };
+  out.x = from.x + (to.x - from.x) * t;
+  out.y = (from.row + (to.row - from.row) * t) * CELL;
+  return out;
 }
+
+// Destino de frogPos para el dibujo; nadie lo guarda entre llamadas.
+const pos: Point = { x: 0, y: 0 };
+
+const RIPPLES = [0.12, 0.24, 0.36]; // radios de los anillos de la rana hundida
 
 // ── Dibujo ────────────────────────────────────────────────────────────────────
 /**
@@ -89,7 +100,7 @@ export const HOP_SCALE = 0.12; // cuánto crece la rana en el punto alto del sal
  * escalando el sprite.
  */
 export function drawFrog(ctx: CanvasRenderingContext2D, frog: Frog, colors: CroacPalette): void {
-  const { x, y } = frogPos(frog);
+  const { x, y } = frogPos(frog, pos);
   const cx = x + CELL / 2;
   const cy = y + CELL / 2;
   // Parábola de 0 a 1 a 0: el tamaño máximo cae a mitad del salto.
@@ -136,7 +147,7 @@ export function drawDeadFrog(
   kind: DeathKind,
   colors: CroacPalette,
 ): void {
-  const { x, y } = frogPos(frog);
+  const { x, y } = frogPos(frog, pos);
   const cx = x + CELL / 2;
   const cy = y + CELL / 2;
 
@@ -150,7 +161,8 @@ export function drawDeadFrog(
 
   ctx.strokeStyle = colors.frogDead;
   ctx.lineWidth = 2;
-  for (const r of [0.12, 0.24, 0.36]) {
+  for (let i = 0; i < RIPPLES.length; i++) {
+    const r = RIPPLES[i];
     ctx.beginPath();
     ctx.ellipse(cx, cy, CELL * r, CELL * r * 0.6, 0, 0, Math.PI * 2);
     ctx.stroke();
