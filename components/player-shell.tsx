@@ -1,12 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { Profiler, useEffect, useRef, useState, type ReactNode } from "react";
 import { useSession } from "@/components/session-provider";
 import { SkinSelector } from "@/components/skin-selector";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { TouchGamepad, type GamepadConfig } from "@/components/touch-gamepad";
 import type { Game } from "@/lib/games";
+import { onPerfRender, perfEnabled } from "@/lib/perf";
 import { useCoarsePointer } from "@/lib/use-coarse-pointer";
 import type { SkinId } from "@/lib/skins";
 
@@ -32,6 +33,20 @@ type Props = {
   /** Lo que se ve dentro de la pantalla del CRT. */
   children: ReactNode;
 };
+
+/**
+ * <Profiler> de `lib/perf.ts`, solo en desarrollo con ?perf=1; si no, los hijos
+ * tal cual. Nunca anidar dos: el `onRender` de fuera también se dispararía con
+ * los renders de dentro, y "shell" contaría los del HUD.
+ */
+function Probe({ id, children }: { id: string; children: ReactNode }) {
+  if (!perfEnabled()) return children;
+  return (
+    <Profiler id={id} onRender={onPerfRender}>
+      {children}
+    </Profiler>
+  );
+}
 
 /**
  * Envoltorio común a todos los players: cabecera de HUD, marco CRT, botones,
@@ -156,192 +171,204 @@ export function PlayerShell({
       ref={playerRef}
       className={gamepad ? "av-player has-gamepad fade-in" : "av-player fade-in"}
     >
-      <div className="player-hud">
-        <div style={{ display: "flex", gap: 24, flexWrap: "wrap" }}>
-          <div className="hud-stat">
-            <div className="l">Jugador</div>
-            <div className="v" style={{ color: "var(--ink)" }}>
-              {name}
+      <Probe id="shell">
+        <div className="player-hud">
+          <div style={{ display: "flex", gap: 24, flexWrap: "wrap" }}>
+            <div className="hud-stat">
+              <div className="l">Jugador</div>
+              <div className="v" style={{ color: "var(--ink)" }}>
+                {name}
+              </div>
+            </div>
+            <div className="hud-stat">
+              <div className="l">Puntuación</div>
+              <div className="v">{score.toLocaleString("es-ES")}</div>
+            </div>
+            <div className="hud-stat lives">
+              <div className="l">Vidas</div>
+              <div className="v">{"♥ ".repeat(lives).trim() || "—"}</div>
+            </div>
+            <div className="hud-stat level">
+              <div className="l">Nivel</div>
+              <div className="v">{String(level).padStart(2, "0")}</div>
             </div>
           </div>
-          <div className="hud-stat">
-            <div className="l">Puntuación</div>
-            <div className="v">{score.toLocaleString("es-ES")}</div>
-          </div>
-          <div className="hud-stat lives">
-            <div className="l">Vidas</div>
-            <div className="v">{"♥ ".repeat(lives).trim() || "—"}</div>
-          </div>
-          <div className="hud-stat level">
-            <div className="l">Nivel</div>
-            <div className="v">{String(level).padStart(2, "0")}</div>
-          </div>
-        </div>
-        {/* En táctil el HUD está oculto y el selector vive en el menú de pausa;
+          {/* En táctil el HUD está oculto y el selector vive en el menú de pausa;
             uno solo en el DOM para no repetir el id de su etiqueta. */}
-        {skin && onSkinChange && !touch && <SkinSelector value={skin} onChange={onSkinChange} />}
-        <div className="hud-actions">
-          <button className="btn yellow" onClick={onTogglePause}>
-            {paused ? "REANUDAR" : "PAUSA"}
-          </button>
-          <button className="btn magenta" onClick={onEnd}>
-            FIN
-          </button>
-          <Link className="btn ghost" href={`/games/${game.id}`}>
-            SALIR
-          </Link>
+          {skin && onSkinChange && !touch && <SkinSelector value={skin} onChange={onSkinChange} />}
+          <div className="hud-actions">
+            <button className="btn yellow" onClick={onTogglePause}>
+              {paused ? "REANUDAR" : "PAUSA"}
+            </button>
+            <button className="btn magenta" onClick={onEnd}>
+              FIN
+            </button>
+            <Link className="btn ghost" href={`/games/${game.id}`}>
+              SALIR
+            </Link>
+          </div>
         </div>
-      </div>
+      </Probe>
 
       <div className="crt">
         <div className="crt-screen">
-          {children}
-          {/* Sin HUD en táctil, pausa y pantalla completa viven sobre la
+          <Probe id="screen">{children}</Probe>
+          <Probe id="shell">
+            {/* Sin HUD en táctil, pausa y pantalla completa viven sobre la
               pantalla, en la esquina donde el mando no llega. */}
-          {/* Mientras espera el primer toque los iconos no salen: ⏸
+            {/* Mientras espera el primer toque los iconos no salen: ⏸
               reanudaría el motor por debajo del cartel. */}
-          {touch && !waiting && (
-            <div className="screen-icons">
-              <button
-                type="button"
-                className="screen-icon"
-                aria-label={paused ? "Reanudar" : "Pausa"}
-                onClick={onTogglePause}
-              >
-                <svg viewBox="0 0 16 16" aria-hidden>
-                  <rect x="3" y="2" width="3.5" height="12" />
-                  <rect x="9.5" y="2" width="3.5" height="12" />
-                </svg>
-              </button>
-              {canFullscreen && (
+            {touch && !waiting && (
+              <div className="screen-icons">
                 <button
                   type="button"
                   className="screen-icon"
-                  aria-label={fullscreen ? "Salir de pantalla completa" : "Pantalla completa"}
-                  onClick={toggleFullscreen}
+                  aria-label={paused ? "Reanudar" : "Pausa"}
+                  onClick={onTogglePause}
                 >
                   <svg viewBox="0 0 16 16" aria-hidden>
-                    {fullscreen ? (
-                      <path d="M6 1v5H1M10 1v5h5M6 15v-5H1M10 15v-5h5" />
-                    ) : (
-                      <path d="M1 6V1h5M15 6V1h-5M1 10v5h5M15 10v5h-5" />
-                    )}
+                    <rect x="3" y="2" width="3.5" height="12" />
+                    <rect x="9.5" y="2" width="3.5" height="12" />
                   </svg>
                 </button>
-              )}
-            </div>
-          )}
-          {waiting && (
-            <button type="button" className="crt-content tap-to-start" onClick={start}>
-              <span className="pixel neon-cyan tap-to-start-label">TOCA PARA EMPEZAR</span>
-            </button>
-          )}
-          {paused && touch && !waiting && (
-            // Sin HUD, la pausa es el único sitio donde ver la partida y salir.
-            <div className="crt-content pause-menu" style={{ zIndex: 5 }}>
-              <div className="pause-menu-inner">
-                <div className="pixel neon-yellow pause-menu-title">EN PAUSA</div>
-                <div className="pause-menu-stats">
-                  <div className="hud-stat">
-                    <div className="l">Puntuación</div>
-                    <div className="v">{score.toLocaleString("es-ES")}</div>
+                {canFullscreen && (
+                  <button
+                    type="button"
+                    className="screen-icon"
+                    aria-label={fullscreen ? "Salir de pantalla completa" : "Pantalla completa"}
+                    onClick={toggleFullscreen}
+                  >
+                    <svg viewBox="0 0 16 16" aria-hidden>
+                      {fullscreen ? (
+                        <path d="M6 1v5H1M10 1v5h5M6 15v-5H1M10 15v-5h5" />
+                      ) : (
+                        <path d="M1 6V1h5M15 6V1h-5M1 10v5h5M15 10v5h-5" />
+                      )}
+                    </svg>
+                  </button>
+                )}
+              </div>
+            )}
+            {waiting && (
+              <button type="button" className="crt-content tap-to-start" onClick={start}>
+                <span className="pixel neon-cyan tap-to-start-label">TOCA PARA EMPEZAR</span>
+              </button>
+            )}
+            {paused && touch && !waiting && (
+              // Sin HUD, la pausa es el único sitio donde ver la partida y salir.
+              <div className="crt-content pause-menu" style={{ zIndex: 5 }}>
+                <div className="pause-menu-inner">
+                  <div className="pixel neon-yellow pause-menu-title">EN PAUSA</div>
+                  <div className="pause-menu-stats">
+                    <div className="hud-stat">
+                      <div className="l">Puntuación</div>
+                      <div className="v">{score.toLocaleString("es-ES")}</div>
+                    </div>
+                    <div className="hud-stat lives">
+                      <div className="l">Vidas</div>
+                      <div className="v">{"♥ ".repeat(lives).trim() || "—"}</div>
+                    </div>
+                    <div className="hud-stat level">
+                      <div className="l">Nivel</div>
+                      <div className="v">{String(level).padStart(2, "0")}</div>
+                    </div>
                   </div>
-                  <div className="hud-stat lives">
-                    <div className="l">Vidas</div>
-                    <div className="v">{"♥ ".repeat(lives).trim() || "—"}</div>
-                  </div>
-                  <div className="hud-stat level">
-                    <div className="l">Nivel</div>
-                    <div className="v">{String(level).padStart(2, "0")}</div>
-                  </div>
-                </div>
-                {/* La nav queda tapada en táctil: el tema se cambia aquí. La
+                  {/* La nav queda tapada en táctil: el tema se cambia aquí. La
                     skin solo si el juego tiene skins. */}
-                <div className="pause-menu-settings">
-                  {skin && onSkinChange && <SkinSelector value={skin} onChange={onSkinChange} />}
-                  <ThemeToggle />
-                </div>
-                <div className="pause-menu-actions">
-                  <button className="btn yellow" onClick={onTogglePause}>
-                    REANUDAR
-                  </button>
-                  <button className="btn magenta" onClick={onEnd}>
-                    FIN
-                  </button>
-                  <Link className="btn ghost" href={`/games/${game.id}`}>
-                    SALIR
-                  </Link>
-                </div>
-              </div>
-            </div>
-          )}
-          {paused && !touch && (
-            <div className="crt-content" style={{ background: "rgba(0,0,0,0.6)", zIndex: 5 }}>
-              <div>
-                <div className="pixel neon-yellow" style={{ fontSize: 22 }}>
-                  EN PAUSA
-                </div>
-                <div
-                  className="mono"
-                  style={{
-                    fontSize: 11,
-                    color: "var(--ink-dim)",
-                    marginTop: 10,
-                    letterSpacing: "0.16em",
-                  }}
-                >
-                  PULSA REANUDAR PARA CONTINUAR
+                  <div className="pause-menu-settings">
+                    {skin && onSkinChange && <SkinSelector value={skin} onChange={onSkinChange} />}
+                    <ThemeToggle />
+                  </div>
+                  <div className="pause-menu-actions">
+                    <button className="btn yellow" onClick={onTogglePause}>
+                      REANUDAR
+                    </button>
+                    <button className="btn magenta" onClick={onEnd}>
+                      FIN
+                    </button>
+                    <Link className="btn ghost" href={`/games/${game.id}`}>
+                      SALIR
+                    </Link>
+                  </div>
                 </div>
               </div>
-            </div>
-          )}
+            )}
+            {paused && !touch && (
+              <div className="crt-content" style={{ background: "rgba(0,0,0,0.6)", zIndex: 5 }}>
+                <div>
+                  <div className="pixel neon-yellow" style={{ fontSize: 22 }}>
+                    EN PAUSA
+                  </div>
+                  <div
+                    className="mono"
+                    style={{
+                      fontSize: 11,
+                      color: "var(--ink-dim)",
+                      marginTop: 10,
+                      letterSpacing: "0.16em",
+                    }}
+                  >
+                    PULSA REANUDAR PARA CONTINUAR
+                  </div>
+                </div>
+              </div>
+            )}
+          </Probe>
         </div>
-        <div className="crt-bottom">
-          <span className="led">SEÑAL OK</span>
-          <span>{game.title} · CRT-83 · 60 HZ</span>
-          <span>CARGA · 1MB</span>
-        </div>
+        <Probe id="shell">
+          <div className="crt-bottom">
+            <span className="led">SEÑAL OK</span>
+            <span>{game.title} · CRT-83 · 60 HZ</span>
+            <span>CARGA · 1MB</span>
+          </div>
+        </Probe>
       </div>
 
       {/* Siempre en el DOM; el CSS solo lo enseña con puntero grueso, así el
           HTML del servidor ya trae el layout correcto y no hay salto. */}
-      {gamepad && <TouchGamepad config={gamepad} />}
+      {gamepad && (
+        <Probe id="gamepad">
+          <TouchGamepad config={gamepad} />
+        </Probe>
+      )}
 
-      {over && (
-        <div className="modal-bd">
-          <div className="modal">
-            <h2>FIN DEL JUEGO</h2>
-            <div className="final-label">PUNTUACIÓN FINAL</div>
-            <div className="final">{score.toLocaleString("es-ES")}</div>
-            {!saved ? (
-              <>
-                <div className="input-row">
-                  <input
-                    value={name}
-                    onChange={(e) => setTypedName(e.target.value.toUpperCase().slice(0, 10))}
-                    placeholder="TUS INICIALES"
-                    disabled={saving}
-                  />
-                  <button className="btn yellow" onClick={save} disabled={saving}>
-                    {saving ? "GUARDANDO…" : "GUARDAR PUNTUACIÓN"}
-                  </button>
-                </div>
-                {saveError && <div className="toast-error">▸ {saveError}</div>}
-              </>
-            ) : (
-              <div className="toast-saved">▸ PUNTUACIÓN GUARDADA_</div>
-            )}
-            <div className="actions">
-              <button className="btn" onClick={restart}>
-                JUGAR DE NUEVO
-              </button>
-              <Link className="btn magenta" href="/games">
-                VOLVER AL VAULT
-              </Link>
+      <Probe id="shell">
+        {over && (
+          <div className="modal-bd">
+            <div className="modal">
+              <h2>FIN DEL JUEGO</h2>
+              <div className="final-label">PUNTUACIÓN FINAL</div>
+              <div className="final">{score.toLocaleString("es-ES")}</div>
+              {!saved ? (
+                <>
+                  <div className="input-row">
+                    <input
+                      value={name}
+                      onChange={(e) => setTypedName(e.target.value.toUpperCase().slice(0, 10))}
+                      placeholder="TUS INICIALES"
+                      disabled={saving}
+                    />
+                    <button className="btn yellow" onClick={save} disabled={saving}>
+                      {saving ? "GUARDANDO…" : "GUARDAR PUNTUACIÓN"}
+                    </button>
+                  </div>
+                  {saveError && <div className="toast-error">▸ {saveError}</div>}
+                </>
+              ) : (
+                <div className="toast-saved">▸ PUNTUACIÓN GUARDADA_</div>
+              )}
+              <div className="actions">
+                <button className="btn" onClick={restart}>
+                  JUGAR DE NUEVO
+                </button>
+                <Link className="btn magenta" href="/games">
+                  VOLVER AL VAULT
+                </Link>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </Probe>
     </div>
   );
 }
