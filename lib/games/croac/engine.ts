@@ -13,6 +13,7 @@
 import {
   CELL,
   COLORS,
+  DEATH_PAUSE,
   GOAL_COLS,
   HOP_MS,
   LIVES,
@@ -26,9 +27,11 @@ import {
   ROW_RIVER_TOP,
   ROW_START,
   W,
+  drawDeadFrog,
   drawFrog,
   drawWorld,
   spawnFrog,
+  type DeathKind,
   type Dir,
   type Frog,
 } from "./entities";
@@ -87,6 +90,8 @@ export class CroacEngine {
   private level = 1;
   private state: CroacState["status"] = "playing";
   private time = 0; // s de juego; marca el ciclo de las hojas y no corre en pausa
+  private deadFor = 0; // ms desde la muerte, mientras status es "dead"
+  private deathKind: DeathKind = "squash";
 
   private rafId: number | null = null;
   private lastTime: number | null = null;
@@ -147,9 +152,7 @@ export class CroacEngine {
 
   forceGameOver(): void {
     if (this.state === "gameover") return;
-    this.state = "gameover";
-    this.emitState();
-    this.onGameOver(this.score);
+    this.endGame();
   }
 
   /**
@@ -188,7 +191,8 @@ export class CroacEngine {
     this.update(dt);
     this.draw();
     this.emitState();
-    this.rafId = requestAnimationFrame(this.loop);
+    // endGame() pudo parar el bucle dentro de update: no se reprograma.
+    if (this.running) this.rafId = requestAnimationFrame(this.loop);
   };
 
   /** Solo avisa a React cuando cambia alguno de los cuatro campos. */
@@ -221,6 +225,7 @@ export class CroacEngine {
     this.level = 1;
     this.state = "playing";
     this.time = 0;
+    this.deadFor = 0;
     this.occupied = [false, false, false, false, false];
     this.lanes = LANES.map((def) => buildLane(def, this.level));
     this.frog = spawnFrog();
@@ -234,7 +239,12 @@ export class CroacEngine {
     this.time += dt;
     // El tráfico sigue moviéndose también mientras la rana está muerta.
     LANES.forEach((def, i) => stepLane(this.lanes[i], def, this.level, dt));
-    if (this.state !== "playing") return;
+
+    if (this.state === "dead") {
+      this.deadFor += dt * 1000;
+      if (this.deadFor >= DEATH_PAUSE) this.revive();
+      return;
+    }
 
     const hop = this.frog.hop;
     if (hop) {
@@ -305,7 +315,7 @@ export class CroacEngine {
     const cx = this.frog.x + CELL / 2;
     const i = GOAL_COLS.findIndex((col) => Math.abs(col * CELL + CELL / 2 - cx) < CELL / 2);
     if (i === -1 || this.occupied[i]) {
-      this.die();
+      this.die("sink");
       return;
     }
     this.occupied[i] = true;
@@ -341,7 +351,7 @@ export class CroacEngine {
     if (frog.row >= ROW_ROAD_TOP && frog.row <= ROW_ROAD_BOT) {
       const left = frog.x + HIT_INSET;
       const right = frog.x + CELL - HIT_INSET;
-      if (pieces.some((p) => p.x < right && p.x + p.len * CELL > left)) this.die();
+      if (pieces.some((p) => p.x < right && p.x + p.len * CELL > left)) this.die("squash");
       return;
     }
 
@@ -349,12 +359,12 @@ export class CroacEngine {
       const cx = frog.x + CELL / 2;
       const under = pieces.find((p) => cx >= p.x && cx < p.x + p.len * CELL);
       if (!under || isSunk(under, this.time)) {
-        this.die();
+        this.die("sink");
         return;
       }
       frog.x += def.dir * speedFor(def, this.level) * dt;
       const ncx = frog.x + CELL / 2;
-      if (ncx < 0 || ncx > W) this.die();
+      if (ncx < 0 || ncx > W) this.die("sink");
     }
   }
 
@@ -363,8 +373,45 @@ export class CroacEngine {
     return i === -1 ? null : { def: LANES[i], pieces: this.lanes[i] };
   }
 
-  private die(): void {
+  /**
+   * Cuesta una vida. Con vidas de sobra la rana queda DEATH_PAUSE en status
+   * "dead" mientras el tráfico sigue; con 0, se acaba la partida. Puntuación,
+   * nivel y nenúfares ocupados se conservan en los dos casos.
+   */
+  private die(kind: DeathKind): void {
+    this.lives--;
+    this.deathKind = kind;
+    this.queued = null;
+    if (this.lives <= 0) {
+      this.lives = 0;
+      this.endGame();
+      return;
+    }
     this.state = "dead";
+    this.deadFor = 0;
+  }
+
+  /** Tras DEATH_PAUSE: rana a la salida con un intento nuevo (bestRow incluido). */
+  private revive(): void {
+    this.state = "playing";
+    this.deadFor = 0;
+    this.frog = spawnFrog();
+  }
+
+  /**
+   * Fin de partida, por vidas o por el botón FIN: el bucle se detiene y
+   * onGameOver se llama una sola vez. El HUD ve el estado final antes de que
+   * se abra el modal.
+   */
+  private endGame(): void {
+    this.state = "gameover";
+    this.running = false;
+    if (this.rafId !== null) {
+      cancelAnimationFrame(this.rafId);
+      this.rafId = null;
+    }
+    this.emitState();
+    this.onGameOver(this.score);
   }
 
   // ── Draw ────────────────────────────────────────────────────────────────────
@@ -373,7 +420,9 @@ export class CroacEngine {
     const { ctx } = this;
     drawWorld(ctx, this.occupied, COLORS);
     LANES.forEach((def, i) => drawLane(ctx, this.lanes[i], def, COLORS, this.time));
-    drawFrog(ctx, this.frog, COLORS);
+    // Muerta, o recién acabada la partida por vidas, se pinta aplastada o hundida.
+    if (this.state === "playing") drawFrog(ctx, this.frog, COLORS);
+    else drawDeadFrog(ctx, this.frog, this.deathKind, COLORS);
   }
 }
 

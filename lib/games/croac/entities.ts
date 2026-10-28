@@ -91,6 +91,7 @@ export const COLORS: CroacColors = {
 
 // ── Rana ──────────────────────────────────────────────────────────────────────
 export type Dir = "up" | "down" | "left" | "right";
+export type DeathKind = "squash" | "sink"; // atropellada o ahogada
 
 export type Frog = {
   x: number; // borde izquierdo en píxeles; continuo, porque el río la arrastra
@@ -227,5 +228,36 @@ export function drawFrog(ctx: CanvasRenderingContext2D, frog: Frog, colors: Croa
     ctx.beginPath();
     ctx.arc(cx + dx, eyeY - eyeR * 0.2, eyeR * 0.5, 0, Math.PI * 2);
     ctx.fill();
+  }
+}
+
+/**
+ * La rana muerta: aplastada en la carretera (una elipse ancha y baja) o
+ * hundida en el agua (anillos concéntricos donde estaba).
+ */
+export function drawDeadFrog(
+  ctx: CanvasRenderingContext2D,
+  frog: Frog,
+  kind: DeathKind,
+  colors: CroacColors,
+): void {
+  const { x, y } = frogPos(frog);
+  const cx = x + CELL / 2;
+  const cy = y + CELL / 2;
+
+  if (kind === "squash") {
+    ctx.fillStyle = colors.frogDead;
+    ctx.beginPath();
+    ctx.ellipse(cx, cy, CELL * 0.44, CELL * 0.16, 0, 0, Math.PI * 2);
+    ctx.fill();
+    return;
+  }
+
+  ctx.strokeStyle = colors.frogDead;
+  ctx.lineWidth = 2;
+  for (const r of [0.12, 0.24, 0.36]) {
+    ctx.beginPath();
+    ctx.ellipse(cx, cy, CELL * r, CELL * r * 0.6, 0, 0, Math.PI * 2);
+    ctx.stroke();
   }
 }
