@@ -25,10 +25,10 @@ import {
   ROW_RIVER_BOT,
   ROW_RIVER_TOP,
   ROW_START,
+  H,
   W,
   drawDeadFrog,
   drawFrog,
-  drawWorld,
   spawnFrog,
   type DeathKind,
   type Dir,
@@ -45,6 +45,7 @@ import {
   type Piece,
 } from "./lanes";
 import { SKINS, type CroacPalette } from "./skins";
+import { buildBackground } from "./sprites";
 
 export type CroacState = {
   score: number;
@@ -113,6 +114,8 @@ export class CroacEngine {
   private lastEmitted: CroacState | null = null;
   private palette: CroacPalette;
   private dpr: number;
+  /** Fondo con los nenúfares ocupados ya pintados; ver rebuildBackground. */
+  private background: HTMLCanvasElement;
 
   constructor(canvas: HTMLCanvasElement, opts: EngineOptions) {
     const ctx = canvas.getContext("2d");
@@ -122,6 +125,7 @@ export class CroacEngine {
     this.onGameOver = opts.onGameOver;
     this.palette = opts.palette ?? SKINS.clasico.dark;
     this.dpr = opts.dpr ?? 1;
+    this.background = buildBackground(this.occupied, this.palette, this.dpr);
   }
 
   // ── API pública ─────────────────────────────────────────────────────────────
@@ -197,6 +201,7 @@ export class CroacEngine {
    */
   setPalette(palette: CroacPalette): void {
     this.palette = palette;
+    this.rebuildBackground();
     if (this.running || this.destroyed || this.lanes.length === 0) return;
     this.draw();
   }
@@ -254,6 +259,7 @@ export class CroacEngine {
     this.lanes = LANES.map((def) => buildLane(def, this.level));
     this.frog = spawnFrog();
     this.queued = null;
+    this.rebuildBackground();
   }
 
   // ── Update ──────────────────────────────────────────────────────────────────
@@ -346,7 +352,9 @@ export class CroacEngine {
     this.score += POINTS_GOAL;
     this.frog = spawnFrog();
     this.queued = null;
+    // Con la charca llena nextRound vacía los nenúfares y rehace el fondo él.
     if (this.occupied.every(Boolean)) this.nextRound();
+    else this.rebuildBackground();
   }
 
   /**
@@ -358,6 +366,7 @@ export class CroacEngine {
     this.level++;
     this.occupied = this.occupied.map(() => false);
     this.lanes = LANES.map((def) => buildLane(def, this.level));
+    this.rebuildBackground();
   }
 
   /**
@@ -440,9 +449,18 @@ export class CroacEngine {
 
   // ── Draw ────────────────────────────────────────────────────────────────────
 
+  /**
+   * El fondo solo cambia con los nenúfares ocupados o con la paleta: se rehace
+   * en esos cuatro momentos (initGame, ocupar nenúfar, ronda nueva, setPalette)
+   * en lugar de repintarlo entero cada frame.
+   */
+  private rebuildBackground(): void {
+    this.background = buildBackground(this.occupied, this.palette, this.dpr);
+  }
+
   private draw(): void {
     const { ctx, palette } = this;
-    drawWorld(ctx, this.occupied, palette);
+    ctx.drawImage(this.background, 0, 0, W, H);
     LANES.forEach((def, i) => drawLane(ctx, this.lanes[i], def, palette, this.time));
     // Muerta, o recién acabada la partida por vidas, se pinta aplastada o hundida.
     if (this.state === "playing") drawFrog(ctx, this.frog, palette);

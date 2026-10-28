@@ -119,7 +119,7 @@ export function isSunk(piece: Piece, t: number): boolean {
 // ── Dibujo ────────────────────────────────────────────────────────────────────
 const PAD = 5; // px de margen vertical de cada pieza dentro de su fila
 
-/** Las piezas de un carril. El fondo de la fila lo pinta drawWorld. */
+/** Las piezas de un carril. El fondo de la fila es la capa de buildBackground. */
 export function drawLane(
   ctx: CanvasRenderingContext2D,
   pieces: Piece[],
