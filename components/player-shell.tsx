@@ -1,7 +1,17 @@
 "use client";
 
 import Link from "next/link";
-import { Profiler, useEffect, useRef, useState, type ReactNode } from "react";
+import {
+  Profiler,
+  memo,
+  useEffect,
+  useImperativeHandle,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type ReactNode,
+  type RefObject,
+} from "react";
 import { useSession } from "@/components/session-provider";
 import { SkinSelector } from "@/components/skin-selector";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -11,11 +21,21 @@ import { onPerfRender, perfEnabled } from "@/lib/perf";
 import { useCoarsePointer } from "@/lib/use-coarse-pointer";
 import type { SkinId } from "@/lib/skins";
 
+export type HudValues = { score: number; lives: number; level: number };
+
+/** Lo que el player recibe en `hudRef.current` para empujar valores al HUD. */
+export type HudHandle = { set(v: HudValues): void };
+
 type Props = {
   game: Game;
-  score: number;
-  lives: number;
-  level: number;
+  /** Valores del HUD por props, para los juegos que aún no usan `hudRef`. */
+  score?: number;
+  lives?: number;
+  level?: number;
+  /** Si llega, el HUD se alimenta por aquí y se ignoran score/lives/level. */
+  hudRef?: RefObject<HudHandle | null>;
+  /** Puntuación del modal de fin de partida; si falta, se usa `score`. */
+  finalScore?: number;
   paused: boolean;
   over: boolean;
   onTogglePause: () => void;
@@ -49,6 +69,80 @@ function Probe({ id, children }: { id: string; children: ReactNode }) {
 }
 
 /**
+ * Reparto de `hudRef.set` entre las dos instancias de `HudStats` (cabecera y
+ * menú de pausa). Guarda el último valor: el menú de pausa se monta después y
+ * tiene que nacer con la partida tal como está.
+ */
+type HudHub = { last: HudValues; subs: Set<(v: HudValues) => void> };
+
+const HUD_START: HudValues = { score: 0, lives: 0, level: 1 };
+
+/**
+ * Puntuación, vidas y nivel, con estado propio: un punto re-renderiza solo
+ * esto, no el shell, el mando ni la pantalla del juego. Con `hub` escucha lo
+ * que el player empuja por `hudRef`; sin él, pinta las props tal cual.
+ */
+const HudStats = memo(function HudStats({
+  hub,
+  score,
+  lives,
+  level,
+  name,
+  className,
+}: {
+  hub?: HudHub;
+  score?: number;
+  lives?: number;
+  level?: number;
+  /** Solo la cabecera muestra al jugador; el menú de pausa no. */
+  name?: string;
+  /** La cabecera va sin clase, en fila; el menú de pausa trae la suya. */
+  className?: string;
+}) {
+  const [pushed, setPushed] = useState<HudValues>(() => hub?.last ?? HUD_START);
+
+  // Layout y no pasivo: el motor emite su primer estado en el efecto pasivo
+  // del canvas, y para entonces la suscripción ya tiene que existir.
+  useLayoutEffect(() => {
+    if (!hub) return;
+    hub.subs.add(setPushed);
+    return () => {
+      hub.subs.delete(setPushed);
+    };
+  }, [hub]);
+
+  const v = hub ? pushed : { score: score ?? 0, lives: lives ?? 0, level: level ?? 1 };
+
+  return (
+    <div
+      className={className}
+      style={className ? undefined : { display: "flex", gap: 24, flexWrap: "wrap" }}
+    >
+      {name !== undefined && (
+        <div className="hud-stat">
+          <div className="l">Jugador</div>
+          <div className="v" style={{ color: "var(--ink)" }}>
+            {name}
+          </div>
+        </div>
+      )}
+      <div className="hud-stat">
+        <div className="l">Puntuación</div>
+        <div className="v">{v.score.toLocaleString("es-ES")}</div>
+      </div>
+      <div className="hud-stat lives">
+        <div className="l">Vidas</div>
+        <div className="v">{"♥ ".repeat(v.lives).trim() || "—"}</div>
+      </div>
+      <div className="hud-stat level">
+        <div className="l">Nivel</div>
+        <div className="v">{String(v.level).padStart(2, "0")}</div>
+      </div>
+    </div>
+  );
+});
+
+/**
  * Envoltorio común a todos los players: cabecera de HUD, marco CRT, botones,
  * cartel de pausa y modal de fin de partida con guardado. Cada juego pone
  * dentro su pantalla y le pasa sus valores; el shell nunca calcula la
@@ -59,6 +153,8 @@ export function PlayerShell({
   score,
   lives,
   level,
+  hudRef,
+  finalScore,
   paused,
   over,
   onTogglePause,
@@ -84,6 +180,24 @@ export function PlayerShell({
   const [typedName, setTypedName] = useState<string | null>(null);
 
   const name = typedName ?? user?.name ?? "INVITADO";
+
+  // Solo existe si el player usa `hudRef`: sin él, HudStats pinta las props.
+  const [hub] = useState<HudHub | undefined>(() =>
+    hudRef ? { last: HUD_START, subs: new Set() } : undefined,
+  );
+  useImperativeHandle(
+    hudRef,
+    () => ({
+      set(v: HudValues) {
+        if (!hub) return;
+        hub.last = v;
+        hub.subs.forEach((sub) => sub(v));
+      },
+    }),
+    [hub],
+  );
+  const hudProps = hub ? { hub } : { score, lives, level };
+  const endScore = finalScore ?? score ?? 0;
 
   // Con el mando en pantalla, un dedo que se sale de un botón haría scroll,
   // zoom o pull-to-refresh. La clase va en <html> porque es quien hace scroll;
@@ -158,7 +272,7 @@ export function PlayerShell({
   const save = async () => {
     setSaving(true);
     setSaveError(null);
-    const result = await saveScore({ game: game.id, score, name });
+    const result = await saveScore({ game: game.id, score: endScore, name });
     setSaving(false);
     // Solo se marca como guardada si el servidor lo confirma: cerrar el modal
     // con la puntuación perdida sería mentirle al jugador.
@@ -171,28 +285,11 @@ export function PlayerShell({
       ref={playerRef}
       className={gamepad ? "av-player has-gamepad fade-in" : "av-player fade-in"}
     >
-      <Probe id="shell">
-        <div className="player-hud">
-          <div style={{ display: "flex", gap: 24, flexWrap: "wrap" }}>
-            <div className="hud-stat">
-              <div className="l">Jugador</div>
-              <div className="v" style={{ color: "var(--ink)" }}>
-                {name}
-              </div>
-            </div>
-            <div className="hud-stat">
-              <div className="l">Puntuación</div>
-              <div className="v">{score.toLocaleString("es-ES")}</div>
-            </div>
-            <div className="hud-stat lives">
-              <div className="l">Vidas</div>
-              <div className="v">{"♥ ".repeat(lives).trim() || "—"}</div>
-            </div>
-            <div className="hud-stat level">
-              <div className="l">Nivel</div>
-              <div className="v">{String(level).padStart(2, "0")}</div>
-            </div>
-          </div>
+      <div className="player-hud">
+        <Probe id="hud">
+          <HudStats {...hudProps} name={name} />
+        </Probe>
+        <Probe id="shell">
           {/* En táctil el HUD está oculto y el selector vive en el menú de pausa;
             uno solo en el DOM para no repetir el id de su etiqueta. */}
           {skin && onSkinChange && !touch && <SkinSelector value={skin} onChange={onSkinChange} />}
@@ -207,113 +304,100 @@ export function PlayerShell({
               SALIR
             </Link>
           </div>
-        </div>
-      </Probe>
+        </Probe>
+      </div>
 
       <div className="crt">
         <div className="crt-screen">
           <Probe id="screen">{children}</Probe>
-          <Probe id="shell">
-            {/* Sin HUD en táctil, pausa y pantalla completa viven sobre la
+          {/* Sin HUD en táctil, pausa y pantalla completa viven sobre la
               pantalla, en la esquina donde el mando no llega. */}
-            {/* Mientras espera el primer toque los iconos no salen: ⏸
+          {/* Mientras espera el primer toque los iconos no salen: ⏸
               reanudaría el motor por debajo del cartel. */}
-            {touch && !waiting && (
-              <div className="screen-icons">
+          {touch && !waiting && (
+            <div className="screen-icons">
+              <button
+                type="button"
+                className="screen-icon"
+                aria-label={paused ? "Reanudar" : "Pausa"}
+                onClick={onTogglePause}
+              >
+                <svg viewBox="0 0 16 16" aria-hidden>
+                  <rect x="3" y="2" width="3.5" height="12" />
+                  <rect x="9.5" y="2" width="3.5" height="12" />
+                </svg>
+              </button>
+              {canFullscreen && (
                 <button
                   type="button"
                   className="screen-icon"
-                  aria-label={paused ? "Reanudar" : "Pausa"}
-                  onClick={onTogglePause}
+                  aria-label={fullscreen ? "Salir de pantalla completa" : "Pantalla completa"}
+                  onClick={toggleFullscreen}
                 >
                   <svg viewBox="0 0 16 16" aria-hidden>
-                    <rect x="3" y="2" width="3.5" height="12" />
-                    <rect x="9.5" y="2" width="3.5" height="12" />
+                    {fullscreen ? (
+                      <path d="M6 1v5H1M10 1v5h5M6 15v-5H1M10 15v-5h5" />
+                    ) : (
+                      <path d="M1 6V1h5M15 6V1h-5M1 10v5h5M15 10v5h-5" />
+                    )}
                   </svg>
                 </button>
-                {canFullscreen && (
-                  <button
-                    type="button"
-                    className="screen-icon"
-                    aria-label={fullscreen ? "Salir de pantalla completa" : "Pantalla completa"}
-                    onClick={toggleFullscreen}
-                  >
-                    <svg viewBox="0 0 16 16" aria-hidden>
-                      {fullscreen ? (
-                        <path d="M6 1v5H1M10 1v5h5M6 15v-5H1M10 15v-5h5" />
-                      ) : (
-                        <path d="M1 6V1h5M15 6V1h-5M1 10v5h5M15 10v5h-5" />
-                      )}
-                    </svg>
-                  </button>
-                )}
-              </div>
-            )}
-            {waiting && (
-              <button type="button" className="crt-content tap-to-start" onClick={start}>
-                <span className="pixel neon-cyan tap-to-start-label">TOCA PARA EMPEZAR</span>
-              </button>
-            )}
-            {paused && touch && !waiting && (
-              // Sin HUD, la pausa es el único sitio donde ver la partida y salir.
-              <div className="crt-content pause-menu" style={{ zIndex: 5 }}>
-                <div className="pause-menu-inner">
-                  <div className="pixel neon-yellow pause-menu-title">EN PAUSA</div>
-                  <div className="pause-menu-stats">
-                    <div className="hud-stat">
-                      <div className="l">Puntuación</div>
-                      <div className="v">{score.toLocaleString("es-ES")}</div>
-                    </div>
-                    <div className="hud-stat lives">
-                      <div className="l">Vidas</div>
-                      <div className="v">{"♥ ".repeat(lives).trim() || "—"}</div>
-                    </div>
-                    <div className="hud-stat level">
-                      <div className="l">Nivel</div>
-                      <div className="v">{String(level).padStart(2, "0")}</div>
-                    </div>
-                  </div>
-                  {/* La nav queda tapada en táctil: el tema se cambia aquí. La
+              )}
+            </div>
+          )}
+          {waiting && (
+            <button type="button" className="crt-content tap-to-start" onClick={start}>
+              <span className="pixel neon-cyan tap-to-start-label">TOCA PARA EMPEZAR</span>
+            </button>
+          )}
+          {paused && touch && !waiting && (
+            // Sin HUD, la pausa es el único sitio donde ver la partida y salir.
+            <div className="crt-content pause-menu" style={{ zIndex: 5 }}>
+              <div className="pause-menu-inner">
+                <div className="pixel neon-yellow pause-menu-title">EN PAUSA</div>
+                <Probe id="hud">
+                  <HudStats {...hudProps} className="pause-menu-stats" />
+                </Probe>
+                {/* La nav queda tapada en táctil: el tema se cambia aquí. La
                     skin solo si el juego tiene skins. */}
-                  <div className="pause-menu-settings">
-                    {skin && onSkinChange && <SkinSelector value={skin} onChange={onSkinChange} />}
-                    <ThemeToggle />
-                  </div>
-                  <div className="pause-menu-actions">
-                    <button className="btn yellow" onClick={onTogglePause}>
-                      REANUDAR
-                    </button>
-                    <button className="btn magenta" onClick={onEnd}>
-                      FIN
-                    </button>
-                    <Link className="btn ghost" href={`/games/${game.id}`}>
-                      SALIR
-                    </Link>
-                  </div>
+                <div className="pause-menu-settings">
+                  {skin && onSkinChange && <SkinSelector value={skin} onChange={onSkinChange} />}
+                  <ThemeToggle />
+                </div>
+                <div className="pause-menu-actions">
+                  <button className="btn yellow" onClick={onTogglePause}>
+                    REANUDAR
+                  </button>
+                  <button className="btn magenta" onClick={onEnd}>
+                    FIN
+                  </button>
+                  <Link className="btn ghost" href={`/games/${game.id}`}>
+                    SALIR
+                  </Link>
                 </div>
               </div>
-            )}
-            {paused && !touch && (
-              <div className="crt-content" style={{ background: "rgba(0,0,0,0.6)", zIndex: 5 }}>
-                <div>
-                  <div className="pixel neon-yellow" style={{ fontSize: 22 }}>
-                    EN PAUSA
-                  </div>
-                  <div
-                    className="mono"
-                    style={{
-                      fontSize: 11,
-                      color: "var(--ink-dim)",
-                      marginTop: 10,
-                      letterSpacing: "0.16em",
-                    }}
-                  >
-                    PULSA REANUDAR PARA CONTINUAR
-                  </div>
+            </div>
+          )}
+          {paused && !touch && (
+            <div className="crt-content" style={{ background: "rgba(0,0,0,0.6)", zIndex: 5 }}>
+              <div>
+                <div className="pixel neon-yellow" style={{ fontSize: 22 }}>
+                  EN PAUSA
+                </div>
+                <div
+                  className="mono"
+                  style={{
+                    fontSize: 11,
+                    color: "var(--ink-dim)",
+                    marginTop: 10,
+                    letterSpacing: "0.16em",
+                  }}
+                >
+                  PULSA REANUDAR PARA CONTINUAR
                 </div>
               </div>
-            )}
-          </Probe>
+            </div>
+          )}
         </div>
         <Probe id="shell">
           <div className="crt-bottom">
@@ -338,7 +422,7 @@ export function PlayerShell({
             <div className="modal">
               <h2>FIN DEL JUEGO</h2>
               <div className="final-label">PUNTUACIÓN FINAL</div>
-              <div className="final">{score.toLocaleString("es-ES")}</div>
+              <div className="final">{endScore.toLocaleString("es-ES")}</div>
               {!saved ? (
                 <>
                   <div className="input-row">
