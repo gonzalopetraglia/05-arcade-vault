@@ -18,6 +18,7 @@ Built with Spec Driven Design using the `/spec` and `/spec-impl` skills from [Kl
 - **Tailwind v4, CSS-first config.** No `tailwind.config.*`. Theme tokens live in `@theme inline` inside `app/globals.css`; PostCSS wiring is `@tailwindcss/postcss` only. Most of the arcade look is hand-written CSS in `globals.css` (`.av-detail`, `.cover-bg`, `.game-arena`…), not utility classes — extend that sheet rather than re-styling with utilities.
 - **ESLint flat config** composing `eslint-config-next/core-web-vitals` + `/typescript`, plus `eslint-config-prettier`. Prettier is the formatter (`npm run format`).
 - `@/*` maps to the repo root.
+- **React Compiler is on** (`reactCompiler: true` in `next.config.ts`, `babel-plugin-react-compiler` devDependency, stable Babel path — not `turbopackRustReactCompiler`). Keep hand-written `memo`/stable callbacks anyway: the Compiler silently skips what it can't compile. Opt a component out with `"use no memo"`.
 
 ## Architecture
 
@@ -49,6 +50,7 @@ Built with Spec Driven Design using the `/spec` and `/spec-impl` skills from [Kl
 - Per game, two client components in `components/games/`: `<name>-canvas.tsx` (canvas + input) and `<name>-player.tsx` (state, wiring).
 - `components/player-shell.tsx` is the shared frame: HUD, CRT border, pause/end/restart buttons and the save-score modal. It never computes score or level — the game passes them in.
 - Binary assets live in `public/games/<id>/`; the untouched originals stay in `references/`.
+- Performance: `references/performance-checklist.md` holds the rules each game follows (state only if painted, HUD via `hudRef`, stable props, dpr cap, cached background, glow in sprites, allocation-free loop) and how to measure with `?perf=1` (`lib/perf.ts`); `references/games-performance.md` logs the before/after numbers per game. CROAC is done; the other games still pass `score`/`lives`/`level` as props.
 - `lib/games.ts` is the seeded catalog (`Game`, `GAMES`, `CATS`, `getGame`, `formatScore`) plus `IMPLEMENTED_GAME_IDS`, `isImplemented` and `visibleGames`. `GAMES` is not what pages render — they go through `lib/catalog.ts`. `Game` has no `best`/`plays` — those come from the API.
 - `references/implemented-games.md` lists which games are actually playable — id, title, category, color, tagline. It is the single source of truth for that list: add a row there when a new game ships, and never copy the list back into this file. `IMPLEMENTED_GAME_IDS` is its code mirror and must hold the same ids. Every other id in `GAMES` is still a mock catalog entry with no engine.
 
