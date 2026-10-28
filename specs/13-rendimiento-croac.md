@@ -148,7 +148,7 @@ export function buildBackground(
 ## Plan de implementación
 
 1. **Instrumento.** Crear `lib/perf.ts` (`perfEnabled`, muestreo de frames, `window.__avPerf` con `reset()`). Envolver en `PlayerShell` el shell, la pantalla y el mando con `<Profiler>` solo si `perfEnabled()`. Comprobar: `/jugar/croac?perf=1` en dev rellena `window.__avPerf`; sin `?perf=1` no existe.
-2. **Baseline.** Con el MCP de Playwright, en `npm run dev`: viewport 390×844, touch emulado por CDP, `Emulation.setCPUThrottlingRate` 4, skin NEON, tema oscuro. Tocar para empezar, `reset()`, 20 s de juego con saltos hacia arriba cada 400 ms. Leer `window.__avPerf`. Repetir con 1280×800 sin throttling. Anotar renders por id, p50, p95 y % de frames > 33 ms en `references/games-performance.md` como fila "antes".
+2. **Baseline.** Con el MCP de Playwright, en `npm run dev`: viewport 390×844, touch emulado por CDP, `Emulation.setCPUThrottlingRate` 4, skin NEON, tema oscuro. Tocar para empezar, `reset()`, 20 s de juego con saltos hacia arriba cada 400 ms; si aparece el modal de fin de partida, pulsar JUGAR DE NUEVO y seguir (saltando a ciegas la partida acaba a los ~3,5 s, y sin reiniciar se mediría el modal con el motor parado). Contar los fines de partida. Leer `window.__avPerf`. Repetir con 1280×800 sin throttling. Anotar renders por id, p50, p95 y % de frames > 33 ms en `references/games-performance.md` como fila "antes".
 3. **React Compiler.** `npm install -D babel-plugin-react-compiler` y `reactCompiler: true` en `next.config.ts`. `npm run build` pasa. Repetir la medición del paso 2 y anotarla como "con Compiler".
 4. **`HudStats` y `hudRef` en `PlayerShell`.** Extraer `HudStats` memo con estado propio, alimentado por `hudRef` o, si falta, por las props `score`/`lives`/`level`. Añadir `finalScore`. Comprobar que los otros 4 juegos se ven y puntúan igual sin tocarlos.
 5. **Efectos estables en `PlayerShell`.** Los efectos de "esperar primer toque" y "giro de pantalla" leen `onTogglePause` por ref (como `cbs` en `CroacCanvas`), no como dependencia. El comportamiento táctil de SPEC 10 no cambia.
@@ -175,7 +175,7 @@ export function buildBackground(
 - [ ] p95 de frame time ≤ 20 ms.
 - [ ] Frames > 33 ms < 2 %.
 - [ ] p95 "después" no es peor que p95 "antes".
-- [ ] Durante los 20 s, `renders.shell`, `renders.screen` y `renders.gamepad` valen 0 (tras el `reset()` posterior al primer toque).
+- [ ] Durante los 20 s, `renders.shell`, `renders.screen` y `renders.gamepad` valen como mucho 2 × número de fines de partida (abrir y cerrar el modal; tras el `reset()` posterior al primer toque). Ningún render por puntuación, vidas o nivel.
 - [ ] `renders.hud` es > 0 y ≤ número de cambios de puntuación, vidas o nivel en esos 20 s.
 
 **Código:**
