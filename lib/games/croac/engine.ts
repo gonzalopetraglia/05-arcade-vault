@@ -13,8 +13,14 @@
 import {
   CELL,
   COLORS,
+  GOAL_COLS,
   HOP_MS,
   LIVES,
+  POINTS_GOAL,
+  POINTS_ROW,
+  ROW_GOALS,
+  ROW_ROAD_BOT,
+  ROW_ROAD_TOP,
   ROW_RIVER_BOT,
   ROW_RIVER_TOP,
   ROW_START,
@@ -25,7 +31,16 @@ import {
   type Dir,
   type Frog,
 } from "./entities";
-import { LANES, buildLane, drawLane, stepLane, type Piece } from "./lanes";
+import {
+  LANES,
+  buildLane,
+  drawLane,
+  isSunk,
+  speedFor,
+  stepLane,
+  type LaneDef,
+  type Piece,
+} from "./lanes";
 
 export type CroacState = {
   score: number;
@@ -40,6 +55,7 @@ type EngineOptions = {
 };
 
 const MAX_DT = 0.1; // s; techo del delta entre frames
+const HIT_INSET = 8; // px que se recorta la caja de la rana por lado contra el tráfico
 
 // WASD como alias de las flechas; el mando táctil manda los códigos de flecha.
 const DIR_BY_KEY: Record<string, Dir | undefined> = {
@@ -224,6 +240,8 @@ export class CroacEngine {
       hop.t += (dt * 1000) / HOP_MS;
       if (hop.t >= 1) this.land();
     }
+    // Quieta también se resuelve: un coche puede atropellarla y el río la arrastra.
+    if (this.state === "playing" && !this.frog.hop) this.checkGround(dt);
   }
 
   /**
@@ -259,9 +277,81 @@ export class CroacEngine {
     frog.row = hop.to.row;
     frog.hop = null;
 
+    // Volver atrás y avanzar otra vez no puntúa dos veces.
+    if (frog.row < frog.bestRow) {
+      this.score += POINTS_ROW;
+      frog.bestRow = frog.row;
+    }
+
+    if (frog.row === ROW_GOALS) {
+      this.reachGoal();
+      return;
+    }
+    this.checkGround(0);
+
+    // Una rana muerta al aterrizar no encadena el salto guardado.
     const next = this.queued;
     this.queued = null;
-    if (next) this.startHop(next);
+    if (next && this.state === "playing") this.startHop(next);
+  }
+
+  /**
+   * Fila 0: vale el nenúfar cuyo centro dista menos de media celda del centro
+   * de la rana. Libre, se ocupa y la rana vuelve a la salida; ocupado o fuera
+   * de un nenúfar, muere.
+   */
+  private reachGoal(): void {
+    const cx = this.frog.x + CELL / 2;
+    const i = GOAL_COLS.findIndex((col) => Math.abs(col * CELL + CELL / 2 - cx) < CELL / 2);
+    if (i === -1 || this.occupied[i]) {
+      this.die();
+      return;
+    }
+    this.occupied[i] = true;
+    this.score += POINTS_GOAL;
+    this.frog = spawnFrog();
+    this.queued = null;
+  }
+
+  /**
+   * Reglas con la rana en el suelo. Carretera: muere si su caja, recortada
+   * HIT_INSET por lado, toca un vehículo. Río: la sostiene la pieza que
+   * contiene su centro y la arrastra a su velocidad; sin pieza, con una hoja
+   * hundida o arrastrada fuera de la pantalla, muere.
+   */
+  private checkGround(dt: number): void {
+    const { frog } = this;
+    const lane = this.laneAt(frog.row);
+    if (!lane) return;
+    const { def, pieces } = lane;
+
+    if (frog.row >= ROW_ROAD_TOP && frog.row <= ROW_ROAD_BOT) {
+      const left = frog.x + HIT_INSET;
+      const right = frog.x + CELL - HIT_INSET;
+      if (pieces.some((p) => p.x < right && p.x + p.len * CELL > left)) this.die();
+      return;
+    }
+
+    if (isRiver(frog.row)) {
+      const cx = frog.x + CELL / 2;
+      const under = pieces.find((p) => cx >= p.x && cx < p.x + p.len * CELL);
+      if (!under || isSunk(under, this.time)) {
+        this.die();
+        return;
+      }
+      frog.x += def.dir * speedFor(def, this.level) * dt;
+      const ncx = frog.x + CELL / 2;
+      if (ncx < 0 || ncx > W) this.die();
+    }
+  }
+
+  private laneAt(row: number): { def: LaneDef; pieces: Piece[] } | null {
+    const i = LANES.findIndex((def) => def.row === row);
+    return i === -1 ? null : { def: LANES[i], pieces: this.lanes[i] };
+  }
+
+  private die(): void {
+    this.state = "dead";
   }
 
   // ── Draw ────────────────────────────────────────────────────────────────────
