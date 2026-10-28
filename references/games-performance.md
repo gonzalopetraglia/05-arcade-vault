@@ -31,6 +31,8 @@ Con el MCP de Playwright, contra `npm run dev`, en `/jugar/<id>?perf=1` (instrum
 | antes | escritorio | 42 | 42 | 42 | — | 9.2 | 17.0 | 0 % | 5 | 31 | 2026-10-28 |
 | con Compiler | móvil | 31 | 0 | 0 | — | 8.4 | 16.8 | 0 % | 5 | 31 | 2026-10-28 |
 | con Compiler | escritorio | 31 | 0 | 0 | — | 8.4 | 16.8 | 0 % | 5 | 31 | 2026-10-28 |
+| después | móvil | 10 | 0 | 0 | 31 | 8.5 | 17.1 | 0 % | 5 | 31 | 2026-10-28 |
+| después | escritorio | 10 | 0 | 0 | 31 | 8.4 | 17.3 | 0 % | 5 | 31 | 2026-10-28 |
 
 Notas:
 
@@ -46,3 +48,14 @@ Notas:
   de frame no cambian. La fila "antes" de escritorio se midió con la pestaña
   vieja esperando en TOCA PARA EMPEZAR, no en `about:blank`; su p50 de 9.2 puede deberse
   a eso.
+- **después:** `shell` = 2 × fines (abrir y cerrar el modal) y `hud` = Δ HUD: un punto
+  solo re-renderiza `HudStats`. `screen` y `gamepad` siguen en 0. El búfer en móvil
+  baja de 2400 a 1600 px de ancho (dpr topado a 2), el fondo es una capa cacheada y el
+  glow NEON sale de sprites, sin `shadowBlur` por frame. Alocaciones del bucle con la
+  rana quieta (muestreo de heap por CDP, incluyendo lo recolectado, 5 s): 3068 KB con
+  los sprites y sin el paso 10, 539 KB después (−82 %); el resto es V8 empaquetando los
+  doubles que se pasan a `drawImage`/`arc` (ver la checklist).
+- Los tiempos de frame no se mueven en ninguna fase: en este equipo el p50 es el
+  intervalo de refresco de la pantalla (120 Hz, 8,3 ms) incluso con CPU 4×, así que el
+  frame time no puede reflejar el ahorro. Las cifras que sí cambian son los renders, el
+  tamaño del búfer y las alocaciones. Falta una pasada en un móvil real.
