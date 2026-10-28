@@ -1,6 +1,6 @@
 # SPEC 12 — CROAC, el quinto juego real
 
-> **Estado:** Aprobado
+> **Estado:** Implementado
 > **Depende de:** SPEC 01, SPEC 05, SPEC 06, SPEC 09, SPEC 10
 > **Fecha:** 2026-10-28
 > **Objetivo:** Diseñar desde cero CROAC, un juego de cruzar carriles (carretera y río) en TypeScript sobre la API de motor del Vault, jugable en `/jugar/croac` con teclado y con el mando táctil común, con su entrada propia de catálogo, su migración de seed y su puntuación guardada por el flujo que ya existe.
@@ -248,37 +248,37 @@ export class CroacEngine {
 
 **Del juego:**
 
-- [ ] La rana empieza en la fila de salida, columna 7, y no se mueve sola.
-- [ ] Cada pulsación de flecha hace exactamente un salto de una celda en 120 ms; mantener la tecla pulsada no encadena saltos.
-- [ ] La rana no puede salir por los laterales ni bajar de la fila de salida.
-- [ ] Coches, camiones, troncos y hojas se mueven en bucle por sus carriles y reaparecen por el lado contrario sin perder los huecos.
-- [ ] Un vehículo que toca a la rana la mata, también si la rana está quieta.
-- [ ] En el río, la rana sobre un tronco u hoja a flote se desplaza con él; en el agua muere.
-- [ ] Las hojas avisan antes de hundirse, y si se hunden con la rana encima, la rana muere.
-- [ ] Si el río arrastra a la rana fuera de la pantalla, muere.
-- [ ] Llegar a un nenúfar libre suma 100 puntos, lo marca ocupado y devuelve la rana a la salida; un nenúfar ocupado o la orilla entre nenúfares la matan.
-- [ ] Cada fila nueva alcanzada en un intento suma 10 puntos una sola vez.
-- [ ] Al llenar los cinco nenúfares se suman 500 puntos, sube el nivel, los nenúfares se vacían y el tráfico va un 15 % más rápido (hasta el doble como máximo).
-- [ ] Al morir se pierde una vida, la puntuación y los nenúfares ocupados se conservan y la rana vuelve a la salida tras ~1 segundo.
-- [ ] Con 0 vidas se abre el modal de fin de partida con la puntuación acumulada.
-- [ ] El canvas no pinta texto, marcadores, vidas ni carteles: `grep -n "fillText" lib/games/croac` no devuelve nada.
+- [x] La rana empieza en la fila de salida, columna 7, y no se mueve sola.
+- [x] Cada pulsación de flecha hace exactamente un salto de una celda en 120 ms; mantener la tecla pulsada no encadena saltos.
+- [x] La rana no puede salir por los laterales ni bajar de la fila de salida.
+- [x] Coches, camiones, troncos y hojas se mueven en bucle por sus carriles y reaparecen por el lado contrario sin perder los huecos.
+- [x] Un vehículo que toca a la rana la mata, también si la rana está quieta.
+- [x] En el río, la rana sobre un tronco u hoja a flote se desplaza con él; en el agua muere.
+- [x] Las hojas avisan antes de hundirse, y si se hunden con la rana encima, la rana muere.
+- [x] Si el río arrastra a la rana fuera de la pantalla, muere.
+- [x] Llegar a un nenúfar libre suma 100 puntos, lo marca ocupado y devuelve la rana a la salida; un nenúfar ocupado o la orilla entre nenúfares la matan.
+- [x] Cada fila nueva alcanzada en un intento suma 10 puntos una sola vez.
+- [x] Al llenar los cinco nenúfares se suman 500 puntos, sube el nivel, los nenúfares se vacían y el tráfico va un 15 % más rápido (hasta el doble como máximo).
+- [x] Al morir se pierde una vida, la puntuación y los nenúfares ocupados se conservan y la rana vuelve a la salida tras ~1 segundo.
+- [x] Con 0 vidas se abre el modal de fin de partida con la puntuación acumulada.
+- [x] El canvas no pinta texto, marcadores, vidas ni carteles: `grep -n "fillText" lib/games/croac` no devuelve nada.
 
 **De la plataforma:**
 
-- [ ] `npm run lint` y `npm run build` terminan sin errores ni advertencias de hidratación.
-- [ ] `/games` muestra CROAC con la portada `cover-rana` y color `green`; `/games/croac` muestra su leaderboard.
-- [ ] `/jugar/croac` carga el juego real; no existe ninguna ruta nueva bajo `app/`.
-- [ ] `grep -rn "getElementById" lib components` no devuelve resultados: el canvas llega por `ref`.
-- [ ] El HUD de `PlayerShell` y lo que ocurre en el canvas coinciden en todo momento.
-- [ ] PAUSA congela el juego entero y REANUDAR no mata a la rana por el salto de tiempo; FIN abre el modal con la puntuación acumulada; JUGAR DE NUEVO reinicia al estado inicial.
-- [ ] Salir de `/jugar/croac` no deja ningún `requestAnimationFrame` corriendo; volver a entrar no acelera el juego.
-- [ ] En un dispositivo táctil aparece el mando común; la cruceta mueve la rana igual que las flechas y el juego espera al primer toque.
-- [ ] Guardar en el modal hace `POST /api/scores` y la partida aparece en `/games/croac` y en `/salon`; si el `POST` falla, el modal muestra un error y no finge que se guardó.
-- [ ] Ningún archivo del juego importa `lib/supabase/*`.
-- [ ] `curl localhost:3000/api/games` devuelve `croac` con `best` y `plays` numéricos.
-- [ ] `curl "localhost:3000/api/scores?game=croac"` devuelve la partida guardada.
-- [ ] Reejecutar `0006_seed_croac.sql` no duplica ninguna fila.
-- [ ] `/jugar/asteroides`, `/jugar/tetris`, `/jugar/arkanoid`, `/jugar/snake` y `/jugar/ranaria` siguen funcionando igual que antes.
+- [x] `npm run lint` y `npm run build` terminan sin errores ni advertencias de hidratación.
+- [x] `/games` muestra CROAC con la portada `cover-rana` y color `green`; `/games/croac` muestra su leaderboard.
+- [x] `/jugar/croac` carga el juego real; no existe ninguna ruta nueva bajo `app/`.
+- [x] `grep -rn "getElementById" lib components` no devuelve resultados: el canvas llega por `ref`.
+- [x] El HUD de `PlayerShell` y lo que ocurre en el canvas coinciden en todo momento.
+- [x] PAUSA congela el juego entero y REANUDAR no mata a la rana por el salto de tiempo; FIN abre el modal con la puntuación acumulada; JUGAR DE NUEVO reinicia al estado inicial.
+- [x] Salir de `/jugar/croac` no deja ningún `requestAnimationFrame` corriendo; volver a entrar no acelera el juego.
+- [x] En un dispositivo táctil aparece el mando común; la cruceta mueve la rana igual que las flechas y el juego espera al primer toque.
+- [x] Guardar en el modal hace `POST /api/scores` y la partida aparece en `/games/croac` y en `/salon`; si el `POST` falla, el modal muestra un error y no finge que se guardó.
+- [x] Ningún archivo del juego importa `lib/supabase/*`.
+- [x] `curl localhost:3000/api/games` devuelve `croac` con `best` y `plays` numéricos.
+- [x] `curl "localhost:3000/api/scores?game=croac"` devuelve la partida guardada.
+- [x] Reejecutar `0006_seed_croac.sql` no duplica ninguna fila.
+- [x] `/jugar/asteroides`, `/jugar/tetris`, `/jugar/arkanoid`, `/jugar/snake` y `/jugar/ranaria` siguen funcionando igual que antes.
 
 ---
 
