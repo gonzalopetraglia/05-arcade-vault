@@ -13,7 +13,8 @@ Con el MCP de Playwright, contra `npm run dev`, en `/jugar/<id>?perf=1` (instrum
   (`Emulation.setTouchEmulationEnabled`), `Emulation.setCPUThrottlingRate` 4. Tocar para
   empezar, `window.__avPerf.reset()`, 20 s de juego.
 - **Escritorio:** 1280×800 en una pestaña nueva (la emulación táctil de otra sesión CDP
-  sobrevive al `clearDeviceMetricsOverride`), sin throttling, mismo guion.
+  sobrevive al `clearDeviceMetricsOverride`) y con la pestaña vieja en `about:blank` (si
+  sigue corriendo un juego compite por la GPU), sin throttling, mismo guion.
 - **Guion de juego:** salto hacia arriba cada 400 ms (botón ▲ del mando en móvil,
   `ArrowUp` en escritorio). Si aparece el modal de fin de partida, JUGAR DE NUEVO y seguir.
 - Tres ejecuciones; se anota la mediana. `p50`/`p95` son de la duración de frame en ms;
@@ -28,11 +29,20 @@ Con el MCP de Playwright, contra `npm run dev`, en `/jugar/<id>?perf=1` (instrum
 |------|---------|-------|--------|---------|-----|-----|-----|--------|-------|-------|-------|
 | antes | móvil | 42 | 42 | 42 | — | 8.4 | 16.8 | 0 % | 5 | 31 | 2026-10-28 |
 | antes | escritorio | 42 | 42 | 42 | — | 9.2 | 17.0 | 0 % | 5 | 31 | 2026-10-28 |
+| con Compiler | móvil | 31 | 0 | 0 | — | 8.4 | 16.8 | 0 % | 5 | 31 | 2026-10-28 |
+| con Compiler | escritorio | 31 | 0 | 0 | — | 8.4 | 16.8 | 0 % | 5 | 31 | 2026-10-28 |
 
 Notas:
 
-- **antes:** cada cambio de HUD y cada apertura o cierre del modal re-renderiza el shell,
-  la pantalla y el mando (42 ≈ 31 + 2 × 5). El búfer del canvas
-  en móvil es 2400 px de ancho (dpr 3, sin tope). En este equipo el CPU 4× no produce
+- **antes:** cada cambio de HUD re-renderiza el shell, la pantalla y el mando, y hay 11
+  commits más (42 frente a 31 cambios de HUD) que el Compiler elimina. El búfer del
+  canvas en móvil es 2400 px de ancho (dpr 3, sin tope). En este equipo el CPU 4× no produce
   frames > 33 ms: la máquina de medición es mucho más rápida que un móvil real, así que
   las cifras sirven para comparar fases, no como valor absoluto del móvil.
+- **con Compiler:** `screen` y `gamepad` bajan a 0: el Compiler memoiza el JSX del canvas
+  y del mando, y sus props ya no cambian de identidad. `shell` queda en 31, igual que
+  Δ HUD: el HUD aún vive en el shell. Abrir y cerrar el modal no suma aparte porque cae
+  en el mismo commit que un cambio de HUD (vidas a 0, reinicio a 0 puntos). Los tiempos
+  de frame no cambian. La fila "antes" de escritorio se midió con la pestaña
+  vieja esperando en TOCA PARA EMPEZAR, no en `about:blank`; su p50 de 9.2 puede deberse
+  a eso.
