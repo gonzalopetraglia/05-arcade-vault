@@ -209,14 +209,22 @@ export function PlayerShell({
     return () => root.classList.remove("av-touch-lock");
   }, [touch]);
 
+  // Por ref, como los callbacks de los canvas: un player que aún no lo tenga
+  // estable lo cambia de identidad al pausar, y los efectos de abajo se
+  // desuscribirían y volverían a suscribir por eso.
+  const togglePauseRef = useRef(onTogglePause);
+  useEffect(() => {
+    togglePauseRef.current = onTogglePause;
+  });
+
   // En móvil el juego arrancaría mientras el jugador aún hace scroll o mira
   // el mando: hasta el primer toque el motor se pausa, sin tocar su `start()`.
   // Sin ref de "ya pausado": el doble montaje de desarrollo crea un segundo
   // motor que también hay que pausar, y la condición basta para no repetir
   // (en cuanto `paused` es true, o el jugador ya tocó, no hace nada).
   useEffect(() => {
-    if (touch && !started && !paused) onTogglePause();
-  }, [touch, started, paused, onTogglePause]);
+    if (touch && !started && !paused) togglePauseRef.current();
+  }, [touch, started, paused]);
 
   const start = () => {
     setStarted(true);
@@ -231,11 +239,11 @@ export function PlayerShell({
     if (!touch) return;
     const mql = window.matchMedia("(orientation: portrait)");
     const onRotate = () => {
-      if (!paused && !over && started) onTogglePause();
+      if (!paused && !over && started) togglePauseRef.current();
     };
     mql.addEventListener("change", onRotate);
     return () => mql.removeEventListener("change", onRotate);
-  }, [touch, paused, over, started, onTogglePause]);
+  }, [touch, paused, over, started]);
 
   // El estado sale del evento y no del clic: el jugador también sale de
   // pantalla completa con el gesto o el botón atrás del sistema.
