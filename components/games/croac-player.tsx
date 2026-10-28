@@ -1,11 +1,13 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { CroacCanvas } from "@/components/games/croac-canvas";
 import { PlayerShell } from "@/components/player-shell";
 import type { CroacEngine, CroacState } from "@/lib/games/croac/engine";
 import { LIVES } from "@/lib/games/croac/entities";
+import { SKINS } from "@/lib/games/croac/skins";
 import type { Game } from "@/lib/games";
+import { useSkin } from "@/lib/use-skin";
 
 const INITIAL: CroacState = { score: 0, lives: LIVES, level: 1, status: "playing" };
 
@@ -20,6 +22,14 @@ export function CroacPlayer({ game }: { game: Game }) {
   const [hud, setHud] = useState<CroacState>(INITIAL);
   const [paused, setPaused] = useState(false);
   const [over, setOver] = useState(false);
+  const { skin, setSkin, scheme } = useSkin(game.id);
+  const palette = SKINS[skin][scheme];
+
+  // Skin o tema del sitio cambian en caliente: el motor solo cambia de
+  // colores, sin reiniciar la partida ni tocar puntuación, vidas o nivel.
+  useEffect(() => {
+    engineRef.current?.setPalette(palette);
+  }, [palette]);
 
   const onEngineReady = useCallback((engine: CroacEngine | null) => {
     engineRef.current = engine;
@@ -66,12 +76,15 @@ export function CroacPlayer({ game }: { game: Game }) {
       onEnd={onEnd}
       onRestart={onRestart}
       gamepad={{ setKey }}
+      skin={skin}
+      onSkinChange={setSkin}
     >
       <CroacCanvas
         onState={onState}
         onGameOver={onGameOver}
         onEngineReady={onEngineReady}
         onAutoPause={onAutoPause}
+        palette={palette}
       />
     </PlayerShell>
   );

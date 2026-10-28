@@ -13,3 +13,4 @@ El agente solo añade o actualiza la fila del juego que se le pidió en esa invo
 | `tetris` | TETRIS | ◀ ▶ mover, ▼ bajar, ▲ rotar | CAÍDA | ROTAR | intacto | Playwright 390×844 · 844×390 + Android | 2026-10-04 | Portado en la SPEC 10. Sin skins: el menú de pausa no muestra selector. |
 | `arkanoid` | ARKANOID | ◀ ▶ mover | — | — | `held` | Playwright 390×844 · 844×390 + Android | 2026-10-04 | Portado en la SPEC 10. |
 | `snake` | SNAKE | las cuatro, girar | — | — | `held` | Playwright 390×844 · 844×390 + Android | 2026-10-04 | Portado en la SPEC 10. |
+| `croac` | CROAC | las cuatro, saltar una casilla | — | — | `held` | Playwright 390×844 · 844×390 · 1280×800 | 2026-10-28 | A/B sin uso (el motor solo lee flechas/WASD). Falta prueba en móvil real. |

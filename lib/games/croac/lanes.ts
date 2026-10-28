@@ -7,8 +7,8 @@
  * que sale por un lado reaparece por el otro sin que los huecos cambien nunca.
  */
 
-import type { CroacColors } from "./entities";
-import { CELL, SPEED_MAX, SPEED_STEP, W } from "./entities";
+import { CELL, SPEED_MAX, SPEED_STEP, W, setGlow } from "./entities";
+import type { CroacPalette } from "./skins";
 
 type LaneKind = "road" | "river";
 type PieceKind = "car" | "truck" | "log" | "leaf";
@@ -124,7 +124,7 @@ export function drawLane(
   ctx: CanvasRenderingContext2D,
   pieces: Piece[],
   def: LaneDef,
-  colors: CroacColors,
+  colors: CroacPalette,
   t: number,
 ): void {
   const y = def.row * CELL;
@@ -154,16 +154,18 @@ function drawCar(
   y: number,
   dir: 1 | -1,
   body: string,
-  colors: CroacColors,
+  colors: CroacPalette,
 ): void {
   const w = p.len * CELL - PAD * 2;
   const h = CELL - PAD * 2 - 4;
   const x = p.x + PAD;
   const top = y + PAD + 2;
   ctx.fillStyle = body;
+  setGlow(ctx, body, colors.glowBlur);
   ctx.beginPath();
   ctx.roundRect(x, top, w, h, 8);
   ctx.fill();
+  setGlow(ctx, body, 0);
   // Ventanilla hacia el sentido de la marcha.
   const ww = w * 0.3;
   const wx = dir === 1 ? x + w - ww - 6 : x + 6;
@@ -178,7 +180,7 @@ function drawTruck(
   p: Piece,
   y: number,
   dir: 1 | -1,
-  colors: CroacColors,
+  colors: CroacPalette,
 ): void {
   const w = p.len * CELL - PAD * 2;
   const h = CELL - PAD * 2;
@@ -189,27 +191,31 @@ function drawTruck(
   const cabX = dir === 1 ? x + w - cab : x;
   const trailerX = dir === 1 ? x : x + cab + 3;
   ctx.fillStyle = colors.truck;
+  setGlow(ctx, colors.truck, colors.glowBlur);
   ctx.beginPath();
   ctx.roundRect(trailerX, top, w - cab - 3, h, 4);
   ctx.fill();
   ctx.beginPath();
   ctx.roundRect(cabX, top + 3, cab, h - 6, 6);
   ctx.fill();
+  setGlow(ctx, colors.truck, 0);
   ctx.fillStyle = colors.window;
   ctx.beginPath();
   ctx.roundRect(dir === 1 ? cabX + cab - 12 : cabX + 4, top + 9, 8, h - 18, 2);
   ctx.fill();
 }
 
-function drawLog(ctx: CanvasRenderingContext2D, p: Piece, y: number, colors: CroacColors): void {
+function drawLog(ctx: CanvasRenderingContext2D, p: Piece, y: number, colors: CroacPalette): void {
   const w = p.len * CELL - 4;
   const h = CELL - PAD * 2;
   const x = p.x + 2;
   const top = y + PAD;
   ctx.fillStyle = colors.log;
+  setGlow(ctx, colors.log, colors.glowBlur);
   ctx.beginPath();
   ctx.roundRect(x, top, w, h, h / 2);
   ctx.fill();
+  setGlow(ctx, colors.log, 0);
   // Vetas: dos líneas largas y un nudo por celda.
   ctx.strokeStyle = colors.logGrain;
   ctx.lineWidth = 2;
@@ -231,7 +237,7 @@ function drawLeaves(
   p: Piece,
   y: number,
   state: LeafState,
-  colors: CroacColors,
+  colors: CroacPalette,
 ): void {
   const r = CELL / 2 - PAD;
   const cy = y + CELL / 2;
@@ -247,8 +253,11 @@ function drawLeaves(
       ctx.lineWidth = 2;
       ctx.stroke();
     } else {
-      ctx.fillStyle = state === "warn" ? colors.leafWarn : colors.leaf;
+      const fill = state === "warn" ? colors.leafWarn : colors.leaf;
+      ctx.fillStyle = fill;
+      setGlow(ctx, fill, colors.glowBlur);
       ctx.fill();
+      setGlow(ctx, fill, 0);
     }
   }
 }

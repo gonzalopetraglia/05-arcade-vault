@@ -6,6 +6,8 @@
  * píxeles porque el río la arrastra; `row` siempre es una fila entera.
  */
 
+import type { CroacPalette } from "./skins";
+
 // ── Constantes del mundo ──────────────────────────────────────────────────────
 export const CELL = 50; // píxeles por celda
 export const COLS = 16;
@@ -36,58 +38,9 @@ export const SPEED_STEP = 0.15; // +15 % de velocidad por nivel
 export const SPEED_MAX = 2; // tope: el doble de la velocidad base
 
 // ── Colores ───────────────────────────────────────────────────────────────────
-// Todos los colores del juego viven aquí y se pasan por parámetro a cada
-// función de dibujo: así skin-designer los convierte en paleta sin buscar
-// literales por el motor.
-export type CroacColors = {
-  water: string;
-  waterDeep: string; // fila de los nenúfares
-  ripple: string;
-  asphalt: string;
-  laneMark: string;
-  grass: string;
-  grassEdge: string;
-  car: string;
-  carAlt: string;
-  truck: string;
-  window: string;
-  log: string;
-  logGrain: string;
-  leaf: string;
-  leafWarn: string; // aviso antes de hundirse
-  leafSunk: string; // contorno tenue de la hoja hundida
-  lily: string;
-  frog: string;
-  frogBelly: string;
-  frogEye: string;
-  frogPupil: string;
-  frogDead: string;
-};
-
-export const COLORS: CroacColors = {
-  water: "#0b3a66",
-  waterDeep: "#06243f",
-  ripple: "#1d5a8f",
-  asphalt: "#1c1c24",
-  laneMark: "#c9c9d6",
-  grass: "#1f6b2a",
-  grassEdge: "#2f8f3c",
-  car: "#ff3b6b",
-  carAlt: "#ffd23f",
-  truck: "#ff8a1f",
-  window: "#9fe3ff",
-  log: "#7a4a24",
-  logGrain: "#5a3418",
-  leaf: "#37c45a",
-  leafWarn: "#a6f0b8",
-  leafSunk: "#2a6f88",
-  lily: "#2fae4a",
-  frog: "#7cff4f",
-  frogBelly: "#c8ff9e",
-  frogEye: "#ffffff",
-  frogPupil: "#0a0a0a",
-  frogDead: "#6b7a5c",
-};
+// Ningún color vive aquí: cada función de dibujo recibe la paleta de la skin
+// activa (lib/games/croac/skins.ts) por parámetro, y así cambiar de skin no
+// toca el estado de la partida.
 
 // ── Rana ──────────────────────────────────────────────────────────────────────
 export type Dir = "up" | "down" | "left" | "right";
@@ -118,6 +71,16 @@ export function frogPos(frog: Frog): { x: number; y: number } {
 }
 
 // ── Dibujo ────────────────────────────────────────────────────────────────────
+/**
+ * Halo de la skin NEON. Se enciende antes de cada relleno que debe brillar y se
+ * apaga justo después: `shadowBlur` es estado del contexto y, olvidado puesto,
+ * haría brillar también el fondo del frame siguiente (y costaría rendimiento).
+ */
+export function setGlow(ctx: CanvasRenderingContext2D, color: string, blur: number): void {
+  ctx.shadowBlur = blur;
+  ctx.shadowColor = blur > 0 ? color : "transparent";
+}
+
 const HOP_SCALE = 0.12; // cuánto crece la rana en el punto alto del salto
 
 /**
@@ -128,7 +91,7 @@ const HOP_SCALE = 0.12; // cuánto crece la rana en el punto alto del salto
 export function drawWorld(
   ctx: CanvasRenderingContext2D,
   occupied: readonly boolean[],
-  colors: CroacColors,
+  colors: CroacPalette,
 ): void {
   ctx.fillStyle = colors.waterDeep;
   ctx.fillRect(0, ROW_GOALS * CELL, W, CELL);
@@ -172,18 +135,20 @@ export function drawWorld(
     const cx = col * CELL + CELL / 2;
     const cy = ROW_GOALS * CELL + CELL / 2;
     ctx.fillStyle = colors.lily;
+    setGlow(ctx, colors.lily, colors.glowBlur);
     ctx.beginPath();
     ctx.moveTo(cx, cy);
     ctx.arc(cx, cy, CELL / 2 - 3, 0.3, Math.PI * 2 - 0.3);
     ctx.closePath();
     ctx.fill();
+    setGlow(ctx, colors.lily, 0);
     if (occupied[i]) {
       drawFrog(ctx, { x: col * CELL, row: ROW_GOALS, hop: null, bestRow: ROW_GOALS }, colors);
     }
   });
 }
 
-function drawGrass(ctx: CanvasRenderingContext2D, row: number, colors: CroacColors): void {
+function drawGrass(ctx: CanvasRenderingContext2D, row: number, colors: CroacPalette): void {
   const y = row * CELL;
   ctx.fillStyle = colors.grass;
   ctx.fillRect(0, y, W, CELL);
@@ -196,7 +161,7 @@ function drawGrass(ctx: CanvasRenderingContext2D, row: number, colors: CroacColo
  * La rana: una elipse con vientre y dos ojos. En el aire se pinta un poco más
  * grande para que el salto se lea sin sombra ni sprite.
  */
-export function drawFrog(ctx: CanvasRenderingContext2D, frog: Frog, colors: CroacColors): void {
+export function drawFrog(ctx: CanvasRenderingContext2D, frog: Frog, colors: CroacPalette): void {
   const { x, y } = frogPos(frog);
   const cx = x + CELL / 2;
   const cy = y + CELL / 2;
@@ -207,9 +172,12 @@ export function drawFrog(ctx: CanvasRenderingContext2D, frog: Frog, colors: Croa
   const ry = CELL * 0.38 * s;
 
   ctx.fillStyle = colors.frog;
+  setGlow(ctx, colors.frog, colors.glowBlur);
   ctx.beginPath();
   ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2);
   ctx.fill();
+  // Solo el cuerpo brilla: con glow en vientre y ojos la cara se emborrona.
+  setGlow(ctx, colors.frog, 0);
 
   ctx.fillStyle = colors.frogBelly;
   ctx.beginPath();
@@ -239,7 +207,7 @@ export function drawDeadFrog(
   ctx: CanvasRenderingContext2D,
   frog: Frog,
   kind: DeathKind,
-  colors: CroacColors,
+  colors: CroacPalette,
 ): void {
   const { x, y } = frogPos(frog);
   const cx = x + CELL / 2;

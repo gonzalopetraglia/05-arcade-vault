@@ -12,7 +12,6 @@
 
 import {
   CELL,
-  COLORS,
   DEATH_PAUSE,
   GOAL_COLS,
   HOP_MS,
@@ -45,6 +44,7 @@ import {
   type LaneDef,
   type Piece,
 } from "./lanes";
+import { SKINS, type CroacPalette } from "./skins";
 
 export type CroacState = {
   score: number;
@@ -56,6 +56,8 @@ export type CroacState = {
 type EngineOptions = {
   onState: (s: CroacState) => void;
   onGameOver: (finalScore: number) => void;
+  /** Colores de la skin activa; sin ella, CLÁSICO oscuro (el aspecto original). */
+  palette?: CroacPalette;
 };
 
 const MAX_DT = 0.1; // s; techo del delta entre frames
@@ -104,6 +106,7 @@ export class CroacEngine {
    */
   private held = false;
   private lastEmitted: CroacState | null = null;
+  private palette: CroacPalette;
 
   constructor(canvas: HTMLCanvasElement, opts: EngineOptions) {
     const ctx = canvas.getContext("2d");
@@ -111,6 +114,7 @@ export class CroacEngine {
     this.ctx = ctx;
     this.onState = opts.onState;
     this.onGameOver = opts.onGameOver;
+    this.palette = opts.palette ?? SKINS.clasico.dark;
   }
 
   // ── API pública ─────────────────────────────────────────────────────────────
@@ -175,6 +179,19 @@ export class CroacEngine {
     // En el aire se guarda una sola pulsación; la última manda.
     if (this.frog.hop) this.queued = dir;
     else this.startHop(dir);
+  }
+
+  /**
+   * Cambia los colores en caliente. Solo toca la paleta: puntuación, vidas,
+   * nivel, rana y carriles siguen donde estaban. Con el bucle parado (pausa,
+   * muerte congelada fuera de foco o fin de partida) se pinta un frame a mano,
+   * porque si no el cambio no se vería hasta reanudar. Antes de start() aún no
+   * hay carriles que pintar.
+   */
+  setPalette(palette: CroacPalette): void {
+    this.palette = palette;
+    if (this.running || this.destroyed || this.lanes.length === 0) return;
+    this.draw();
   }
 
   destroy(): void {
@@ -417,12 +434,12 @@ export class CroacEngine {
   // ── Draw ────────────────────────────────────────────────────────────────────
 
   private draw(): void {
-    const { ctx } = this;
-    drawWorld(ctx, this.occupied, COLORS);
-    LANES.forEach((def, i) => drawLane(ctx, this.lanes[i], def, COLORS, this.time));
+    const { ctx, palette } = this;
+    drawWorld(ctx, this.occupied, palette);
+    LANES.forEach((def, i) => drawLane(ctx, this.lanes[i], def, palette, this.time));
     // Muerta, o recién acabada la partida por vidas, se pinta aplastada o hundida.
-    if (this.state === "playing") drawFrog(ctx, this.frog, COLORS);
-    else drawDeadFrog(ctx, this.frog, this.deathKind, COLORS);
+    if (this.state === "playing") drawFrog(ctx, this.frog, palette);
+    else drawDeadFrog(ctx, this.frog, this.deathKind, palette);
   }
 }
 

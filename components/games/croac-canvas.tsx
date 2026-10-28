@@ -2,7 +2,8 @@
 
 import { useEffect, useRef } from "react";
 import { CroacEngine, type CroacState } from "@/lib/games/croac/engine";
-import { COLORS, H, W } from "@/lib/games/croac/entities";
+import { H, W } from "@/lib/games/croac/entities";
+import type { CroacPalette } from "@/lib/games/croac/skins";
 
 /** Teclas de juego: se les corta el scroll de la página mientras se juega. */
 const GAME_KEYS = ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Space"];
@@ -14,9 +15,15 @@ type Props = {
   onEngineReady: (engine: CroacEngine | null) => void;
   /** El juego se ha pausado solo (pestaña oculta o ventana sin foco). */
   onAutoPause: () => void;
+  /**
+   * Paleta de la skin activa. Aquí solo se usa para crear el motor y para el
+   * fondo CSS previo al primer frame; los cambios posteriores los aplica el
+   * player con `engine.setPalette`, sin remontar el canvas.
+   */
+  palette: CroacPalette;
 };
 
-export function CroacCanvas({ onState, onGameOver, onEngineReady, onAutoPause }: Props) {
+export function CroacCanvas({ onState, onGameOver, onEngineReady, onAutoPause, palette }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   // El efecto se monta una sola vez; los callbacks van por ref para que cambiar
   // de identidad en el padre no reinicie la partida.
@@ -24,6 +31,9 @@ export function CroacCanvas({ onState, onGameOver, onEngineReady, onAutoPause }:
   useEffect(() => {
     cbs.current = { onState, onGameOver, onEngineReady, onAutoPause };
   });
+  // Por ref por el mismo motivo: el motor nace con la paleta del momento y no
+  // debe recrearse (perdiendo la partida) cuando cambia la skin.
+  const initialPalette = useRef(palette);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -39,6 +49,7 @@ export function CroacCanvas({ onState, onGameOver, onEngineReady, onAutoPause }:
     const engine = new CroacEngine(canvas, {
       onState: (s) => cbs.current.onState(s),
       onGameOver: (s) => cbs.current.onGameOver(s),
+      palette: initialPalette.current,
     });
 
     const onKeyDown = (e: KeyboardEvent) => {
@@ -90,7 +101,7 @@ export function CroacCanvas({ onState, onGameOver, onEngineReady, onAutoPause }:
           display: "block",
           width: "100%",
           aspectRatio: "4 / 3",
-          background: COLORS.waterDeep,
+          background: palette.waterDeep,
           touchAction: "none",
         }}
       />
