@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { GamePlayer } from "@/components/game-player";
 import { ArkanoidPlayer } from "@/components/games/arkanoid-player";
 import { AsteroidsPlayer } from "@/components/games/asteroids-player";
+import { CroacPlayer } from "@/components/games/croac-player";
 import { SnakePlayer } from "@/components/games/snake-player";
 import { TetrisPlayer } from "@/components/games/tetris-player";
 import { getCatalogGame } from "@/lib/catalog";
@@ -14,6 +15,7 @@ const PLAYERS: Record<ImplementedGameId, ComponentType<{ game: Game }>> = {
   tetris: TetrisPlayer,
   arkanoid: ArkanoidPlayer,
   snake: SnakePlayer,
+  croac: CroacPlayer,
 };
 
 export default async function PlayPage({ params }: PageProps<"/jugar/[id]">) {
