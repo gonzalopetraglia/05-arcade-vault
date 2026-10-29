@@ -5,6 +5,12 @@ import { CroacEngine, type CroacState } from "@/lib/games/croac/engine";
 import { H, W } from "@/lib/games/croac/entities";
 import type { CroacPalette } from "@/lib/games/croac/skins";
 
+/**
+ * Tope de densidad del búfer. A ojo no se distingue 2 de 3 en un canvas de
+ * 800×600 escalado, y con dpr 3 serían 2,25× más píxeles por frame.
+ */
+const MAX_DPR = 2;
+
 /** Teclas de juego: se les corta el scroll de la página mientras se juega. */
 const GAME_KEYS = ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Space"];
 
@@ -41,15 +47,18 @@ export function CroacCanvas({ onState, onGameOver, onEngineReady, onAutoPause, p
 
     // Búfer fijo de 800×600 multiplicado por la densidad de pantalla: sin esto
     // el dibujo se ve borroso en pantallas Retina.
-    const dpr = window.devicePixelRatio || 1;
+    const dpr = Math.min(window.devicePixelRatio || 1, MAX_DPR);
     canvas.width = W * dpr;
     canvas.height = H * dpr;
-    canvas.getContext("2d")?.scale(dpr, dpr);
+    // Opaco: el fondo del juego cubre siempre todo el canvas, y el navegador se
+    // ahorra componer transparencia. El motor recibe este mismo contexto.
+    canvas.getContext("2d", { alpha: false })?.scale(dpr, dpr);
 
     const engine = new CroacEngine(canvas, {
       onState: (s) => cbs.current.onState(s),
       onGameOver: (s) => cbs.current.onGameOver(s),
       palette: initialPalette.current,
+      dpr,
     });
 
     const onKeyDown = (e: KeyboardEvent) => {

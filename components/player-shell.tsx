@@ -1,20 +1,41 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import {
+  Profiler,
+  memo,
+  useEffect,
+  useImperativeHandle,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type ReactNode,
+  type RefObject,
+} from "react";
 import { useSession } from "@/components/session-provider";
 import { SkinSelector } from "@/components/skin-selector";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { TouchGamepad, type GamepadConfig } from "@/components/touch-gamepad";
 import type { Game } from "@/lib/games";
+import { onPerfRender, perfEnabled } from "@/lib/perf";
 import { useCoarsePointer } from "@/lib/use-coarse-pointer";
 import type { SkinId } from "@/lib/skins";
 
+export type HudValues = { score: number; lives: number; level: number };
+
+/** Lo que el player recibe en `hudRef.current` para empujar valores al HUD. */
+export type HudHandle = { set(v: HudValues): void };
+
 type Props = {
   game: Game;
-  score: number;
-  lives: number;
-  level: number;
+  /** Valores del HUD por props, para los juegos que aún no usan `hudRef`. */
+  score?: number;
+  lives?: number;
+  level?: number;
+  /** Si llega, el HUD se alimenta por aquí y se ignoran score/lives/level. */
+  hudRef?: RefObject<HudHandle | null>;
+  /** Puntuación del modal de fin de partida; si falta, se usa `score`. */
+  finalScore?: number;
   paused: boolean;
   over: boolean;
   onTogglePause: () => void;
@@ -34,6 +55,94 @@ type Props = {
 };
 
 /**
+ * <Profiler> de `lib/perf.ts`, solo en desarrollo con ?perf=1; si no, los hijos
+ * tal cual. Nunca anidar dos: el `onRender` de fuera también se dispararía con
+ * los renders de dentro, y "shell" contaría los del HUD.
+ */
+function Probe({ id, children }: { id: string; children: ReactNode }) {
+  if (!perfEnabled()) return children;
+  return (
+    <Profiler id={id} onRender={onPerfRender}>
+      {children}
+    </Profiler>
+  );
+}
+
+/**
+ * Reparto de `hudRef.set` entre las dos instancias de `HudStats` (cabecera y
+ * menú de pausa). Guarda el último valor: el menú de pausa se monta después y
+ * tiene que nacer con la partida tal como está.
+ */
+type HudHub = { last: HudValues; subs: Set<(v: HudValues) => void> };
+
+const HUD_START: HudValues = { score: 0, lives: 0, level: 1 };
+
+/**
+ * Puntuación, vidas y nivel, con estado propio: un punto re-renderiza solo
+ * esto, no el shell, el mando ni la pantalla del juego. Con `hub` escucha lo
+ * que el player empuja por `hudRef`; sin él, pinta las props tal cual.
+ */
+const HudStats = memo(function HudStats({
+  hub,
+  score,
+  lives,
+  level,
+  name,
+  className,
+}: {
+  hub?: HudHub;
+  score?: number;
+  lives?: number;
+  level?: number;
+  /** Solo la cabecera muestra al jugador; el menú de pausa no. */
+  name?: string;
+  /** La cabecera va sin clase, en fila; el menú de pausa trae la suya. */
+  className?: string;
+}) {
+  const [pushed, setPushed] = useState<HudValues>(() => hub?.last ?? HUD_START);
+
+  // Layout y no pasivo: el motor emite su primer estado en el efecto pasivo
+  // del canvas, y para entonces la suscripción ya tiene que existir.
+  useLayoutEffect(() => {
+    if (!hub) return;
+    hub.subs.add(setPushed);
+    return () => {
+      hub.subs.delete(setPushed);
+    };
+  }, [hub]);
+
+  const v = hub ? pushed : { score: score ?? 0, lives: lives ?? 0, level: level ?? 1 };
+
+  return (
+    <div
+      className={className}
+      style={className ? undefined : { display: "flex", gap: 24, flexWrap: "wrap" }}
+    >
+      {name !== undefined && (
+        <div className="hud-stat">
+          <div className="l">Jugador</div>
+          <div className="v" style={{ color: "var(--ink)" }}>
+            {name}
+          </div>
+        </div>
+      )}
+      <div className="hud-stat">
+        <div className="l">Puntuación</div>
+        <div className="v">{v.score.toLocaleString("es-ES")}</div>
+      </div>
+      <div className="hud-stat lives">
+        <div className="l">Vidas</div>
+        <div className="v">{"♥ ".repeat(v.lives).trim() || "—"}</div>
+      </div>
+      <div className="hud-stat level">
+        <div className="l">Nivel</div>
+        <div className="v">{String(v.level).padStart(2, "0")}</div>
+      </div>
+    </div>
+  );
+});
+
+/**
  * Envoltorio común a todos los players: cabecera de HUD, marco CRT, botones,
  * cartel de pausa y modal de fin de partida con guardado. Cada juego pone
  * dentro su pantalla y le pasa sus valores; el shell nunca calcula la
@@ -44,6 +153,8 @@ export function PlayerShell({
   score,
   lives,
   level,
+  hudRef,
+  finalScore,
   paused,
   over,
   onTogglePause,
@@ -70,6 +181,28 @@ export function PlayerShell({
 
   const name = typedName ?? user?.name ?? "INVITADO";
 
+  // Solo existe si el player usa `hudRef`: sin él, HudStats pinta las props.
+  const [hub] = useState<HudHub | undefined>(() =>
+    hudRef ? { last: HUD_START, subs: new Set() } : undefined,
+  );
+  useImperativeHandle(
+    hudRef,
+    () => ({
+      set(v: HudValues) {
+        // Los motores también avisan cuando solo cambia su `status` (muerte,
+        // respawn): con los mismos tres números el HUD no tiene nada que pintar.
+        if (!hub) return;
+        const { last } = hub;
+        if (v.score === last.score && v.lives === last.lives && v.level === last.level) return;
+        hub.last = v;
+        hub.subs.forEach((sub) => sub(v));
+      },
+    }),
+    [hub],
+  );
+  const hudProps = hub ? { hub } : { score, lives, level };
+  const endScore = finalScore ?? score ?? 0;
+
   // Con el mando en pantalla, un dedo que se sale de un botón haría scroll,
   // zoom o pull-to-refresh. La clase va en <html> porque es quien hace scroll;
   // se retira al desmontar, así SALIR devuelve la página a la normalidad.
@@ -80,14 +213,22 @@ export function PlayerShell({
     return () => root.classList.remove("av-touch-lock");
   }, [touch]);
 
+  // Por ref, como los callbacks de los canvas: un player que aún no lo tenga
+  // estable lo cambia de identidad al pausar, y los efectos de abajo se
+  // desuscribirían y volverían a suscribir por eso.
+  const togglePauseRef = useRef(onTogglePause);
+  useEffect(() => {
+    togglePauseRef.current = onTogglePause;
+  });
+
   // En móvil el juego arrancaría mientras el jugador aún hace scroll o mira
   // el mando: hasta el primer toque el motor se pausa, sin tocar su `start()`.
   // Sin ref de "ya pausado": el doble montaje de desarrollo crea un segundo
   // motor que también hay que pausar, y la condición basta para no repetir
   // (en cuanto `paused` es true, o el jugador ya tocó, no hace nada).
   useEffect(() => {
-    if (touch && !started && !paused) onTogglePause();
-  }, [touch, started, paused, onTogglePause]);
+    if (touch && !started && !paused) togglePauseRef.current();
+  }, [touch, started, paused]);
 
   const start = () => {
     setStarted(true);
@@ -102,11 +243,11 @@ export function PlayerShell({
     if (!touch) return;
     const mql = window.matchMedia("(orientation: portrait)");
     const onRotate = () => {
-      if (!paused && !over && started) onTogglePause();
+      if (!paused && !over && started) togglePauseRef.current();
     };
     mql.addEventListener("change", onRotate);
     return () => mql.removeEventListener("change", onRotate);
-  }, [touch, paused, over, started, onTogglePause]);
+  }, [touch, paused, over, started]);
 
   // El estado sale del evento y no del clic: el jugador también sale de
   // pantalla completa con el gesto o el botón atrás del sistema.
@@ -143,7 +284,7 @@ export function PlayerShell({
   const save = async () => {
     setSaving(true);
     setSaveError(null);
-    const result = await saveScore({ game: game.id, score, name });
+    const result = await saveScore({ game: game.id, score: endScore, name });
     setSaving(false);
     // Solo se marca como guardada si el servidor lo confirma: cerrar el modal
     // con la puntuación perdida sería mentirle al jugador.
@@ -157,45 +298,30 @@ export function PlayerShell({
       className={gamepad ? "av-player has-gamepad fade-in" : "av-player fade-in"}
     >
       <div className="player-hud">
-        <div style={{ display: "flex", gap: 24, flexWrap: "wrap" }}>
-          <div className="hud-stat">
-            <div className="l">Jugador</div>
-            <div className="v" style={{ color: "var(--ink)" }}>
-              {name}
-            </div>
-          </div>
-          <div className="hud-stat">
-            <div className="l">Puntuación</div>
-            <div className="v">{score.toLocaleString("es-ES")}</div>
-          </div>
-          <div className="hud-stat lives">
-            <div className="l">Vidas</div>
-            <div className="v">{"♥ ".repeat(lives).trim() || "—"}</div>
-          </div>
-          <div className="hud-stat level">
-            <div className="l">Nivel</div>
-            <div className="v">{String(level).padStart(2, "0")}</div>
-          </div>
-        </div>
-        {/* En táctil el HUD está oculto y el selector vive en el menú de pausa;
+        <Probe id="hud">
+          <HudStats {...hudProps} name={name} />
+        </Probe>
+        <Probe id="shell">
+          {/* En táctil el HUD está oculto y el selector vive en el menú de pausa;
             uno solo en el DOM para no repetir el id de su etiqueta. */}
-        {skin && onSkinChange && !touch && <SkinSelector value={skin} onChange={onSkinChange} />}
-        <div className="hud-actions">
-          <button className="btn yellow" onClick={onTogglePause}>
-            {paused ? "REANUDAR" : "PAUSA"}
-          </button>
-          <button className="btn magenta" onClick={onEnd}>
-            FIN
-          </button>
-          <Link className="btn ghost" href={`/games/${game.id}`}>
-            SALIR
-          </Link>
-        </div>
+          {skin && onSkinChange && !touch && <SkinSelector value={skin} onChange={onSkinChange} />}
+          <div className="hud-actions">
+            <button className="btn yellow" onClick={onTogglePause}>
+              {paused ? "REANUDAR" : "PAUSA"}
+            </button>
+            <button className="btn magenta" onClick={onEnd}>
+              FIN
+            </button>
+            <Link className="btn ghost" href={`/games/${game.id}`}>
+              SALIR
+            </Link>
+          </div>
+        </Probe>
       </div>
 
       <div className="crt">
         <div className="crt-screen">
-          {children}
+          <Probe id="screen">{children}</Probe>
           {/* Sin HUD en táctil, pausa y pantalla completa viven sobre la
               pantalla, en la esquina donde el mando no llega. */}
           {/* Mientras espera el primer toque los iconos no salen: ⏸
@@ -241,20 +367,9 @@ export function PlayerShell({
             <div className="crt-content pause-menu" style={{ zIndex: 5 }}>
               <div className="pause-menu-inner">
                 <div className="pixel neon-yellow pause-menu-title">EN PAUSA</div>
-                <div className="pause-menu-stats">
-                  <div className="hud-stat">
-                    <div className="l">Puntuación</div>
-                    <div className="v">{score.toLocaleString("es-ES")}</div>
-                  </div>
-                  <div className="hud-stat lives">
-                    <div className="l">Vidas</div>
-                    <div className="v">{"♥ ".repeat(lives).trim() || "—"}</div>
-                  </div>
-                  <div className="hud-stat level">
-                    <div className="l">Nivel</div>
-                    <div className="v">{String(level).padStart(2, "0")}</div>
-                  </div>
-                </div>
+                <Probe id="hud">
+                  <HudStats {...hudProps} className="pause-menu-stats" />
+                </Probe>
                 {/* La nav queda tapada en táctil: el tema se cambia aquí. La
                     skin solo si el juego tiene skins. */}
                 <div className="pause-menu-settings">
@@ -296,52 +411,60 @@ export function PlayerShell({
             </div>
           )}
         </div>
-        <div className="crt-bottom">
-          <span className="led">SEÑAL OK</span>
-          <span>{game.title} · CRT-83 · 60 HZ</span>
-          <span>CARGA · 1MB</span>
-        </div>
+        <Probe id="shell">
+          <div className="crt-bottom">
+            <span className="led">SEÑAL OK</span>
+            <span>{game.title} · CRT-83 · 60 HZ</span>
+            <span>CARGA · 1MB</span>
+          </div>
+        </Probe>
       </div>
 
       {/* Siempre en el DOM; el CSS solo lo enseña con puntero grueso, así el
           HTML del servidor ya trae el layout correcto y no hay salto. */}
-      {gamepad && <TouchGamepad config={gamepad} />}
+      {gamepad && (
+        <Probe id="gamepad">
+          <TouchGamepad config={gamepad} />
+        </Probe>
+      )}
 
-      {over && (
-        <div className="modal-bd">
-          <div className="modal">
-            <h2>FIN DEL JUEGO</h2>
-            <div className="final-label">PUNTUACIÓN FINAL</div>
-            <div className="final">{score.toLocaleString("es-ES")}</div>
-            {!saved ? (
-              <>
-                <div className="input-row">
-                  <input
-                    value={name}
-                    onChange={(e) => setTypedName(e.target.value.toUpperCase().slice(0, 10))}
-                    placeholder="TUS INICIALES"
-                    disabled={saving}
-                  />
-                  <button className="btn yellow" onClick={save} disabled={saving}>
-                    {saving ? "GUARDANDO…" : "GUARDAR PUNTUACIÓN"}
-                  </button>
-                </div>
-                {saveError && <div className="toast-error">▸ {saveError}</div>}
-              </>
-            ) : (
-              <div className="toast-saved">▸ PUNTUACIÓN GUARDADA_</div>
-            )}
-            <div className="actions">
-              <button className="btn" onClick={restart}>
-                JUGAR DE NUEVO
-              </button>
-              <Link className="btn magenta" href="/games">
-                VOLVER AL VAULT
-              </Link>
+      <Probe id="shell">
+        {over && (
+          <div className="modal-bd">
+            <div className="modal">
+              <h2>FIN DEL JUEGO</h2>
+              <div className="final-label">PUNTUACIÓN FINAL</div>
+              <div className="final">{endScore.toLocaleString("es-ES")}</div>
+              {!saved ? (
+                <>
+                  <div className="input-row">
+                    <input
+                      value={name}
+                      onChange={(e) => setTypedName(e.target.value.toUpperCase().slice(0, 10))}
+                      placeholder="TUS INICIALES"
+                      disabled={saving}
+                    />
+                    <button className="btn yellow" onClick={save} disabled={saving}>
+                      {saving ? "GUARDANDO…" : "GUARDAR PUNTUACIÓN"}
+                    </button>
+                  </div>
+                  {saveError && <div className="toast-error">▸ {saveError}</div>}
+                </>
+              ) : (
+                <div className="toast-saved">▸ PUNTUACIÓN GUARDADA_</div>
+              )}
+              <div className="actions">
+                <button className="btn" onClick={restart}>
+                  JUGAR DE NUEVO
+                </button>
+                <Link className="btn magenta" href="/games">
+                  VOLVER AL VAULT
+                </Link>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </Probe>
     </div>
   );
 }
