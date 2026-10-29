@@ -1,6 +1,6 @@
 # SPEC 13 — Rendimiento de CROAC (React y canvas), patrón para los demás juegos
 
-> **Estado:** Aprobado
+> **Estado:** Implementado
 > **Depende de:** SPEC 10, SPEC 12
 > **Fecha:** 2026-10-28
 > **Objetivo:** Quitar a CROAC los re-renders de React que no cambian nada en pantalla y el trabajo de canvas que se repite en cada frame, medirlo antes y después con un instrumento reutilizable, y dejar las reglas en una checklist que se pueda aplicar después a cada uno de los otros juegos.
@@ -170,42 +170,42 @@ export function buildBackground(
 
 **Medición:**
 
-- [ ] `/jugar/croac?perf=1` en `npm run dev` expone `window.__avPerf` con `renders` y `frames`.
-- [ ] Sin `?perf=1`, y en `npm run build && npm run start` con o sin él, `window.__avPerf` es `undefined` y no hay ningún `<Profiler>` montado.
-- [ ] `references/games-performance.md` tiene las filas "antes", "con Compiler" y "después" de `croac` con renders por id, p50, p95 y % de frames > 33 ms.
+- [x] `/jugar/croac?perf=1` en `npm run dev` expone `window.__avPerf` con `renders` y `frames`.
+- [x] Sin `?perf=1`, y en `npm run build && npm run start` con o sin él, `window.__avPerf` es `undefined` y no hay ningún `<Profiler>` montado.
+- [x] `references/games-performance.md` tiene las filas "antes", "con Compiler" y "después" de `croac` con renders por id, p50, p95 y % de frames > 33 ms.
 
 **Rendimiento (390×844, touch, CPU 4×, NEON, oscuro, 20 s):**
 
-- [ ] p95 de frame time ≤ 20 ms.
-- [ ] Frames > 33 ms < 2 %.
-- [ ] p95 "después" no es peor que p95 "antes".
-- [ ] Durante los 20 s, `renders.shell`, `renders.screen` y `renders.gamepad` valen como mucho 2 × número de fines de partida (abrir y cerrar el modal; tras el `reset()` posterior al primer toque). Ningún render por puntuación, vidas o nivel.
-- [ ] `renders.hud` es > 0 y ≤ número de cambios de puntuación, vidas o nivel en esos 20 s.
+- [x] p95 de frame time ≤ 20 ms.
+- [x] Frames > 33 ms < 2 %.
+- [x] p95 "después" no es peor que p95 "antes".
+- [x] Durante los 20 s, `renders.shell`, `renders.screen` y `renders.gamepad` valen como mucho 2 × número de fines de partida (abrir y cerrar el modal; tras el `reset()` posterior al primer toque). Ningún render por puntuación, vidas o nivel.
+- [x] `renders.hud` es > 0 y ≤ número de cambios de puntuación, vidas o nivel en esos 20 s.
 
 **Código:**
 
-- [ ] `croac-player.tsx` no tiene `useState` para score, lives ni level.
-- [ ] `onTogglePause`, `onEnd`, `onRestart`, `setKey` y el objeto `gamepad` de `CroacPlayer` mantienen la misma identidad durante toda la partida.
-- [ ] No hay `shadowBlur` ni `setGlow` en ninguna función que se llame desde `loop` del motor.
-- [ ] `canvas.width` es `800 × min(dpr, 2)`.
-- [ ] `next.config.ts` tiene `reactCompiler: true` y `babel-plugin-react-compiler` está en `devDependencies`.
+- [x] `croac-player.tsx` no tiene `useState` para score, lives ni level.
+- [x] `onTogglePause`, `onEnd`, `onRestart`, `setKey` y el objeto `gamepad` de `CroacPlayer` mantienen la misma identidad durante toda la partida.
+- [x] No hay `shadowBlur` ni `setGlow` en ninguna función que se llame desde `loop` del motor.
+- [x] `canvas.width` es `800 × min(dpr, 2)`.
+- [x] `next.config.ts` tiene `reactCompiler: true` y `babel-plugin-react-compiler` está en `devDependencies`.
 
 **Sin regresiones:**
 
-- [ ] CROAC se ve igual a ojo en las tres skins y los dos temas, en 390×844, 844×390 y 1280×800.
-- [ ] Cambiar skin o tema con la partida en curso, en pausa o en fin de partida aplica los colores sin reiniciar.
-- [ ] El halo NEON no se ve recortado en ninguna pieza.
-- [ ] Ocupar un nenúfar lo pinta ocupado en el siguiente frame; empezar ronda los vacía.
-- [ ] ASTEROIDES, TETRIS, ARKANOID y SNAKE muestran puntuación, vidas y nivel igual que antes y guardan puntuación.
-- [ ] El modal de fin de partida de CROAC muestra la puntuación final correcta y `GUARDAR PUNTUACIÓN` la envía.
-- [ ] TOCA PARA EMPEZAR, pausa al girar, menú de pausa con estadísticas y pantalla completa funcionan como en SPEC 10.
-- [ ] `npm run build` y `npm run lint` pasan sin errores.
-- [ ] No hay errores en consola en `/`, `/games`, `/games/croac`, `/jugar/croac` y `/salon`.
+- [x] CROAC se ve igual a ojo en las tres skins y los dos temas, en 390×844, 844×390 y 1280×800.
+- [x] Cambiar skin o tema con la partida en curso, en pausa o en fin de partida aplica los colores sin reiniciar.
+- [x] El halo NEON no se ve recortado en ninguna pieza.
+- [x] Ocupar un nenúfar lo pinta ocupado en el siguiente frame; empezar ronda los vacía.
+- [x] ASTEROIDES, TETRIS, ARKANOID y SNAKE muestran puntuación, vidas y nivel igual que antes y guardan puntuación.
+- [x] El modal de fin de partida de CROAC muestra la puntuación final correcta y `GUARDAR PUNTUACIÓN` la envía.
+- [x] TOCA PARA EMPEZAR, pausa al girar, menú de pausa con estadísticas y pantalla completa funcionan como en SPEC 10.
+- [x] `npm run build` y `npm run lint` pasan sin errores.
+- [x] No hay errores en consola en `/`, `/games`, `/games/croac`, `/jugar/croac` y `/salon`.
 
 **Patrón:**
 
-- [ ] `references/performance-checklist.md` existe y cada regla tiene cómo verificarla.
-- [ ] `CLAUDE.md` menciona la checklist, el registro y React Compiler.
+- [x] `references/performance-checklist.md` existe y cada regla tiene cómo verificarla.
+- [x] `CLAUDE.md` menciona la checklist, el registro y React Compiler.
 
 ---
 
